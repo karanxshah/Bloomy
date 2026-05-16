@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import ParentInsights from "./ParentInsights";
 
 const SUPABASE_URL = "https://ymfvezvezzmckcdwjvzm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_5CR_k4TEBUYXhqm3AuN7bQ_Csiafdcs";
@@ -266,6 +267,7 @@ export default function BloomyApp() {
   const [journalSaved,setJournalSaved]       = useState(false);
   const [promptIdx,setPromptIdx]             = useState(0);
   const [saveLoading,setSaveLoading]         = useState(false);
+  const [showInsights,setShowInsights]       = useState(false);
   const [onboardStep,setOnboardStep]         = useState(0); // 0-3 onboarding slides
   const touchStartX                          = useRef(null);
   const touchStartY                          = useRef(null);
@@ -699,6 +701,15 @@ export default function BloomyApp() {
     </Shell>
   );
 
+  /* Show parent insights overlay */
+  if (showInsights) return (
+    <ParentInsights
+      session={session}
+      children={children}
+      onClose={()=>setShowInsights(false)}
+    />
+  );
+
   /* ════════════════════════════
      PARENT DASHBOARD
   ════════════════════════════ */
@@ -807,6 +818,29 @@ export default function BloomyApp() {
             )}
           </Card>
         )}
+
+        {/* Parent Insights button */}
+        <button onClick={()=>setShowInsights(true)} style={{
+          width:"100%",background:"#fff",border:`1.5px solid ${C.border}`,
+          borderRadius:20,padding:"18px 20px",cursor:"pointer",marginTop:8,
+          display:"flex",alignItems:"center",gap:14,
+          boxShadow:"0 2px 18px rgba(124,77,255,0.07)",
+          transition:"transform 0.15s"}}
+          onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"}
+          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+          <div style={{background:"#EDE7F6",borderRadius:14,padding:10,flexShrink:0}}>
+            <Icon name="lock" size={24} color={C.purple}/>
+          </div>
+          <div style={{flex:1,textAlign:"left"}}>
+            <p style={{fontFamily:F.h,fontWeight:800,fontSize:17,color:C.text,margin:0}}>
+              Parent Insights
+            </p>
+            <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
+              View activity, mood history and journals
+            </p>
+          </div>
+          <Icon name="back" size={20} color={C.muted} style={{transform:"rotate(180deg)"}}/>
+        </button>
       </div>
     </Shell>
   );
