@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://ymfvezvezzmckcdwjvzm.supabase.co";
@@ -9,11 +9,15 @@ const FontLoader = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Poppins:wght@400;500;600;700&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    @keyframes floatUp { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-    @keyframes pulse   { 0%,100%{transform:scale(1)}      50%{transform:scale(1.13)} }
-    @keyframes fadeIn  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes scaleIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
-    textarea:focus, input:focus { outline: none; }
+    @keyframes floatUp    { 0%,100%{transform:translateY(0)}   50%{transform:translateY(-10px)} }
+    @keyframes pulse      { 0%,100%{transform:scale(1)}         50%{transform:scale(1.13)} }
+    @keyframes fadeIn     { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes scaleIn    { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+    @keyframes slideInUp  { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes swipeLeft  { 0%{opacity:1;transform:translateX(0) rotate(0deg) scale(1)}
+                            100%{opacity:0;transform:translateX(-140px) rotate(-12deg) scale(0.9)} }
+    @keyframes slideRight { 0%{opacity:0;transform:translateX(100px) rotate(8deg) scale(0.95)}
+                            100%{opacity:1;transform:translateX(0) rotate(0deg) scale(1)} }
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
   `}</style>
@@ -26,6 +30,7 @@ const C = {
 };
 const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
 
+/* ── Icons ── */
 const Icon = ({ name, size=24, color=C.purple, style: st }) => {
   const s = { width:size, height:size, display:"block", flexShrink:0, ...st };
   const p = { stroke:color, strokeWidth:"2.2", strokeLinecap:"round", strokeLinejoin:"round", fill:"none" };
@@ -46,10 +51,14 @@ const Icon = ({ name, size=24, color=C.purple, style: st }) => {
     plus:    <svg viewBox="0 0 24 24" style={s}><path d="M12 5v14M5 12h14" {...p}/></svg>,
     logout:  <svg viewBox="0 0 24 24" style={s}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" {...p}/></svg>,
     trash:   <svg viewBox="0 0 24 24" style={s}><polyline points="3 6 5 6 21 6" {...p}/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" {...p}/></svg>,
+    sparkle: <svg viewBox="0 0 24 24" style={s}><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" {...p}/></svg>,
+    shield:  <svg viewBox="0 0 24 24" style={s}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" {...p}/></svg>,
+    growth:  <svg viewBox="0 0 24 24" style={s}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" {...p}/><polyline points="17 6 23 6 23 12" {...p}/></svg>,
   };
   return map[name] || null;
 };
 
+/* ── Mascot Faces ── */
 const MascotFace = ({ id, size=64 }) => {
   const faces = {
     fox:   <svg width={size} height={size} viewBox="0 0 80 80"><ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/><polygon points="13,18 26,44 38,24" fill="#FF7043"/><polygon points="67,18 54,44 42,24" fill="#FF7043"/><ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/><circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/><circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="32" cy="41" r="1" fill="#fff"/><circle cx="52" cy="41" r="1" fill="#fff"/><ellipse cx="40" cy="53" rx="5" ry="3.5" fill="#EF5350"/><path d="M36 56 Q40 60 44 56" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/></svg>,
@@ -62,6 +71,7 @@ const MascotFace = ({ id, size=64 }) => {
   return faces[id] || faces.fox;
 };
 
+/* ── Mood Faces ── */
 const MoodFace = ({ type, size=44, active }) => {
   const cfg = {
     Amazing:{bg:"#FFF9C4",c:"#F9A825"}, Good:{bg:"#E8F5E9",c:"#43A047"},
@@ -94,6 +104,7 @@ const MoodFace = ({ type, size=44, active }) => {
   );
 };
 
+/* ── Data ── */
 const MASCOTS = [
   {id:"fox",   name:"Finn",    color:"#FF7043", bg:"#FFF3E0"},
   {id:"bunny", name:"Blossom", color:"#EC407A", bg:"#FCE4EC"},
@@ -105,6 +116,17 @@ const MASCOTS = [
 const MOODS = ["Amazing","Good","Okay","Sad","Angry","Worried"];
 const MOOD_COLORS = {Amazing:"#F9A825",Good:"#43A047",Okay:"#1E88E5",Sad:"#7B1FA2",Angry:"#E53935",Worried:"#E64A19"};
 const MOOD_BG = {Amazing:"#FFF9C4",Good:"#E8F5E9",Okay:"#E3F2FD",Sad:"#EDE7F6",Angry:"#FFEBEE",Worried:"#FBE9E7"};
+
+/* ── Emotion-specific messages (fix #4) ── */
+const MOOD_MESSAGES = {
+  Amazing: { title:"You are absolutely glowing today!", sub:"That energy is contagious — keep shining!" },
+  Good:    { title:"It feels great to feel good!", sub:"Hold onto that feeling — you deserve it." },
+  Okay:    { title:"Okay days are perfectly normal.", sub:"Every day doesn't need to be amazing. You're doing great." },
+  Sad:     { title:"It's okay to feel sad sometimes.", sub:"Your feelings are valid. Be gentle with yourself today." },
+  Angry:   { title:"Feeling angry is completely normal.", sub:"Take a deep breath — let's work through it together." },
+  Worried: { title:"It's okay to feel worried.", sub:"You are safe and supported. One breath at a time." },
+};
+
 const AFFIRMATIONS = [
   {text:"I am brave and strong.",   color:"#FF7043"},
   {text:"I am loved just as I am.", color:"#EC407A"},
@@ -128,74 +150,65 @@ const JOURNAL_PROMPTS = [
   "What made you feel brave today?",
 ];
 const BADGE_DEFS = [
-  {id:"first_checkin", icon:"star",   label:"First Check-in",  check: (ml,j,b,a) => ml.length >= 1},
-  {id:"mood_explorer", icon:"mood",   label:"Mood Explorer",   check: (ml,j,b,a) => new Set(ml.map(e=>e.mood)).size >= 6},
-  {id:"brave_heart",   icon:"heart",  label:"Brave Heart",     check: (ml,j,b,a) => j.length >= 5},
-  {id:"week_streak",   icon:"fire",   label:"7-Day Streak",    check: (ml,j,b,a) => getStreak(ml) >= 7},
-  {id:"affirm_pro",    icon:"trophy", label:"Affirmation Pro", check: (ml,j,b,a) => a >= 20},
-  {id:"calm_champ",    icon:"wind",   label:"Calm Champion",   check: (ml,j,b,a) => b >= 5},
+  {id:"first_checkin", icon:"star",   label:"First Check-in",  check:(ml,j,b,a)=>ml.length>=1},
+  {id:"mood_explorer", icon:"mood",   label:"Mood Explorer",   check:(ml,j,b,a)=>new Set(ml.map(e=>e.mood)).size>=6},
+  {id:"brave_heart",   icon:"heart",  label:"Brave Heart",     check:(ml,j,b,a)=>j.length>=5},
+  {id:"week_streak",   icon:"fire",   label:"7-Day Streak",    check:(ml,j,b,a)=>getStreak(ml)>=7},
+  {id:"affirm_pro",    icon:"trophy", label:"Affirmation Pro", check:(ml,j,b,a)=>a>=20},
+  {id:"calm_champ",    icon:"wind",   label:"Calm Champion",   check:(ml,j,b,a)=>b>=5},
 ];
 
 const today = () => new Date().toISOString().split("T")[0];
-
 const getStreak = (moodLog) => {
-  if (!moodLog || moodLog.length === 0) return 0;
-  const dates = [...new Set(moodLog.map(e => e.date))].sort().reverse();
-  let streak = 0;
-  const d = new Date();
-  for (let i = 0; i < 100; i++) {
-    const s = d.toISOString().split("T")[0];
-    if (dates.includes(s)) { streak++; }
-    else if (i > 0) break;
-    d.setDate(d.getDate() - 1);
+  if (!moodLog||moodLog.length===0) return 0;
+  const dates = [...new Set(moodLog.map(e=>e.date))].sort().reverse();
+  let streak=0; const d=new Date();
+  for (let i=0;i<100;i++) {
+    const s=d.toISOString().split("T")[0];
+    if (dates.includes(s)) streak++; else if (i>0) break;
+    d.setDate(d.getDate()-1);
   }
   return streak;
 };
-
 const last7Days = () => {
-  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  return Array.from({length:7}, (_,i) => {
-    const d = new Date(); d.setDate(d.getDate()-6+i);
-    return { date: d.toISOString().split("T")[0], label: days[d.getDay()] };
+  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  return Array.from({length:7},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-6+i);
+    return {date:d.toISOString().split("T")[0],label:days[d.getDay()]};
   });
 };
 
-const Card = ({children, style}) => (
+/* ── Primitives ── */
+const Card = ({children,style}) => (
   <div style={{background:"#fff",borderRadius:20,padding:"22px 20px",
     boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14,...style}}>
     {children}
   </div>
 );
-
-const Btn = ({children, onClick, color, textColor, style, small, icon, disabled, loading}) => (
+const Btn = ({children,onClick,color,textColor,style,small,icon,disabled,loading}) => (
   <button onClick={onClick} disabled={!!disabled||!!loading} style={{
-    background: disabled||loading ? "#e0e0e0" : (color||C.purple),
-    color: disabled||loading ? "#aaa" : (textColor||"#fff"),
-    border:"none", borderRadius:50,
-    padding: small ? "10px 22px" : "15px 34px",
-    fontSize: small ? 14 : 16,
-    fontWeight:700, fontFamily:F.b,
-    cursor: disabled||loading ? "not-allowed" : "pointer",
-    boxShadow: disabled||loading ? "none" : `0 4px 14px ${color||C.purple}44`,
+    background:disabled||loading?"#e0e0e0":(color||C.purple),
+    color:disabled||loading?"#aaa":(textColor||"#fff"),
+    border:"none",borderRadius:50,
+    padding:small?"10px 22px":"15px 34px",
+    fontSize:small?14:16,fontWeight:700,fontFamily:F.b,
+    cursor:disabled||loading?"not-allowed":"pointer",
+    boxShadow:disabled||loading?"none":`0 4px 14px ${color||C.purple}44`,
     transition:"transform 0.12s",
-    display:"inline-flex", alignItems:"center", gap:8, letterSpacing:0.2, ...style,
+    display:"inline-flex",alignItems:"center",gap:8,letterSpacing:0.2,...style,
   }}
-    onMouseDown={e=>{ if(!disabled&&!loading) e.currentTarget.style.transform="scale(0.95)"; }}
-    onMouseUp={e=>{ e.currentTarget.style.transform="scale(1)"; }}
+    onMouseDown={e=>{if(!disabled&&!loading)e.currentTarget.style.transform="scale(0.95)";}}
+    onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
   >
-    {icon && !loading && <Icon name={icon} size={18} color={disabled||loading?"#aaa":(textColor||"#fff")}/>}
-    {loading ? "Loading..." : children}
+    {icon&&!loading&&<Icon name={icon} size={18} color={disabled||loading?"#aaa":(textColor||"#fff")}/>}
+    {loading?"Loading...":children}
   </button>
 );
-
 const Label = ({children}) => (
   <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:C.muted,
-    letterSpacing:1.3,textTransform:"uppercase",marginBottom:10}}>
-    {children}
-  </p>
+    letterSpacing:1.3,textTransform:"uppercase",marginBottom:10}}>{children}</p>
 );
-
-const TextInput = ({value, onChange, placeholder, type="text", style}) => (
+const TextInput = ({value,onChange,placeholder,type="text",style}) => (
   <input value={value} onChange={onChange} placeholder={placeholder} type={type}
     style={{width:"100%",padding:"13px 18px",borderRadius:50,
       border:`2px solid ${C.border}`,fontSize:16,fontFamily:F.b,
@@ -204,7 +217,6 @@ const TextInput = ({value, onChange, placeholder, type="text", style}) => (
     onBlur={e=>e.target.style.border=`2px solid ${C.border}`}
   />
 );
-
 const Shell = ({children}) => (
   <div style={{minHeight:"100vh",background:C.bg,fontFamily:F.b,
     display:"flex",flexDirection:"column",alignItems:"center",
@@ -220,209 +232,197 @@ const Shell = ({children}) => (
   </div>
 );
 
+/* ══════════════════════════════════════════════
+   MAIN APP
+══════════════════════════════════════════════ */
 export default function BloomyApp() {
-  const [session, setSession]             = useState(null);
-  const [loading, setLoading]             = useState(true);
-  const [screen, setScreen]               = useState("landing");
-  const [email, setEmail]                 = useState("");
-  const [password, setPassword]           = useState("");
-  const [name, setName]                   = useState("");
-  const [authError, setAuthError]         = useState("");
-  const [authLoading, setAuthLoading]     = useState(false);
-  const [children, setChildren]           = useState([]);
-  const [childrenLoading, setChildrenLoading] = useState(false);
-  const [activeChild, setActiveChild]     = useState(null);
-  const [moodLog, setMoodLog]             = useState([]);
-  const [journals, setJournals]           = useState([]);
-  const [addingChild, setAddingChild]     = useState(false);
-  const [newChildName, setNewChildName]   = useState("");
-  const [newChildMascot, setNewChildMascot] = useState(null);
-  const [addStep, setAddStep]             = useState(1);
-  const [addLoading, setAddLoading]       = useState(false);
-  const [tab, setTab]                     = useState("home");
-  const [selectedMood, setSelectedMood]   = useState(null);
-  const [moodLogged, setMoodLogged]       = useState(false);
-  const [affirmIdx, setAffirmIdx]         = useState(0);
-  const [breathPhase, setBreathPhase]     = useState(0);
-  const [breathActive, setBreathActive]   = useState(false);
-  const [breathCount, setBreathCount]     = useState(0);
-  const [journalText, setJournalText]     = useState("");
-  const [journalSaved, setJournalSaved]   = useState(false);
-  const [promptIdx, setPromptIdx]         = useState(0);
-  const [saveLoading, setSaveLoading]     = useState(false);
+  const [session,setSession]                 = useState(null);
+  const [loading,setLoading]                 = useState(true);
+  const [screen,setScreen]                   = useState("landing");
+  const [email,setEmail]                     = useState("");
+  const [password,setPassword]               = useState("");
+  const [name,setName]                       = useState("");
+  const [authError,setAuthError]             = useState("");
+  const [authLoading,setAuthLoading]         = useState(false);
+  const [children,setChildren]               = useState([]);
+  const [childrenLoading,setChildrenLoading] = useState(false);
+  const [activeChild,setActiveChild]         = useState(null);
+  const [moodLog,setMoodLog]                 = useState([]);
+  const [journals,setJournals]               = useState([]);
+  const [addingChild,setAddingChild]         = useState(false);
+  const [newChildName,setNewChildName]       = useState("");
+  const [newChildMascot,setNewChildMascot]   = useState(null);
+  const [addStep,setAddStep]                 = useState(1);
+  const [addLoading,setAddLoading]           = useState(false);
+  const [tab,setTab]                         = useState("home");
+  const [selectedMood,setSelectedMood]       = useState(null);
+  const [moodLogged,setMoodLogged]           = useState(false);
+  const [affirmIdx,setAffirmIdx]             = useState(0);
+  const [affirmAnim,setAffirmAnim]           = useState("idle"); // idle | swiping | entering
+  const [breathPhase,setBreathPhase]         = useState(0);
+  const [breathActive,setBreathActive]       = useState(false);
+  const [breathCount,setBreathCount]         = useState(0);
+  const [journalText,setJournalText]         = useState("");
+  const [journalSaved,setJournalSaved]       = useState(false);
+  const [promptIdx,setPromptIdx]             = useState(0);
+  const [saveLoading,setSaveLoading]         = useState(false);
+  const [onboardStep,setOnboardStep]         = useState(0); // 0-3 onboarding slides
 
-  /* ── Auth listener ── */
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
+  /* ── Auth ── */
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data:{session}})=>{
+      setSession(session); setLoading(false);
       if (session) setScreen("dashboard");
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((_,session)=>{
       setSession(session);
-      if (session) { setScreen("dashboard"); loadChildren(session.user.id); }
-      else { setScreen("landing"); setChildren([]); setActiveChild(null); }
+      if (session){setScreen("dashboard");loadChildren(session.user.id);}
+      else {setScreen("landing");setChildren([]);setActiveChild(null);}
     });
-    return () => subscription.unsubscribe();
-  }, []);
+    return ()=>subscription.unsubscribe();
+  },[]);
 
-  /* ── Load children ── */
-  const loadChildren = async (userId) => {
+  const loadChildren = async (userId)=>{
     setChildrenLoading(true);
-    const { data, error } = await supabase
-      .from("children")
-      .select("*")
-      .eq("parent_id", userId)
-      .order("created_at", {ascending: true});
-    if (!error && data) setChildren(data);
+    const {data,error} = await supabase.from("children").select("*")
+      .eq("parent_id",userId).order("created_at",{ascending:true});
+    if (!error&&data) setChildren(data);
     setChildrenLoading(false);
   };
 
-  useEffect(() => {
-    if (session) loadChildren(session.user.id);
-  }, [session]);
+  useEffect(()=>{if(session)loadChildren(session.user.id);},[session]);
 
-  /* ── Load child data ── */
-  const loadChildData = async (child) => {
-    const [moodRes, journalRes] = await Promise.all([
-      supabase.from("mood_logs").select("*").eq("child_id", child.id).order("created_at", {ascending:true}),
-      supabase.from("journal_entries").select("*").eq("child_id", child.id).order("created_at", {ascending:false}),
+  const loadChildData = async (child)=>{
+    const [moodRes,journalRes] = await Promise.all([
+      supabase.from("mood_logs").select("*").eq("child_id",child.id).order("created_at",{ascending:true}),
+      supabase.from("journal_entries").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
     ]);
-    if (!moodRes.error) setMoodLog(moodRes.data || []);
-    if (!journalRes.error) setJournals(journalRes.data || []);
+    if (!moodRes.error) setMoodLog(moodRes.data||[]);
+    if (!journalRes.error) setJournals(journalRes.data||[]);
   };
 
   /* ── Breathing ── */
-  useEffect(() => {
+  useEffect(()=>{
     if (!breathActive) return;
-    const t = setTimeout(async () => {
-      const next = (breathPhase+1) % BREATHING.length;
+    const t = setTimeout(async()=>{
+      const next=(breathPhase+1)%BREATHING.length;
       setBreathPhase(next);
-      if (next === 0) {
-        setBreathCount(c => c+1);
-        if (activeChild) {
-          const newCount = (activeChild.breath_sessions||0)+1;
+      if (next===0){
+        setBreathCount(c=>c+1);
+        if (activeChild){
+          const newCount=(activeChild.breath_sessions||0)+1;
           await supabase.from("children").update({breath_sessions:newCount}).eq("id",activeChild.id);
-          setActiveChild(prev => ({...prev, breath_sessions:newCount}));
-          setChildren(prev => prev.map(c => c.id===activeChild.id ? {...c,breath_sessions:newCount} : c));
+          setActiveChild(prev=>({...prev,breath_sessions:newCount}));
+          setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,breath_sessions:newCount}:c));
         }
       }
-    }, BREATHING[breathPhase].duration * 1000);
-    return () => clearTimeout(t);
-  }, [breathActive, breathPhase]);
+    },BREATHING[breathPhase].duration*1000);
+    return ()=>clearTimeout(t);
+  },[breathActive,breathPhase]);
 
-  /* ── Sign up ── */
-  const handleSignup = async () => {
-    if (!name.trim()||!email.trim()||!password.trim()) { setAuthError("Please fill in all fields."); return; }
-    if (password.length < 6) { setAuthError("Password must be at least 6 characters."); return; }
-    setAuthLoading(true); setAuthError("");
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: { data: { name: name.trim() } }
-    });
+  /* ── Affirmation card deck animation (fix #5) ── */
+  const nextAffirm = async ()=>{
+    if (affirmAnim!=="idle") return;
+    setAffirmAnim("swiping");
+    setTimeout(()=>{
+      setAffirmIdx(i=>(i+1)%AFFIRMATIONS.length);
+      setAffirmAnim("entering");
+      setTimeout(()=>setAffirmAnim("idle"),400);
+    },350);
+    if (activeChild){
+      const newCount=(activeChild.affirm_count||0)+1;
+      await supabase.from("children").update({affirm_count:newCount}).eq("id",activeChild.id);
+      setActiveChild(prev=>({...prev,affirm_count:newCount}));
+      setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,affirm_count:newCount}:c));
+    }
+  };
+
+  /* ── Auth handlers ── */
+  const handleSignup = async ()=>{
+    if (!name.trim()||!email.trim()||!password.trim()){setAuthError("Please fill in all fields.");return;}
+    if (password.length<6){setAuthError("Password must be at least 6 characters.");return;}
+    setAuthLoading(true);setAuthError("");
+    const {error} = await supabase.auth.signUp({email:email.trim(),password,
+      options:{data:{name:name.trim()}}});
     if (error) setAuthError(error.message);
     setAuthLoading(false);
   };
-
-  /* ── Sign in ── */
-  const handleLogin = async () => {
-    if (!email.trim()||!password.trim()) { setAuthError("Please fill in all fields."); return; }
-    setAuthLoading(true); setAuthError("");
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+  const handleLogin = async ()=>{
+    if (!email.trim()||!password.trim()){setAuthError("Please fill in all fields.");return;}
+    setAuthLoading(true);setAuthError("");
+    const {error} = await supabase.auth.signInWithPassword({email:email.trim(),password});
     if (error) setAuthError("Incorrect email or password.");
     setAuthLoading(false);
   };
-
-  /* ── Sign out ── */
-  const handleLogout = async () => {
+  const handleLogout = async ()=>{
     await supabase.auth.signOut();
-    setBreathActive(false);
-    setActiveChild(null);
-    setMoodLog([]); setJournals([]);
+    setBreathActive(false);setActiveChild(null);setMoodLog([]);setJournals([]);
   };
 
-  /* ── Add child ── */
-  const handleAddChild = async () => {
+  /* ── Add / delete child ── */
+  const handleAddChild = async ()=>{
     if (!newChildName.trim()||!newChildMascot||!session) return;
     setAddLoading(true);
-    const { data, error } = await supabase.from("children").insert({
-      parent_id: session.user.id,
-      name: newChildName.trim(),
-      mascot_id: newChildMascot.id,
-      mascot_name: newChildMascot.name,
-      mascot_color: newChildMascot.color,
-      mascot_bg: newChildMascot.bg,
-      affirm_count: 0,
-      breath_sessions: 0,
+    const {data,error} = await supabase.from("children").insert({
+      parent_id:session.user.id, name:newChildName.trim(),
+      mascot_id:newChildMascot.id, mascot_name:newChildMascot.name,
+      mascot_color:newChildMascot.color, mascot_bg:newChildMascot.bg,
+      affirm_count:0, breath_sessions:0,
     }).select().single();
-    if (!error && data) {
-      setChildren(prev => [...prev, data]);
-      setActiveChild(data);
-      setMoodLog([]); setJournals([]);
-      setTab("home");
+    if (!error&&data){
+      setChildren(prev=>[...prev,data]);
+      setActiveChild(data);setMoodLog([]);setJournals([]);setTab("home");
     }
-    setAddingChild(false); setNewChildName(""); setNewChildMascot(null); setAddStep(1);
+    setAddingChild(false);setNewChildName("");setNewChildMascot(null);setAddStep(1);
     setAddLoading(false);
   };
-
-  /* ── Delete child ── */
-  const handleDeleteChild = async (childId) => {
-    await supabase.from("children").delete().eq("id", childId);
-    setChildren(prev => prev.filter(c => c.id !== childId));
-    if (activeChild?.id === childId) { setActiveChild(null); setMoodLog([]); setJournals([]); }
+  const handleDeleteChild = async (childId)=>{
+    await supabase.from("children").delete().eq("id",childId);
+    setChildren(prev=>prev.filter(c=>c.id!==childId));
+    if (activeChild?.id===childId){setActiveChild(null);setMoodLog([]);setJournals([]);}
   };
 
-  /* ── Log mood ── */
-  const logMood = async (mood) => {
+  /* ── App actions ── */
+  const logMood = async (mood)=>{
     if (!activeChild) return;
-    const entry = { child_id: activeChild.id, mood, date: today() };
-    const { data, error } = await supabase.from("mood_logs").insert(entry).select().single();
-    if (!error && data) { setMoodLog(prev => [...prev, data]); setMoodLogged(true); }
+    const {data,error} = await supabase.from("mood_logs")
+      .insert({child_id:activeChild.id,mood,date:today()}).select().single();
+    if (!error&&data){setMoodLog(prev=>[...prev,data]);setMoodLogged(true);}
   };
-
-  /* ── Save journal ── */
-  const saveJournal = async () => {
+  const saveJournal = async ()=>{
     if (!journalText.trim()||!activeChild) return;
     setSaveLoading(true);
-    const entry = { child_id:activeChild.id, text:journalText, prompt:JOURNAL_PROMPTS[promptIdx], date:today() };
-    const { data, error } = await supabase.from("journal_entries").insert(entry).select().single();
-    if (!error && data) { setJournals(prev => [data, ...prev]); setJournalSaved(true); }
+    const {data,error} = await supabase.from("journal_entries")
+      .insert({child_id:activeChild.id,text:journalText,
+        prompt:JOURNAL_PROMPTS[promptIdx],date:today()}).select().single();
+    if (!error&&data){setJournals(prev=>[data,...prev]);setJournalSaved(true);}
     setSaveLoading(false);
   };
-
-  /* ── Next affirmation ── */
-  const nextAffirm = async () => {
-    setAffirmIdx(i => (i+1) % AFFIRMATIONS.length);
-    if (activeChild) {
-      const newCount = (activeChild.affirm_count||0)+1;
-      await supabase.from("children").update({affirm_count:newCount}).eq("id",activeChild.id);
-      setActiveChild(prev => ({...prev, affirm_count:newCount}));
-      setChildren(prev => prev.map(c => c.id===activeChild.id ? {...c,affirm_count:newCount} : c));
-    }
-  };
-
-  const openChild = async (child) => {
-    setActiveChild(child); setTab("home");
-    setMoodLogged(false); setJournalSaved(false); setJournalText("");
-    setBreathActive(false); setBreathPhase(0); setBreathCount(0);
+  const openChild = async (child)=>{
+    setActiveChild(child);setTab("home");
+    setMoodLogged(false);setJournalSaved(false);setJournalText("");
+    setBreathActive(false);setBreathPhase(0);setBreathCount(0);
     await loadChildData(child);
   };
 
   /* ── Computed ── */
   const streak = getStreak(moodLog);
-  const week = last7Days();
+  const week   = last7Days();
   const todayEntry = moodLog.slice().reverse().find(e=>e.date===today());
   const badges = activeChild
-    ? Object.fromEntries(BADGE_DEFS.map(b=>[b.id, b.check(moodLog,journals,activeChild.breath_sessions||0,activeChild.affirm_count||0)]))
+    ? Object.fromEntries(BADGE_DEFS.map(b=>[b.id,b.check(moodLog,journals,
+        activeChild.breath_sessions||0,activeChild.affirm_count||0)]))
     : {};
   const cm = activeChild
-    ? { id:activeChild.mascot_id, name:activeChild.mascot_name, color:activeChild.mascot_color, bg:activeChild.mascot_bg }
+    ? {id:activeChild.mascot_id,name:activeChild.mascot_name,
+       color:activeChild.mascot_color,bg:activeChild.mascot_bg}
     : MASCOTS[0];
-  const parentName = session?.user?.user_metadata?.name || session?.user?.email || "there";
+  const parentName = session?.user?.user_metadata?.name||session?.user?.email||"there";
 
+  /* ── Loading splash ── */
   if (loading) return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(148deg,#A78BFA 0%,#F06292 60%,#FFD54F 100%)",
+    <div style={{minHeight:"100vh",
+      background:"linear-gradient(148deg,#A78BFA 0%,#F06292 60%,#FFD54F 100%)",
       display:"flex",alignItems:"center",justifyContent:"center"}}>
       <FontLoader/>
       <div style={{textAlign:"center"}}>
@@ -434,43 +434,173 @@ export default function BloomyApp() {
     </div>
   );
 
-  /* ── LANDING ── */
-  if (screen==="landing") return (
-    <div style={{minHeight:"100vh",
-      background:"linear-gradient(148deg,#A78BFA 0%,#F06292 60%,#FFD54F 100%)",
-      display:"flex",flexDirection:"column",alignItems:"center",
-      justifyContent:"center",padding:28,textAlign:"center",fontFamily:F.b}}>
-      <FontLoader/>
-      <div style={{animation:"floatUp 3s ease-in-out infinite",marginBottom:20}}>
-        <Icon name="flower" size={84} color="#fff"/>
-      </div>
-      <h1 style={{fontFamily:F.h,fontSize:52,fontWeight:900,color:"#fff",
-        marginBottom:8,letterSpacing:-1,textShadow:"0 4px 20px rgba(0,0,0,0.18)"}}>
-        Bloomy
-      </h1>
-      <p style={{fontSize:17,color:"rgba(255,255,255,0.92)",marginBottom:48,
-        fontWeight:500,lineHeight:1.6,maxWidth:280}}>
-        A safe, joyful space for children to grow, feel, and shine.
-      </p>
-      <Btn onClick={()=>setScreen("signup")} color="#fff" textColor={C.purple}
-        style={{fontSize:18,padding:"17px 48px",marginBottom:14}}>
-        Create Free Account
-      </Btn>
-      <button onClick={()=>setScreen("login")} style={{
-        background:"rgba(255,255,255,0.2)",border:"2px solid rgba(255,255,255,0.5)",
-        color:"#fff",borderRadius:50,padding:"11px 28px",fontSize:15,
-        fontWeight:600,fontFamily:F.b,cursor:"pointer"}}>
-        Sign In
-      </button>
-    </div>
-  );
+  /* ════════════════════════════════════════
+     ONBOARDING SLIDES
+  ════════════════════════════════════════ */
+  const ONBOARD_SLIDES = [
+    {
+      grad:"linear-gradient(148deg,#A78BFA 0%,#7C4DFF 100%)",
+      icon:"flower", iconColor:"#fff",
+      tag:"Welcome to Bloomy",
+      title:"Where little feelings grow into big strengths.",
+      sub:"A safe, joyful space built just for children ages 5 to 11.",
+      mascots:["fox","bunny","bear"],
+    },
+    {
+      grad:"linear-gradient(148deg,#F06292 0%,#FF7043 100%)",
+      icon:"mood", iconColor:"#fff",
+      tag:"Check in every day",
+      title:"How are you feeling today?",
+      sub:"Children log their mood with friendly faces. Parents see patterns over time to better understand their child.",
+      mascots:["owl","cat","dog"],
+    },
+    {
+      grad:"linear-gradient(148deg,#4DB6AC 0%,#4FC3F7 100%)",
+      icon:"star", iconColor:"#fff",
+      tag:"Grow and shine",
+      title:"Affirmations, journaling, breathing and more.",
+      sub:"Every tool your child needs to build confidence, calm big emotions, and express themselves freely.",
+      mascots:["fox","owl","cat"],
+    },
+    {
+      grad:"linear-gradient(148deg,#FFD54F 0%,#F06292 100%)",
+      icon:"shield", iconColor:"#fff",
+      tag:"Safe for your family",
+      title:"No ads. No tracking. Always free to start.",
+      sub:"Bloomy is built with child safety first. Parents stay in control with a private dashboard and PIN protection.",
+      mascots:["bunny","bear","dog"],
+      isCTA: true,
+    },
+  ];
 
-  /* ── SIGN UP ── */
+  if (screen==="landing") {
+    const slide = ONBOARD_SLIDES[onboardStep];
+    const isLast = onboardStep === ONBOARD_SLIDES.length - 1;
+    return (
+      <div style={{minHeight:"100vh",background:slide.grad,fontFamily:F.b,
+        display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",
+        transition:"background 0.5s ease"}}>
+        <FontLoader/>
+
+        {/* Decorative blobs */}
+        <div style={{position:"absolute",top:-80,right:-80,width:240,height:240,
+          borderRadius:"50%",background:"rgba(255,255,255,0.1)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",bottom:-60,left:-60,width:200,height:200,
+          borderRadius:"50%",background:"rgba(255,255,255,0.08)",pointerEvents:"none"}}/>
+
+        {/* Skip button */}
+        {!isLast && (
+          <button onClick={()=>setScreen("signup")} style={{
+            position:"absolute",top:24,right:24,
+            background:"rgba(255,255,255,0.2)",border:"none",
+            color:"#fff",borderRadius:50,padding:"8px 18px",
+            fontSize:13,fontWeight:600,fontFamily:F.b,cursor:"pointer"}}>
+            Skip
+          </button>
+        )}
+
+        {/* Sign in link top left */}
+        <button onClick={()=>setScreen("login")} style={{
+          position:"absolute",top:24,left:24,
+          background:"none",border:"none",
+          color:"rgba(255,255,255,0.7)",
+          fontSize:13,fontWeight:600,fontFamily:F.b,cursor:"pointer"}}>
+          Sign in
+        </button>
+
+        {/* Main content */}
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",
+          justifyContent:"center",padding:"80px 32px 40px",textAlign:"center",
+          animation:"fadeIn 0.5s ease"}}>
+
+          {/* Mascot row */}
+          <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:28}}>
+            {slide.mascots.map((m,i)=>(
+              <div key={m+i} style={{
+                background:"rgba(255,255,255,0.2)",borderRadius:20,padding:10,
+                animation:`floatUp ${2+i*0.4}s ease-in-out infinite`,
+                animationDelay:`${i*0.3}s`}}>
+                <MascotFace id={m} size={56}/>
+              </div>
+            ))}
+          </div>
+
+          {/* Tag */}
+          <div style={{background:"rgba(255,255,255,0.2)",borderRadius:50,
+            padding:"6px 18px",marginBottom:18,display:"inline-block"}}>
+            <p style={{color:"#fff",fontSize:12,fontWeight:700,
+              letterSpacing:1.2,textTransform:"uppercase",margin:0}}>
+              {slide.tag}
+            </p>
+          </div>
+
+          {/* Title */}
+          <h1 style={{fontFamily:F.h,fontSize:32,fontWeight:900,color:"#fff",
+            marginBottom:16,lineHeight:1.25,textShadow:"0 2px 12px rgba(0,0,0,0.15)"}}>
+            {slide.title}
+          </h1>
+
+          {/* Subtitle */}
+          <p style={{fontSize:16,color:"rgba(255,255,255,0.88)",
+            fontWeight:500,lineHeight:1.7,maxWidth:320,margin:"0 auto"}}>
+            {slide.sub}
+          </p>
+        </div>
+
+        {/* Bottom controls */}
+        <div style={{padding:"0 32px 52px",display:"flex",
+          flexDirection:"column",alignItems:"center",gap:16}}>
+
+          {/* Dot indicators */}
+          <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+            {ONBOARD_SLIDES.map((_,i)=>(
+              <div key={i} onClick={()=>setOnboardStep(i)} style={{
+                width:i===onboardStep?24:8,height:8,borderRadius:50,
+                background:i===onboardStep?"#fff":"rgba(255,255,255,0.4)",
+                transition:"all 0.3s",cursor:"pointer"}}/>
+            ))}
+          </div>
+
+          {/* CTA button */}
+          {isLast ? (
+            <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:10}}>
+              <Btn onClick={()=>setScreen("signup")} color="#fff" textColor={C.purple}
+                style={{fontSize:18,padding:"17px 0",width:"100%",justifyContent:"center"}}>
+                Create Free Account
+              </Btn>
+              <button onClick={()=>setScreen("login")} style={{
+                background:"rgba(255,255,255,0.18)",border:"2px solid rgba(255,255,255,0.5)",
+                color:"#fff",borderRadius:50,padding:"13px 0",fontSize:15,
+                fontWeight:600,fontFamily:F.b,cursor:"pointer",width:"100%"}}>
+                I already have an account
+              </button>
+              <p style={{color:"rgba(255,255,255,0.6)",fontSize:12,
+                fontWeight:500,textAlign:"center",margin:0}}>
+                Free forever. No credit card needed.
+              </p>
+            </div>
+          ) : (
+            <div style={{width:"100%",maxWidth:340}}>
+              <Btn onClick={()=>setOnboardStep(s=>s+1)} color="#fff" textColor={C.purple}
+                style={{fontSize:17,padding:"16px 0",width:"100%",justifyContent:"center"}}
+                icon="next">
+                Next
+              </Btn>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ════════════════════════════
+     SIGN UP
+  ════════════════════════════ */
   if (screen==="signup") return (
     <Shell>
       <div style={{paddingTop:52}}>
-        <button onClick={()=>setScreen("landing")} style={{background:"none",border:"none",cursor:"pointer",
-          display:"flex",alignItems:"center",gap:6,marginBottom:24,
+        <button onClick={()=>setScreen("landing")} style={{background:"none",border:"none",
+          cursor:"pointer",display:"flex",alignItems:"center",gap:6,marginBottom:24,
           color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
           <Icon name="back" size={20} color={C.muted}/> Back
         </button>
@@ -486,7 +616,7 @@ export default function BloomyApp() {
           <TextInput value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" type="email"/>
           <TextInput value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password (min 6 characters)" type="password"/>
         </div>
-        {authError && <p style={{color:"#E53935",fontSize:14,marginBottom:12,fontWeight:500}}>{authError}</p>}
+        {authError&&<p style={{color:"#E53935",fontSize:14,marginBottom:12,fontWeight:500}}>{authError}</p>}
         <Btn onClick={handleSignup} style={{width:"100%"}} icon="next" loading={authLoading}>
           Create Account
         </Btn>
@@ -499,12 +629,14 @@ export default function BloomyApp() {
     </Shell>
   );
 
-  /* ── LOGIN ── */
+  /* ════════════════════════════
+     LOGIN
+  ════════════════════════════ */
   if (screen==="login") return (
     <Shell>
       <div style={{paddingTop:52}}>
-        <button onClick={()=>setScreen("landing")} style={{background:"none",border:"none",cursor:"pointer",
-          display:"flex",alignItems:"center",gap:6,marginBottom:24,
+        <button onClick={()=>setScreen("landing")} style={{background:"none",border:"none",
+          cursor:"pointer",display:"flex",alignItems:"center",gap:6,marginBottom:24,
           color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
           <Icon name="back" size={20} color={C.muted}/> Back
         </button>
@@ -519,10 +651,8 @@ export default function BloomyApp() {
           <TextInput value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" type="email"/>
           <TextInput value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" type="password"/>
         </div>
-        {authError && <p style={{color:"#E53935",fontSize:14,marginBottom:12,fontWeight:500}}>{authError}</p>}
-        <Btn onClick={handleLogin} style={{width:"100%"}} icon="next" loading={authLoading}>
-          Sign In
-        </Btn>
+        {authError&&<p style={{color:"#E53935",fontSize:14,marginBottom:12,fontWeight:500}}>{authError}</p>}
+        <Btn onClick={handleLogin} style={{width:"100%"}} icon="next" loading={authLoading}>Sign In</Btn>
         <p style={{textAlign:"center",marginTop:20,color:C.muted,fontSize:14,fontWeight:500}}>
           No account yet?{" "}
           <span onClick={()=>{setScreen("signup");setAuthError("");}}
@@ -532,7 +662,9 @@ export default function BloomyApp() {
     </Shell>
   );
 
-  /* ── PARENT DASHBOARD ── */
+  /* ════════════════════════════
+     PARENT DASHBOARD
+  ════════════════════════════ */
   if (!activeChild) return (
     <Shell>
       <div style={{paddingTop:36}}>
@@ -549,18 +681,18 @@ export default function BloomyApp() {
           </button>
         </div>
 
-        <Card style={{background:`linear-gradient(135deg,${C.purple},${C.pink})`,padding:"22px 22px"}}>
+        <Card style={{background:`linear-gradient(135deg,${C.purple},${C.pink})`,padding:"22px"}}>
           <p style={{color:"rgba(255,255,255,0.8)",fontSize:12,fontWeight:700,
             letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Children's Profiles</p>
           <p style={{color:"#fff",fontSize:17,fontWeight:600,lineHeight:1.5,margin:0}}>
-            {childrenLoading ? "Loading..." : children.length === 0
-              ? "Add your first child profile to get started."
-              : `You have ${children.length} child profile${children.length>1?"s":""}.`}
+            {childrenLoading?"Loading...":children.length===0
+              ?"Add your first child profile to get started."
+              :`You have ${children.length} child profile${children.length>1?"s":""}.`}
           </p>
         </Card>
 
-        {children.map(child => {
-          const m = MASCOTS.find(x=>x.id===child.mascot_id)||MASCOTS[0];
+        {children.map(child=>{
+          const m=MASCOTS.find(x=>x.id===child.mascot_id)||MASCOTS[0];
           return (
             <Card key={child.id} style={{padding:"18px 20px"}}>
               <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
@@ -577,9 +709,7 @@ export default function BloomyApp() {
                 </div>
               </div>
               <div style={{display:"flex",gap:8}}>
-                <Btn small style={{flex:1}} onClick={()=>openChild(child)}>
-                  Open Profile
-                </Btn>
+                <Btn small style={{flex:1}} onClick={()=>openChild(child)}>Open Profile</Btn>
                 <button onClick={()=>handleDeleteChild(child.id)} style={{
                   background:"#FFF5F5",border:"1.5px solid #FFCDD2",borderRadius:50,
                   padding:"8px 14px",cursor:"pointer",display:"flex",alignItems:"center"}}>
@@ -597,7 +727,7 @@ export default function BloomyApp() {
           </Btn>
         ) : (
           <Card style={{border:`2px solid ${C.purple}22`}}>
-            {addStep===1 && (
+            {addStep===1&&(
               <>
                 <h3 style={{fontFamily:F.h,fontSize:20,fontWeight:800,color:C.text,marginBottom:8}}>
                   What's your child's name?
@@ -611,7 +741,7 @@ export default function BloomyApp() {
                 </div>
               </>
             )}
-            {addStep===2 && (
+            {addStep===2&&(
               <>
                 <h3 style={{fontFamily:F.h,fontSize:20,fontWeight:800,color:C.text,marginBottom:8}}>
                   Pick {newChildName}'s buddy
@@ -644,8 +774,10 @@ export default function BloomyApp() {
     </Shell>
   );
 
-  /* ── CHILD APP ── */
-  const NavBar = () => (
+  /* ════════════════════════════
+     CHILD APP
+  ════════════════════════════ */
+  const NavBar = ()=>(
     <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",
       borderTop:`1.5px solid ${C.border}`,display:"flex",justifyContent:"space-around",
       alignItems:"center",padding:"10px 0 20px",zIndex:100,
@@ -688,8 +820,8 @@ export default function BloomyApp() {
         <div style={{width:64}}/>
       </div>
 
-      {/* HOME */}
-      {tab==="home" && (
+      {/* ── HOME ── */}
+      {tab==="home"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
             <div>
@@ -709,31 +841,55 @@ export default function BloomyApp() {
             </p>
           </Card>
 
-          {todayEntry ? (
-            <Card style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",
-              background:MOOD_BG[todayEntry.mood]}}>
-              <MoodFace type={todayEntry.mood} size={44}/>
-              <div>
-                <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
-                  color:MOOD_COLORS[todayEntry.mood],margin:0}}>
-                  Feeling {todayEntry.mood} today
-                </p>
-                <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>Mood logged!</p>
-              </div>
-            </Card>
-          ) : (
-            <Card onClick={()=>setTab("mood")} style={{display:"flex",alignItems:"center",gap:14,
-              padding:"16px 20px",border:`2px dashed ${C.border}`,
-              background:"transparent",boxShadow:"none",cursor:"pointer"}}>
-              <Icon name="mood" size={36} color={C.purple}/>
-              <div>
-                <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,color:C.text,margin:0}}>
-                  How are you feeling?
-                </p>
-                <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>Tap to log today's mood</p>
-              </div>
-            </Card>
-          )}
+          {/* Mood card — always a real button so it's always clickable */}
+          <button
+            onClick={()=>setTab("mood")}
+            style={{
+              width:"100%", display:"flex", alignItems:"center", gap:14,
+              padding:"16px 20px", borderRadius:20, marginBottom:14,
+              border: todayEntry ? "none" : `2px dashed ${C.purple}`,
+              background: todayEntry ? MOOD_BG[todayEntry.mood] : "#F7F4FF",
+              boxShadow: todayEntry ? "0 2px 18px rgba(124,77,255,0.09)" : "none",
+              cursor:"pointer", textAlign:"left",
+              transition:"transform 0.15s, box-shadow 0.15s",
+            }}
+            onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"}
+            onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}
+            onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}
+          >
+            {todayEntry ? (
+              <>
+                <MoodFace type={todayEntry.mood} size={44}/>
+                <div style={{flex:1}}>
+                  <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
+                    color:MOOD_COLORS[todayEntry.mood],margin:0}}>
+                    Feeling {todayEntry.mood} today
+                  </p>
+                  <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
+                    Tap to update
+                  </p>
+                </div>
+                <Icon name="next" size={18} color={MOOD_COLORS[todayEntry.mood]}/>
+              </>
+            ) : (
+              <>
+                <div style={{background:C.purple+"22",borderRadius:"50%",
+                  padding:10,flexShrink:0}}>
+                  <Icon name="mood" size={28} color={C.purple}/>
+                </div>
+                <div style={{flex:1}}>
+                  <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
+                    color:C.text,margin:0}}>
+                    How are you feeling?
+                  </p>
+                  <p style={{color:C.purple,fontSize:13,fontWeight:600,margin:0}}>
+                    Tap to log today's mood
+                  </p>
+                </div>
+                <Icon name="next" size={18} color={C.purple}/>
+              </>
+            )}
+          </button>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
             {[
@@ -754,7 +910,7 @@ export default function BloomyApp() {
             ))}
           </div>
 
-          {streak > 0 && (
+          {streak>0&&(
             <Card style={{background:"linear-gradient(135deg,#FFD54F,#FF7043)",
               display:"flex",alignItems:"center",gap:14,padding:"18px 20px"}}>
               <Icon name="fire" size={36} color="#fff"/>
@@ -786,8 +942,8 @@ export default function BloomyApp() {
         </div>
       )}
 
-      {/* MOOD */}
-      {tab==="mood" && (
+      {/* ── MOOD ── */}
+      {tab==="mood"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
           <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
             How are you feeling?
@@ -811,17 +967,18 @@ export default function BloomyApp() {
             ))}
           </div>
 
-          {selectedMood && !moodLogged && (
+          {/* Fix #4 — emotion-specific messages */}
+          {selectedMood&&!moodLogged&&(
             <Card style={{background:MOOD_BG[selectedMood],textAlign:"center",animation:"scaleIn 0.3s ease"}}>
               <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
                 <MoodFace type={selectedMood} size={64}/>
               </div>
               <p style={{fontFamily:F.h,fontWeight:800,fontSize:20,
                 color:MOOD_COLORS[selectedMood],marginBottom:6}}>
-                It's okay to feel {selectedMood.toLowerCase()}.
+                {MOOD_MESSAGES[selectedMood].title}
               </p>
               <p style={{color:C.muted,marginBottom:18,fontSize:14,fontWeight:500}}>
-                {cm.name} is here with you.
+                {MOOD_MESSAGES[selectedMood].sub}
               </p>
               <Btn onClick={()=>logMood(selectedMood)} color={MOOD_COLORS[selectedMood]} icon="check">
                 Log My Mood
@@ -829,7 +986,7 @@ export default function BloomyApp() {
             </Card>
           )}
 
-          {moodLogged && (
+          {moodLogged&&(
             <Card style={{textAlign:"center",animation:"scaleIn 0.3s ease"}}>
               <div style={{background:"#E0F2F1",borderRadius:"50%",width:68,height:68,
                 display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
@@ -852,13 +1009,13 @@ export default function BloomyApp() {
             <Label>This Week</Label>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
               {week.map(d=>{
-                const entry = moodLog.slice().reverse().find(e=>e.date===d.date);
+                const entry=moodLog.slice().reverse().find(e=>e.date===d.date);
                 return (
                   <div key={d.date} style={{textAlign:"center",display:"flex",
                     flexDirection:"column",alignItems:"center",gap:5}}>
                     {entry
-                      ? <MoodFace type={entry.mood} size={30}/>
-                      : <div style={{width:30,height:30,borderRadius:"50%",
+                      ?<MoodFace type={entry.mood} size={30}/>
+                      :<div style={{width:30,height:30,borderRadius:"50%",
                           background:"#f0f0f0",border:"1.5px dashed #ddd"}}/>}
                     <span style={{fontSize:11,color:C.muted,fontWeight:700,fontFamily:F.b}}>{d.label}</span>
                   </div>
@@ -867,7 +1024,7 @@ export default function BloomyApp() {
             </div>
           </Card>
 
-          {moodLog.length > 0 && (
+          {moodLog.length>0&&(
             <Card>
               <Label>Recent Moods</Label>
               {[...moodLog].reverse().slice(0,5).map((e,i)=>(
@@ -887,33 +1044,54 @@ export default function BloomyApp() {
         </div>
       )}
 
-      {/* AFFIRMATIONS */}
-      {tab==="affirm" && (
+      {/* ── AFFIRMATIONS (Fix #5 — card deck animation) ── */}
+      {tab==="affirm"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
           <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
             Daily Affirmations
           </h2>
           <p style={{color:C.muted,fontSize:15,marginBottom:20,fontWeight:500}}>
-            Tap the card to see the next one.
+            Tap the card to flip to the next one.
           </p>
-          <div onClick={nextAffirm} style={{
-            background:`linear-gradient(135deg,${AFFIRMATIONS[affirmIdx].color},${C.pink})`,
-            borderRadius:24,padding:"44px 28px",textAlign:"center",cursor:"pointer",
-            boxShadow:`0 10px 36px ${AFFIRMATIONS[affirmIdx].color}44`,
-            marginBottom:18,minHeight:200,
-            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-            transition:"box-shadow 0.3s"}}>
-            <Icon name="star" size={44} color="rgba(255,255,255,0.6)" style={{marginBottom:18}}/>
-            <p style={{color:"#fff",fontSize:24,fontWeight:800,fontFamily:F.h,
-              lineHeight:1.35,margin:"0 0 14px"}}>
-              {AFFIRMATIONS[affirmIdx].text}
-            </p>
-            <div style={{display:"flex",alignItems:"center",gap:6,
-              color:"rgba(255,255,255,0.65)",fontSize:13,fontWeight:600}}>
-              <Icon name="next" size={14} color="rgba(255,255,255,0.65)"/> Tap for next
+
+          {/* Card deck stack */}
+          <div style={{position:"relative",height:260,marginBottom:20,cursor:"pointer"}}
+            onClick={nextAffirm}>
+            {/* Background stack cards */}
+            <div style={{position:"absolute",top:8,left:"4%",right:"4%",bottom:0,
+              background:`${AFFIRMATIONS[(affirmIdx+2)%AFFIRMATIONS.length].color}55`,
+              borderRadius:24,transform:"rotate(-2deg)"}}/>
+            <div style={{position:"absolute",top:4,left:"2%",right:"2%",bottom:0,
+              background:`${AFFIRMATIONS[(affirmIdx+1)%AFFIRMATIONS.length].color}88`,
+              borderRadius:24,transform:"rotate(-1deg)"}}/>
+
+            {/* Active card */}
+            <div style={{
+              position:"absolute",top:0,left:0,right:0,bottom:0,
+              background:`linear-gradient(135deg,${AFFIRMATIONS[affirmIdx].color},${C.pink})`,
+              borderRadius:24,padding:"36px 28px",
+              display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+              boxShadow:`0 10px 36px ${AFFIRMATIONS[affirmIdx].color}44`,
+              animation: affirmAnim==="swiping"
+                ? "swipeLeft 0.35s ease-in forwards"
+                : affirmAnim==="entering"
+                ? "slideRight 0.4s ease-out forwards"
+                : "none",
+              textAlign:"center",
+            }}>
+              <Icon name="star" size={40} color="rgba(255,255,255,0.6)" style={{marginBottom:16}}/>
+              <p style={{color:"#fff",fontSize:24,fontWeight:800,fontFamily:F.h,
+                lineHeight:1.35,margin:"0 0 16px"}}>
+                {AFFIRMATIONS[affirmIdx].text}
+              </p>
+              <div style={{display:"flex",alignItems:"center",gap:6,
+                color:"rgba(255,255,255,0.65)",fontSize:13,fontWeight:600}}>
+                <Icon name="next" size={14} color="rgba(255,255,255,0.65)"/> Tap to flip
+              </div>
             </div>
           </div>
 
+          {/* Dot indicators */}
           <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
             {AFFIRMATIONS.map((_,i)=>(
               <div key={i} onClick={()=>setAffirmIdx(i)} style={{
@@ -934,8 +1112,8 @@ export default function BloomyApp() {
               </p>
               <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
                 {(activeChild.affirm_count||0)>=20
-                  ? "Affirmation Pro badge earned!"
-                  : `${20-(activeChild.affirm_count||0)} more for the badge`}
+                  ?"Affirmation Pro badge earned!"
+                  :`${20-(activeChild.affirm_count||0)} more for the badge`}
               </p>
             </div>
           </Card>
@@ -955,8 +1133,8 @@ export default function BloomyApp() {
         </div>
       )}
 
-      {/* BREATHE */}
-      {tab==="breathe" && (
+      {/* ── BREATHE ── */}
+      {tab==="breathe"&&(
         <div style={{paddingTop:12,textAlign:"center",animation:"fadeIn 0.4s ease"}}>
           <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
             Breathe With Me
@@ -964,7 +1142,6 @@ export default function BloomyApp() {
           <p style={{color:C.muted,fontSize:15,marginBottom:30,fontWeight:500}}>
             Let's calm down together.
           </p>
-
           <div style={{position:"relative",display:"inline-flex",
             alignItems:"center",justifyContent:"center",marginBottom:28}}>
             <div style={{width:220,height:220,borderRadius:"50%",position:"absolute",
@@ -982,14 +1159,13 @@ export default function BloomyApp() {
                 color:BREATHING[breathPhase].color,marginTop:6,marginBottom:0}}>
                 {breathActive?BREATHING[breathPhase].phase:"Ready"}
               </p>
-              {breathActive && (
+              {breathActive&&(
                 <p style={{color:C.muted,fontSize:13,fontWeight:600,marginBottom:0}}>
                   {BREATHING[breathPhase].duration}s
                 </p>
               )}
             </div>
           </div>
-
           <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:28}}>
             {BREATHING.map((b,i)=>(
               <div key={b.phase} style={{
@@ -999,20 +1175,17 @@ export default function BloomyApp() {
                 fontFamily:F.b,transition:"all 0.6s"}}>{b.phase}</div>
             ))}
           </div>
-
           <Btn onClick={()=>{
             setBreathActive(!breathActive);
             if(!breathActive){setBreathPhase(0);setBreathCount(0);}
           }} color={breathActive?"#EF5350":C.mint} style={{marginBottom:18}}>
             {breathActive?"Stop":"Start Breathing"}
           </Btn>
-
-          {breathCount>0 && (
+          {breathCount>0&&(
             <p style={{color:C.purple,fontWeight:700,fontSize:16,fontFamily:F.b}}>
               {breathCount} breath{breathCount>1?"s":""} complete — well done!
             </p>
           )}
-
           <Card style={{marginTop:20,textAlign:"left"}}>
             <Label>Sessions completed</Label>
             <p style={{fontFamily:F.h,fontWeight:800,fontSize:28,color:C.purple,margin:0}}>
@@ -1020,15 +1193,15 @@ export default function BloomyApp() {
             </p>
             <p style={{color:C.muted,fontSize:14,fontWeight:500,marginTop:4}}>
               {(activeChild.breath_sessions||0)>=5
-                ? "Calm Champion badge earned!"
-                : `${5-(activeChild.breath_sessions||0)} more for the Calm Champion badge`}
+                ?"Calm Champion badge earned!"
+                :`${5-(activeChild.breath_sessions||0)} more for the Calm Champion badge`}
             </p>
           </Card>
         </div>
       )}
 
-      {/* JOURNAL */}
-      {tab==="journal" && (
+      {/* ── JOURNAL (Fix #2 — no black glitch, cohesive styling) ── */}
+      {tab==="journal"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
           <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
             My Journal
@@ -1051,16 +1224,39 @@ export default function BloomyApp() {
             </button>
           </Card>
 
-          <Card>
-            <textarea value={journalText}
-              onChange={e=>{setJournalText(e.target.value);setJournalSaved(false);}}
-              placeholder="Write anything you want — there are no wrong answers."
-              style={{width:"100%",minHeight:140,border:"none",outline:"none",
-                fontSize:16,fontFamily:F.b,fontWeight:500,color:C.text,
-                lineHeight:1.8,resize:"none"}}/>
+          {/* Fix #2 — textarea with explicit stable styling, no black glitch */}
+          <div style={{background:"#fff",borderRadius:20,marginBottom:14,
+            boxShadow:"0 2px 18px rgba(124,77,255,0.09)",overflow:"hidden"}}>
+            <div style={{padding:"20px 20px 0"}}>
+              <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:C.muted,
+                letterSpacing:1.3,textTransform:"uppercase",marginBottom:12}}>
+                Write here
+              </p>
+              <textarea
+                value={journalText}
+                onChange={e=>{setJournalText(e.target.value);setJournalSaved(false);}}
+                placeholder="Write anything you want — there are no wrong answers."
+                style={{
+                  width:"100%", minHeight:150,
+                  border:"2px solid #EEE9FF",
+                  borderRadius:16,
+                  padding:"14px 16px",
+                  fontSize:16, fontFamily:F.b, fontWeight:500,
+                  color:"#2D2040",
+                  background:"#F7F4FF",
+                  lineHeight:1.8, resize:"none",
+                  outline:"none",
+                  display:"block",
+                  WebkitAppearance:"none",
+                  MozAppearance:"none",
+                }}
+                onFocus={e=>{e.target.style.border=`2px solid ${C.purple}`;e.target.style.background="#fff";}}
+                onBlur={e=>{e.target.style.border="2px solid #EEE9FF";e.target.style.background="#F7F4FF";}}
+              />
+            </div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-              marginTop:10,borderTop:`1px solid ${C.border}`,paddingTop:10}}>
-              <span style={{color:"#ccc",fontSize:13,fontFamily:F.b}}>
+              padding:"12px 20px",borderTop:`1px solid ${C.border}`,marginTop:12}}>
+              <span style={{color:C.muted,fontSize:13,fontFamily:F.b,fontWeight:500}}>
                 {journalText.length} characters
               </span>
               <Btn onClick={saveJournal} disabled={!journalText.trim()||journalSaved}
@@ -1069,13 +1265,13 @@ export default function BloomyApp() {
                 {journalSaved?"Saved":"Save Entry"}
               </Btn>
             </div>
-          </Card>
+          </div>
 
-          {journalSaved && (
+          {journalSaved&&(
             <Card style={{textAlign:"center",background:"#E8F5E9",animation:"scaleIn 0.3s ease"}}>
               <div style={{background:"#C8E6C9",borderRadius:"50%",width:64,height:64,
                 display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}>
-                <Icon name="star" size={34} color="#2E7D32"/>
+                <Icon name="check" size={34} color="#2E7D32"/>
               </div>
               <p style={{fontFamily:F.h,fontWeight:800,fontSize:20,color:"#2E7D32",marginBottom:4}}>
                 Amazing job writing today!
@@ -1090,7 +1286,7 @@ export default function BloomyApp() {
             </Card>
           )}
 
-          {journals.length > 0 && (
+          {journals.length>0&&(
             <Card>
               <Label>Past Entries ({journals.length})</Label>
               {journals.slice(0,5).map((j,i)=>(
