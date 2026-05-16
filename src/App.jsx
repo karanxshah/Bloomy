@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import ParentInsights from "./ParentInsights";
+import { GrowthMascot, GrowthProgressBar, GrowthCelebration, calcGrowthScore, getStage } from "./MascotGrowth";
 
 const SUPABASE_URL = "https://ymfvezvezzmckcdwjvzm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_5CR_k4TEBUYXhqm3AuN7bQ_Csiafdcs";
@@ -268,6 +269,7 @@ export default function BloomyApp() {
   const [promptIdx,setPromptIdx]             = useState(0);
   const [saveLoading,setSaveLoading]         = useState(false);
   const [showInsights,setShowInsights]       = useState(false);
+  const [celebration,setCelebration]         = useState(null);
   const [onboardStep,setOnboardStep]         = useState(0); // 0-3 onboarding slides
   const touchStartX                          = useRef(null);
   const touchStartY                          = useRef(null);
@@ -391,15 +393,36 @@ export default function BloomyApp() {
     if (!activeChild) return;
     const {data,error} = await supabase.from("mood_logs")
       .insert({child_id:activeChild.id,mood,date:today()}).select().single();
-    if (!error&&data){setMoodLog(prev=>[...prev,data]);setMoodLogged(true);}
+    if (!error&&data){
+      const newLog = [...moodLog, data];
+      setMoodLog(newLog);
+      setMoodLogged(true);
+      checkGrowthStageUp(newLog, journals);
+    }
   };
+  const checkGrowthStageUp = (newMoodLog, newJournals) => {
+    if (!activeChild) return;
+    const oldScore = calcGrowthScore(activeChild, moodLog, journals);
+    const newScore = calcGrowthScore(activeChild, newMoodLog, newJournals);
+    const oldStage = getStage(oldScore);
+    const newStage = getStage(newScore);
+    if (newStage.id > oldStage.id) {
+      setCelebration(newStage.id);
+    }
+  };
+
   const saveJournal = async ()=>{
     if (!journalText.trim()||!activeChild) return;
     setSaveLoading(true);
     const {data,error} = await supabase.from("journal_entries")
       .insert({child_id:activeChild.id,text:journalText,
         prompt:JOURNAL_PROMPTS[promptIdx],date:today()}).select().single();
-    if (!error&&data){setJournals(prev=>[data,...prev]);setJournalSaved(true);}
+    if (!error&&data){
+      const newJournals = [data, ...journals];
+      setJournals(newJournals);
+      setJournalSaved(true);
+      checkGrowthStageUp(moodLog, newJournals);
+    }
     setSaveLoading(false);
   };
   const openChild = async (child)=>{
@@ -410,6 +433,8 @@ export default function BloomyApp() {
   };
 
   /* ── Computed ── */
+  const growthScore  = activeChild ? calcGrowthScore(activeChild, moodLog, journals) : 0;
+  const currentStage = getStage(growthScore);
   const streak = getStreak(moodLog);
   const week   = last7Days();
   const todayEntry = moodLog.slice().reverse().find(e=>e.date===today());
@@ -877,6 +902,14 @@ export default function BloomyApp() {
   return (
     <Shell>
       <NavBar/>
+      {celebration !== null && (
+        <GrowthCelebration
+          mascotId={cm.id}
+          newStage={celebration}
+          childName={activeChild.name}
+          onDismiss={()=>setCelebration(null)}
+        />
+      )}
       <div style={{paddingTop:18,display:"flex",justifyContent:"space-between",
         alignItems:"center",marginBottom:4}}>
         <button onClick={()=>{setActiveChild(null);setBreathActive(false);}} style={{
@@ -900,9 +933,12 @@ export default function BloomyApp() {
               <h2 style={{fontFamily:F.h,fontSize:30,fontWeight:900,color:C.text}}>{activeChild.name}</h2>
             </div>
             <div style={{background:cm.bg,borderRadius:16,padding:10}}>
-              <MascotFace id={cm.id} size={52}/>
+              <GrowthMascot id={cm.id} size={52} stage={currentStage.id} />
             </div>
           </div>
+
+          {/* Growth progress bar */}
+          <GrowthProgressBar score={growthScore}/>
 
           <Card style={{background:`linear-gradient(135deg,${cm.color} 0%,${C.pink} 100%)`,padding:"24px 22px"}}>
             <p style={{color:"rgba(255,255,255,0.8)",fontSize:12,fontWeight:700,
@@ -1225,7 +1261,7 @@ export default function BloomyApp() {
               border:`2.5px solid ${BREATHING[breathPhase].color}80`,
               display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
               transition:"all 1.2s ease"}}>
-              <MascotFace id={cm.id} size={62}/>
+              <GrowthMascot id={cm.id} size={62} stage={currentStage.id} />
               <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
                 color:BREATHING[breathPhase].color,marginTop:6,marginBottom:0}}>
                 {breathActive?BREATHING[breathPhase].phase:"Ready"}
