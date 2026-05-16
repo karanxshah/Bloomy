@@ -267,6 +267,8 @@ export default function BloomyApp() {
   const [promptIdx,setPromptIdx]             = useState(0);
   const [saveLoading,setSaveLoading]         = useState(false);
   const [onboardStep,setOnboardStep]         = useState(0); // 0-3 onboarding slides
+  const touchStartX                          = useRef(null);
+  const touchStartY                          = useRef(null);
 
   /* ── Auth ── */
   useEffect(()=>{
@@ -478,9 +480,6 @@ export default function BloomyApp() {
     const isLast = onboardStep === ONBOARD_SLIDES.length - 1;
 
     /* ── Swipe handlers ── */
-    const touchStartX = useRef(null);
-    const touchStartY = useRef(null);
-
     const handleTouchStart = (e) => {
       touchStartX.current = e.touches[0].clientX;
       touchStartY.current = e.touches[0].clientY;
