@@ -476,10 +476,40 @@ export default function BloomyApp() {
   if (screen==="landing") {
     const slide = ONBOARD_SLIDES[onboardStep];
     const isLast = onboardStep === ONBOARD_SLIDES.length - 1;
+
+    /* ── Swipe handlers ── */
+    const touchStartX = useRef(null);
+    const touchStartY = useRef(null);
+
+    const handleTouchStart = (e) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e) => {
+      if (touchStartX.current === null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      const dy = e.changedTouches[0].clientY - touchStartY.current;
+      // Only trigger if horizontal swipe is dominant
+      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+      if (dx < 0) {
+        // swipe left → next slide
+        if (!isLast) setOnboardStep(s => s + 1);
+        else setScreen("signup");
+      } else {
+        // swipe right → previous slide
+        if (onboardStep > 0) setOnboardStep(s => s - 1);
+      }
+      touchStartX.current = null;
+    };
+
     return (
-      <div style={{minHeight:"100vh",background:slide.grad,fontFamily:F.b,
-        display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",
-        transition:"background 0.5s ease"}}>
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{minHeight:"100vh",background:slide.grad,fontFamily:F.b,
+          display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",
+          transition:"background 0.5s ease",userSelect:"none"}}>
         <FontLoader/>
 
         {/* Decorative blobs */}
@@ -494,7 +524,7 @@ export default function BloomyApp() {
             position:"absolute",top:24,right:24,
             background:"rgba(255,255,255,0.2)",border:"none",
             color:"#fff",borderRadius:50,padding:"8px 18px",
-            fontSize:13,fontWeight:600,fontFamily:F.b,cursor:"pointer"}}>
+            fontSize:13,fontWeight:600,fontFamily:F.b,cursor:"pointer",zIndex:10}}>
             Skip
           </button>
         )}
@@ -504,7 +534,7 @@ export default function BloomyApp() {
           position:"absolute",top:24,left:24,
           background:"none",border:"none",
           color:"rgba(255,255,255,0.7)",
-          fontSize:13,fontWeight:600,fontFamily:F.b,cursor:"pointer"}}>
+          fontSize:13,fontWeight:600,fontFamily:F.b,cursor:"pointer",zIndex:10}}>
           Sign in
         </button>
 
@@ -545,6 +575,14 @@ export default function BloomyApp() {
             fontWeight:500,lineHeight:1.7,maxWidth:320,margin:"0 auto"}}>
             {slide.sub}
           </p>
+
+          {/* Swipe hint on first slide */}
+          {onboardStep===0 && (
+            <p style={{color:"rgba(255,255,255,0.5)",fontSize:12,
+              fontWeight:500,marginTop:24}}>
+              Swipe to explore
+            </p>
+          )}
         </div>
 
         {/* Bottom controls */}
