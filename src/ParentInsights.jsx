@@ -1,9 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://ymfvezvezzmckcdwjvzm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_5CR_k4TEBUYXhqm3AuN7bQ_Csiafdcs";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ── Font loader — same as main app ── */
+const FontLoader = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Poppins:wght@400;500;600;700&display=swap');
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  `}</style>
+);
 
 const C = {
   purple:"#7C4DFF", pink:"#F06292", yellow:"#FFD54F",
@@ -13,7 +22,7 @@ const C = {
 const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
 
 const MOOD_COLORS = {Amazing:"#F9A825",Good:"#43A047",Okay:"#1E88E5",Sad:"#7B1FA2",Angry:"#E53935",Worried:"#E64A19"};
-const MOOD_BG = {Amazing:"#FFF9C4",Good:"#E8F5E9",Okay:"#E3F2FD",Sad:"#EDE7F6",Angry:"#FFEBEE",Worried:"#FBE9E7"};
+const MOOD_BG     = {Amazing:"#FFF9C4",Good:"#E8F5E9",Okay:"#E3F2FD",Sad:"#EDE7F6",Angry:"#FFEBEE",Worried:"#FBE9E7"};
 
 const MASCOTS = [
   {id:"fox",   name:"Finn",    color:"#FF7043", bg:"#FFF3E0"},
@@ -37,7 +46,7 @@ const today = () => new Date().toISOString().split("T")[0];
 
 const getStreak = (moodLog) => {
   if (!moodLog||moodLog.length===0) return 0;
-  const dates = [...new Set(moodLog.map(e=>e.date))].sort().reverse();
+  const dates=[...new Set(moodLog.map(e=>e.date))].sort().reverse();
   let streak=0; const d=new Date();
   for (let i=0;i<100;i++) {
     const s=d.toISOString().split("T")[0];
@@ -55,8 +64,8 @@ const last7Days = () => {
   });
 };
 
-const computeBadges = (child, moodLog, journals) => {
-  const moodsUsed = new Set(moodLog.map(e=>e.mood));
+const computeBadges = (child,moodLog,journals) => {
+  const moodsUsed=new Set(moodLog.map(e=>e.mood));
   return {
     first_checkin: moodLog.length>=1,
     mood_explorer: moodsUsed.size>=6,
@@ -69,12 +78,11 @@ const computeBadges = (child, moodLog, journals) => {
 
 /* ── Icons ── */
 const Icon = ({ name, size=24, color=C.purple, style:st }) => {
-  const s = { width:size, height:size, display:"block", flexShrink:0, ...st };
-  const p = { stroke:color, strokeWidth:"2.2", strokeLinecap:"round", strokeLinejoin:"round", fill:"none" };
+  const s={width:size,height:size,display:"block",flexShrink:0,...st};
+  const p={stroke:color,strokeWidth:"2.2",strokeLinecap:"round",strokeLinejoin:"round",fill:"none"};
   const map = {
     back:    <svg viewBox="0 0 24 24" style={s}><path d="M19 12H5M12 5l-7 7 7 7" {...p}/></svg>,
     lock:    <svg viewBox="0 0 24 24" style={s}><rect x="3" y="11" width="18" height="11" rx="2" {...p}/><path d="M7 11V7a5 5 0 0110 0v4" {...p}/><circle cx="12" cy="16" r="1.5" fill={color}/></svg>,
-    unlock:  <svg viewBox="0 0 24 24" style={s}><rect x="3" y="11" width="18" height="11" rx="2" {...p}/><path d="M7 11V7a5 5 0 019.9-1" {...p}/><circle cx="12" cy="16" r="1.5" fill={color}/></svg>,
     check:   <svg viewBox="0 0 24 24" style={s}><path d="M20 6L9 17l-5-5" {...p}/></svg>,
     mood:    <svg viewBox="0 0 24 24" style={s}><circle cx="12" cy="12" r="9" {...p}/><circle cx="9" cy="10" r="1.2" fill={color}/><circle cx="15" cy="10" r="1.2" fill={color}/><path d="M8.5 14.5c1 1.5 5.5 1.5 7 0" {...p}/></svg>,
     star:    <svg viewBox="0 0 24 24" style={s}><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z" stroke={color} strokeWidth="2" fill={color} fillOpacity="0.15"/></svg>,
@@ -85,20 +93,20 @@ const Icon = ({ name, size=24, color=C.purple, style:st }) => {
     book:    <svg viewBox="0 0 24 24" style={s}><path d="M4 19.5A2.5 2.5 0 016.5 17H20" {...p}/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" {...p}/><path d="M9 7h6M9 11h4" {...p}/></svg>,
     alert:   <svg viewBox="0 0 24 24" style={s}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" {...p}/><line x1="12" y1="9" x2="12" y2="13" {...p}/><circle cx="12" cy="17" r="1" fill={color}/></svg>,
     settings:<svg viewBox="0 0 24 24" style={s}><circle cx="12" cy="12" r="3" {...p}/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" {...p}/></svg>,
-    refresh: <svg viewBox="0 0 24 24" style={s}><path d="M23 4v6h-6" {...p}/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" {...p}/></svg>,
+    next:    <svg viewBox="0 0 24 24" style={s}><path d="M5 12h14M12 5l7 7-7 7" {...p}/></svg>,
   };
-  return map[name] || null;
+  return map[name]||null;
 };
 
 /* ── Mood face ── */
 const MoodFace = ({ type, size=32 }) => {
-  const cfg = {
-    Amazing:{bg:"#FFF9C4",c:"#F9A825"}, Good:{bg:"#E8F5E9",c:"#43A047"},
-    Okay:{bg:"#E3F2FD",c:"#1E88E5"},   Sad:{bg:"#EDE7F6",c:"#7B1FA2"},
-    Angry:{bg:"#FFEBEE",c:"#E53935"},  Worried:{bg:"#FBE9E7",c:"#E64A19"},
+  const cfg={
+    Amazing:{bg:"#FFF9C4",c:"#F9A825"},Good:{bg:"#E8F5E9",c:"#43A047"},
+    Okay:{bg:"#E3F2FD",c:"#1E88E5"},Sad:{bg:"#EDE7F6",c:"#7B1FA2"},
+    Angry:{bg:"#FFEBEE",c:"#E53935"},Worried:{bg:"#FBE9E7",c:"#E64A19"},
   };
-  const {bg,c} = cfg[type]||cfg.Okay;
-  const mouths = {
+  const {bg,c}=cfg[type]||cfg.Okay;
+  const mouths={
     Amazing:<path d="M14 20 Q20 27 26 20" stroke={c} strokeWidth="2.2" fill="none" strokeLinecap="round"/>,
     Good:   <path d="M14 19 Q20 24 26 19" stroke={c} strokeWidth="2.2" fill="none" strokeLinecap="round"/>,
     Okay:   <line x1="14" y1="21" x2="26" y2="21" stroke={c} strokeWidth="2.2" strokeLinecap="round"/>,
@@ -109,15 +117,15 @@ const MoodFace = ({ type, size=32 }) => {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40">
       <circle cx="20" cy="20" r="18" fill={bg} stroke={c} strokeWidth="2"/>
-      <circle cx="14" cy="17" r="2.4" fill={c}/>
-      <circle cx="26" cy="17" r="2.4" fill={c}/>
+      <circle cx="14" cy="17" r="2.4" fill={c}/><circle cx="26" cy="17" r="2.4" fill={c}/>
       {mouths[type]}
     </svg>
   );
 };
 
+/* ── Mascot face ── */
 const MascotFace = ({ id, size=48 }) => {
-  const faces = {
+  const faces={
     fox:   <svg width={size} height={size} viewBox="0 0 80 80"><ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/><polygon points="13,18 26,44 38,24" fill="#FF7043"/><polygon points="67,18 54,44 42,24" fill="#FF7043"/><ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/><circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/><circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/></svg>,
     bunny: <svg width={size} height={size} viewBox="0 0 80 80"><ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/><ellipse cx="53" cy="20" rx="7" ry="17" fill="#F8BBD0"/><ellipse cx="40" cy="50" rx="26" ry="22" fill="#FCE4EC"/><circle cx="30" cy="46" r="5" fill="#fff"/><circle cx="50" cy="46" r="5" fill="#fff"/><circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/></svg>,
     bear:  <svg width={size} height={size} viewBox="0 0 80 80"><circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/><ellipse cx="40" cy="50" rx="27" ry="23" fill="#8D6E63"/><circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/><circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/></svg>,
@@ -128,7 +136,7 @@ const MascotFace = ({ id, size=48 }) => {
   return faces[id]||faces.fox;
 };
 
-/* ── Card primitive ── */
+/* ── Primitives ── */
 const Card = ({children,style}) => (
   <div style={{background:"#fff",borderRadius:20,padding:"20px",
     boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14,...style}}>
@@ -138,93 +146,130 @@ const Card = ({children,style}) => (
 
 const Label = ({children,color}) => (
   <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:color||C.muted,
-    letterSpacing:1.3,textTransform:"uppercase",marginBottom:10}}>{children}</p>
+    letterSpacing:1.3,textTransform:"uppercase",marginBottom:10,margin:"0 0 10px"}}>
+    {children}
+  </p>
+);
+
+const BackBtn = ({onClick,label="Back"}) => (
+  <button onClick={onClick} style={{background:"none",border:"none",cursor:"pointer",
+    display:"flex",alignItems:"center",gap:6,paddingTop:32,paddingBottom:12,
+    color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
+    <Icon name="back" size={18} color={C.muted}/> {label}
+  </button>
+);
+
+const Shell = ({children}) => (
+  <div style={{minHeight:"100vh",background:C.bg,fontFamily:F.b,
+    display:"flex",flexDirection:"column",alignItems:"center",
+    padding:"0 0 60px",overflowX:"hidden"}}>
+    <FontLoader/>
+    <div style={{position:"fixed",top:-90,right:-90,width:280,height:280,
+      borderRadius:"50%",background:"rgba(124,77,255,0.06)",pointerEvents:"none",zIndex:0}}/>
+    <div style={{position:"fixed",bottom:-90,left:-90,width:320,height:320,
+      borderRadius:"50%",background:"rgba(240,98,146,0.06)",pointerEvents:"none",zIndex:0}}/>
+    <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:430,padding:"0 20px"}}>
+      {children}
+    </div>
+  </div>
 );
 
 /* ══════════════════════════════════════════
-   PIN PAD COMPONENT
+   PIN PAD
 ══════════════════════════════════════════ */
 const PinPad = ({ onSuccess, onCancel, existingPin, mode }) => {
   const [input,setInput]   = useState("");
-  const [step,setStep]     = useState(mode==="set" ? "enter" : "verify"); // enter | confirm | verify
+  const [step,setStep]     = useState(mode==="set"?"enter":"verify");
   const [first,setFirst]   = useState("");
   const [error,setError]   = useState("");
   const [shake,setShake]   = useState(false);
 
-  const triggerShake = () => {
+  const triggerShake = (msg) => {
     setShake(true);
     setTimeout(()=>setShake(false),500);
     setInput("");
-    setError("Incorrect PIN. Try again.");
+    setError(msg||"Incorrect PIN. Try again.");
   };
 
   const handleDigit = (d) => {
-    if (input.length >= 4) return;
-    const next = input + d;
+    if (input.length>=4) return;
+    const next=input+d;
     setInput(next);
     setError("");
-    if (next.length === 4) {
-      setTimeout(() => {
-        if (mode === "verify") {
-          if (next === existingPin) { onSuccess(); }
-          else { triggerShake(); }
-        } else if (mode === "set") {
-          if (step === "enter") { setFirst(next); setInput(""); setStep("confirm"); }
+    if (next.length===4) {
+      setTimeout(()=>{
+        if (mode==="verify") {
+          if (next===existingPin) onSuccess();
+          else triggerShake("Incorrect PIN. Try again.");
+        } else {
+          if (step==="enter") { setFirst(next); setInput(""); setStep("confirm"); }
           else {
-            if (next === first) { onSuccess(next); }
-            else { setFirst(""); setStep("enter"); triggerShake(); setError("PINs didn't match. Try again."); }
+            if (next===first) onSuccess(next);
+            else { setFirst(""); setStep("enter"); triggerShake("PINs didn't match. Try again."); }
           }
         }
-      }, 150);
+      },150);
     }
   };
 
   const handleDelete = () => setInput(i=>i.slice(0,-1));
 
-  const dots = Array.from({length:4},(_,i)=>(
-    <div key={i} style={{
-      width:16,height:16,borderRadius:"50%",
-      background:i<input.length?C.purple:"transparent",
-      border:`2.5px solid ${i<input.length?C.purple:C.border}`,
-      transition:"all 0.15s",
-    }}/>
-  ));
-
-  const prompt = mode==="verify" ? "Enter your parent PIN"
+  const prompt = mode==="verify"
+    ? "Enter your parent PIN"
     : step==="enter" ? "Create a 4-digit PIN" : "Confirm your PIN";
 
   return (
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"32px 24px"}}>
-      <div style={{background:"#EDE7F6",borderRadius:"50%",padding:16,marginBottom:20}}>
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",
+      padding:"20px 24px 32px",animation:"fadeIn 0.3s ease"}}>
+
+      <div style={{background:"#EDE7F6",borderRadius:"50%",padding:18,marginBottom:20}}>
         <Icon name="lock" size={36} color={C.purple}/>
       </div>
-      <h2 style={{fontFamily:F.h,fontSize:24,fontWeight:800,color:C.text,marginBottom:6}}>
+
+      <h2 style={{fontFamily:F.h,fontSize:26,fontWeight:800,color:C.text,
+        marginBottom:6,textAlign:"center"}}>
         {prompt}
       </h2>
+
+      <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,color:C.muted,
+        marginBottom:4,textAlign:"center",lineHeight:1.5}}>
+        {mode==="set"
+          ? step==="enter" ? "Choose 4 digits to protect your parent area." : "Enter the same PIN again to confirm."
+          : "This keeps your children's data private."}
+      </p>
+
       {error && (
-        <p style={{color:"#E53935",fontSize:14,fontWeight:500,marginBottom:8}}>{error}</p>
+        <p style={{fontFamily:F.b,color:"#E53935",fontSize:14,
+          fontWeight:600,marginTop:8,marginBottom:0}}>{error}</p>
       )}
 
       {/* Dots */}
-      <div style={{display:"flex",gap:16,margin:"20px 0",
+      <div style={{display:"flex",gap:16,margin:"24px 0",
         animation:shake?"shake 0.4s ease":"none"}}>
-        <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}`}</style>
-        {dots}
+        {Array.from({length:4},(_,i)=>(
+          <div key={i} style={{width:16,height:16,borderRadius:"50%",
+            background:i<input.length?C.purple:"transparent",
+            border:`2.5px solid ${i<input.length?C.purple:C.border}`,
+            transition:"all 0.15s"}}/>
+        ))}
       </div>
 
       {/* Number pad */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16,width:"100%",maxWidth:280}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",
+        gap:12,marginBottom:20,width:"100%",maxWidth:300}}>
         {[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map((d,i)=>(
-          <button key={i} onClick={()=>d==="⌫"?handleDelete():d!==""&&handleDigit(String(d))} style={{
-            background:d===""?"transparent":d==="⌫"?"#FFF3E0":"#fff",
-            border:d===""?"none":`1.5px solid ${C.border}`,
-            borderRadius:16,padding:"18px 0",
-            fontSize:d==="⌫"?22:22,fontWeight:700,fontFamily:F.b,
-            color:d==="⌫"?C.coral:C.text,
-            cursor:d===""?"default":"pointer",
-            boxShadow:d===""?"none":"0 2px 8px rgba(0,0,0,0.06)",
-            transition:"transform 0.1s",
-          }}
+          <button key={i}
+            onClick={()=>d==="⌫"?handleDelete():d!==""&&handleDigit(String(d))}
+            style={{
+              background:d===""?"transparent":d==="⌫"?"#FFF3E0":"#fff",
+              border:d===""?"none":`1.5px solid ${C.border}`,
+              borderRadius:16,padding:"18px 0",
+              fontSize:22,fontWeight:700,fontFamily:F.b,
+              color:d==="⌫"?C.coral:C.text,
+              cursor:d===""?"default":"pointer",
+              boxShadow:d===""?"none":"0 2px 8px rgba(0,0,0,0.06)",
+              transition:"transform 0.1s",
+            }}
             onMouseDown={e=>{if(d!=="")e.currentTarget.style.transform="scale(0.93)";}}
             onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
             {d}
@@ -241,33 +286,30 @@ const PinPad = ({ onSuccess, onCancel, existingPin, mode }) => {
 };
 
 /* ══════════════════════════════════════════
-   MAIN PARENT INSIGHTS EXPORT
+   MAIN EXPORT
 ══════════════════════════════════════════ */
 export default function ParentInsights({ session, children, onClose }) {
-  const [pinState,setPinState]         = useState("check"); // check|set|unlock|unlocked
-  const [savedPin,setSavedPin]         = useState(null);
+  const [pinState,setPinState]           = useState("check");
+  const [savedPin,setSavedPin]           = useState(null);
   const [selectedChild,setSelectedChild] = useState(null);
-  const [moodLog,setMoodLog]           = useState([]);
-  const [journals,setJournals]         = useState([]);
-  const [dataLoading,setDataLoading]   = useState(false);
-  const [changingPin,setChangingPin]   = useState(false);
+  const [moodLog,setMoodLog]             = useState([]);
+  const [journals,setJournals]           = useState([]);
+  const [dataLoading,setDataLoading]     = useState(false);
+  const [changingPin,setChangingPin]     = useState(false);
 
-  /* ── Load PIN from Supabase user metadata ── */
   useEffect(()=>{
-    const pin = session?.user?.user_metadata?.parent_pin;
+    const pin=session?.user?.user_metadata?.parent_pin;
     if (pin) { setSavedPin(pin); setPinState("unlock"); }
     else { setPinState("set"); }
   },[session]);
 
-  /* ── Save PIN to Supabase ── */
   const savePin = async (pin) => {
-    await supabase.auth.updateUser({ data:{ parent_pin: pin } });
+    await supabase.auth.updateUser({data:{parent_pin:pin}});
     setSavedPin(pin);
     setPinState("unlocked");
     setChangingPin(false);
   };
 
-  /* ── Load child data ── */
   const loadChildData = async (child) => {
     setDataLoading(true);
     setSelectedChild(child);
@@ -280,59 +322,37 @@ export default function ParentInsights({ session, children, onClose }) {
     setDataLoading(false);
   };
 
-  const week = last7Days();
+  const week=last7Days();
 
-  /* ── Wrapper styles ── */
-  const wrap = {
-    minHeight:"100vh", background:C.bg, fontFamily:F.b,
-    display:"flex", flexDirection:"column", alignItems:"center",
-    overflowX:"hidden",
-  };
-  const inner = {
-    width:"100%", maxWidth:430, padding:"0 20px 60px", position:"relative", zIndex:1,
-  };
-
-  /* ── PIN screens ── */
+  /* ── Set PIN screen ── */
   if (pinState==="set"||changingPin) return (
-    <div style={wrap}>
-      <div style={inner}>
-        <button onClick={()=>{ setChangingPin(false); if(!savedPin)onClose(); else setPinState("unlocked"); }}
-          style={{background:"none",border:"none",cursor:"pointer",
-            display:"flex",alignItems:"center",gap:6,paddingTop:32,paddingBottom:8,
-            color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
-          <Icon name="back" size={18} color={C.muted}/> Back
-        </button>
-        <PinPad mode="set" onSuccess={savePin}
-          onCancel={()=>{ setChangingPin(false); if(!savedPin)onClose(); else setPinState("unlocked"); }}/>
-      </div>
-    </div>
+    <Shell>
+      <BackBtn onClick={()=>{setChangingPin(false);if(!savedPin)onClose();else setPinState("unlocked");}}
+        label={savedPin?"Back":"Back to Dashboard"}/>
+      <PinPad mode="set" onSuccess={savePin}
+        onCancel={()=>{setChangingPin(false);if(!savedPin)onClose();else setPinState("unlocked");}}/>
+    </Shell>
   );
 
+  /* ── Unlock screen ── */
   if (pinState==="unlock") return (
-    <div style={wrap}>
-      <div style={inner}>
-        <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",
-          display:"flex",alignItems:"center",gap:6,paddingTop:32,paddingBottom:8,
-          color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
-          <Icon name="back" size={18} color={C.muted}/> Back
-        </button>
-        <PinPad mode="verify" existingPin={savedPin}
-          onSuccess={()=>setPinState("unlocked")}
-          onCancel={onClose}/>
-      </div>
-    </div>
+    <Shell>
+      <BackBtn onClick={onClose} label="Back to Dashboard"/>
+      <PinPad mode="verify" existingPin={savedPin}
+        onSuccess={()=>setPinState("unlocked")}
+        onCancel={onClose}/>
+    </Shell>
   );
 
-  /* ── Unlocked — child list view ── */
-  if (pinState==="unlocked" && !selectedChild) return (
-    <div style={wrap}>
-      <div style={inner}>
-        {/* Header */}
-        <div style={{paddingTop:36,display:"flex",justifyContent:"space-between",
+  /* ── Child list ── */
+  if (pinState==="unlocked"&&!selectedChild) return (
+    <Shell>
+      <div style={{paddingTop:36}}>
+        <div style={{display:"flex",justifyContent:"space-between",
           alignItems:"center",marginBottom:24}}>
           <div>
             <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",
-              display:"flex",alignItems:"center",gap:5,marginBottom:8,
+              display:"flex",alignItems:"center",gap:5,marginBottom:6,
               color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:14}}>
               <Icon name="back" size={16} color={C.muted}/> Dashboard
             </button>
@@ -349,11 +369,11 @@ export default function ParentInsights({ session, children, onClose }) {
         </div>
 
         <Card style={{background:`linear-gradient(135deg,${C.purple},${C.pink})`,padding:"20px 22px"}}>
-          <p style={{color:"rgba(255,255,255,0.8)",fontSize:12,fontWeight:700,
+          <p style={{fontFamily:F.b,color:"rgba(255,255,255,0.8)",fontSize:12,fontWeight:700,
             letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>
             Select a child to view
           </p>
-          <p style={{color:"#fff",fontSize:16,fontWeight:600,lineHeight:1.5,margin:0}}>
+          <p style={{fontFamily:F.b,color:"#fff",fontSize:16,fontWeight:500,lineHeight:1.5,margin:0}}>
             Tap a profile below to see their full activity, mood history, and journal entries.
           </p>
         </Card>
@@ -361,21 +381,20 @@ export default function ParentInsights({ session, children, onClose }) {
         {children.length===0 && (
           <Card style={{textAlign:"center",padding:"32px 20px"}}>
             <Icon name="mood" size={40} color={C.muted} style={{margin:"0 auto 12px"}}/>
-            <p style={{color:C.muted,fontWeight:500,fontSize:15}}>
+            <p style={{fontFamily:F.b,color:C.muted,fontWeight:500,fontSize:15,margin:0}}>
               No child profiles yet. Add one from the dashboard!
             </p>
           </Card>
         )}
 
         {children.map(child=>{
-          const m = MASCOTS.find(x=>x.id===child.mascot_id)||MASCOTS[0];
+          const m=MASCOTS.find(x=>x.id===child.mascot_id)||MASCOTS[0];
           return (
             <button key={child.id} onClick={()=>loadChildData(child)} style={{
               width:"100%",background:"#fff",borderRadius:20,padding:"18px 20px",
               border:`1.5px solid ${C.border}`,marginBottom:12,cursor:"pointer",
               display:"flex",alignItems:"center",gap:14,textAlign:"left",
-              boxShadow:"0 2px 18px rgba(124,77,255,0.08)",
-              transition:"transform 0.15s"}}
+              boxShadow:"0 2px 18px rgba(124,77,255,0.08)",transition:"transform 0.15s"}}
               onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"}
               onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
               <div style={{background:m.bg,borderRadius:14,padding:10,flexShrink:0}}>
@@ -385,41 +404,38 @@ export default function ParentInsights({ session, children, onClose }) {
                 <p style={{fontFamily:F.h,fontWeight:800,fontSize:20,color:C.text,margin:0}}>
                   {child.name}
                 </p>
-                <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
+                <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
                   {child.mascot_name} · Tap to view activity
                 </p>
               </div>
-              <Icon name="back" size={20} color={C.muted}
-                style={{transform:"rotate(180deg)"}}/>
+              <Icon name="next" size={20} color={C.muted}/>
             </button>
           );
         })}
       </div>
-    </div>
+    </Shell>
   );
 
-  /* ── Child detail view ── */
-  if (pinState==="unlocked" && selectedChild) {
-    const m = MASCOTS.find(x=>x.id===selectedChild.mascot_id)||MASCOTS[0];
-    const streak = getStreak(moodLog);
-    const badges = computeBadges(selectedChild,moodLog,journals);
-    const todayMood = moodLog.slice().reverse().find(e=>e.date===today());
-    const moodCounts = moodLog.reduce((acc,e)=>({...acc,[e.mood]:(acc[e.mood]||0)+1}),{});
-    const topMood = Object.entries(moodCounts).sort((a,b)=>b[1]-a[1])[0];
-
-    /* Alert: sad/angry/worried 3+ times this week */
-    const thisWeekMoods = moodLog.filter(e=>{
+  /* ── Child detail ── */
+  if (pinState==="unlocked"&&selectedChild) {
+    const m=MASCOTS.find(x=>x.id===selectedChild.mascot_id)||MASCOTS[0];
+    const streak=getStreak(moodLog);
+    const badges=computeBadges(selectedChild,moodLog,journals);
+    const todayMood=moodLog.slice().reverse().find(e=>e.date===today());
+    const moodCounts=moodLog.reduce((acc,e)=>({...acc,[e.mood]:(acc[e.mood]||0)+1}),{});
+    const topMood=Object.entries(moodCounts).sort((a,b)=>b[1]-a[1])[0];
+    const thisWeekMoods=moodLog.filter(e=>{
       const d=new Date(); d.setDate(d.getDate()-6);
       return new Date(e.date)>=d;
     });
-    const concernMoods = thisWeekMoods.filter(e=>["Sad","Angry","Worried"].includes(e.mood));
-    const showAlert = concernMoods.length >= 3;
+    const concernMoods=thisWeekMoods.filter(e=>["Sad","Angry","Worried"].includes(e.mood));
+    const showAlert=concernMoods.length>=3;
 
     return (
-      <div style={wrap}>
-        <div style={inner}>
+      <Shell>
+        <div style={{paddingTop:36}}>
           {/* Header */}
-          <div style={{paddingTop:36,display:"flex",justifyContent:"space-between",
+          <div style={{display:"flex",justifyContent:"space-between",
             alignItems:"center",marginBottom:20}}>
             <button onClick={()=>{setSelectedChild(null);setMoodLog([]);setJournals([]);}}
               style={{background:"none",border:"none",cursor:"pointer",
@@ -427,7 +443,7 @@ export default function ParentInsights({ session, children, onClose }) {
                 color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:14}}>
               <Icon name="back" size={16} color={C.muted}/> All children
             </button>
-            <span style={{fontFamily:F.h,fontWeight:800,fontSize:16,color:C.text}}>
+            <span style={{fontFamily:F.h,fontWeight:800,fontSize:18,color:C.text}}>
               {selectedChild.name}
             </span>
             <div style={{width:80}}/>
@@ -435,11 +451,14 @@ export default function ParentInsights({ session, children, onClose }) {
 
           {dataLoading ? (
             <Card style={{textAlign:"center",padding:"40px 20px"}}>
-              <p style={{color:C.muted,fontWeight:500}}>Loading {selectedChild.name}'s data...</p>
+              <p style={{fontFamily:F.b,color:C.muted,fontWeight:500,fontSize:15,margin:0}}>
+                Loading {selectedChild.name}'s data...
+              </p>
             </Card>
           ) : (
-            <>
-              {/* Child identity card */}
+            <div style={{animation:"fadeIn 0.4s ease"}}>
+
+              {/* Identity card */}
               <Card style={{background:`linear-gradient(135deg,${m.color},${C.pink})`,padding:"20px 22px"}}>
                 <div style={{display:"flex",alignItems:"center",gap:14}}>
                   <div style={{background:"rgba(255,255,255,0.2)",borderRadius:16,padding:10}}>
@@ -449,25 +468,28 @@ export default function ParentInsights({ session, children, onClose }) {
                     <p style={{fontFamily:F.h,fontWeight:900,fontSize:22,color:"#fff",margin:0}}>
                       {selectedChild.name}
                     </p>
-                    <p style={{color:"rgba(255,255,255,0.8)",fontSize:14,fontWeight:500,margin:0}}>
+                    <p style={{fontFamily:F.b,color:"rgba(255,255,255,0.8)",
+                      fontSize:14,fontWeight:500,margin:0}}>
                       {m.name} · {streak>0?`${streak}-day streak`:"No streak yet"}
                     </p>
                   </div>
                 </div>
               </Card>
 
-              {/* Alert banner */}
+              {/* Alert */}
               {showAlert && (
                 <Card style={{background:"#FFF3E0",border:"1.5px solid #FFB74D",padding:"16px 18px"}}>
                   <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
                     <Icon name="alert" size={24} color="#F57C00" style={{flexShrink:0,marginTop:2}}/>
                     <div>
-                      <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,color:"#E65100",marginBottom:4}}>
+                      <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
+                        color:"#E65100",margin:"0 0 4px"}}>
                         Worth checking in on
                       </p>
-                      <p style={{color:"#BF360C",fontSize:14,fontWeight:500,margin:0,lineHeight:1.6}}>
-                        {selectedChild.name} has logged difficult emotions {concernMoods.length} times this week.
-                        Consider asking how they're feeling today.
+                      <p style={{fontFamily:F.b,color:"#BF360C",fontSize:14,
+                        fontWeight:500,margin:0,lineHeight:1.6}}>
+                        {selectedChild.name} has logged difficult emotions {concernMoods.length} times
+                        this week. A gentle conversation can make a big difference.
                       </p>
                     </div>
                   </div>
@@ -477,13 +499,16 @@ export default function ParentInsights({ session, children, onClose }) {
               {/* Quick stats */}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
                 {[
-                  {label:"Streak",      value:`${streak}d`,                      color:C.coral,   bg:"#FFF3E0"},
-                  {label:"Mood logs",   value:moodLog.length,                    color:C.purple,  bg:"#EDE7F6"},
-                  {label:"Journals",    value:journals.length,                   color:C.pink,    bg:"#FCE4EC"},
+                  {label:"Streak",    value:`${streak}d`,    color:C.coral,  bg:"#FFF3E0"},
+                  {label:"Mood logs", value:moodLog.length,  color:C.purple, bg:"#EDE7F6"},
+                  {label:"Journals",  value:journals.length, color:C.pink,   bg:"#FCE4EC"},
                 ].map(s=>(
-                  <div key={s.label} style={{background:s.bg,borderRadius:16,padding:"14px 10px",textAlign:"center"}}>
-                    <p style={{fontFamily:F.h,fontWeight:900,fontSize:24,color:s.color,margin:0}}>{s.value}</p>
-                    <p style={{color:s.color,fontSize:11,fontWeight:700,margin:0,fontFamily:F.b}}>{s.label}</p>
+                  <div key={s.label} style={{background:s.bg,borderRadius:16,
+                    padding:"14px 10px",textAlign:"center"}}>
+                    <p style={{fontFamily:F.h,fontWeight:900,fontSize:24,
+                      color:s.color,margin:0}}>{s.value}</p>
+                    <p style={{fontFamily:F.b,color:s.color,fontSize:11,
+                      fontWeight:700,margin:0}}>{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -497,19 +522,18 @@ export default function ParentInsights({ session, children, onClose }) {
                     <div>
                       <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,
                         color:MOOD_COLORS[todayMood.mood],margin:0}}>{todayMood.mood}</p>
-                      <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
-                        Logged today
-                      </p>
+                      <p style={{fontFamily:F.b,color:C.muted,fontSize:13,
+                        fontWeight:500,margin:0}}>Logged today</p>
                     </div>
                   </div>
                 ) : (
-                  <p style={{color:C.muted,fontSize:15,fontWeight:500}}>
+                  <p style={{fontFamily:F.b,color:C.muted,fontSize:15,fontWeight:500,margin:0}}>
                     {selectedChild.name} hasn't logged a mood today yet.
                   </p>
                 )}
               </Card>
 
-              {/* Weekly mood calendar */}
+              {/* Weekly calendar */}
               <Card>
                 <Label>This Week</Label>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
@@ -522,7 +546,9 @@ export default function ParentInsights({ session, children, onClose }) {
                           ?<MoodFace type={entry.mood} size={34}/>
                           :<div style={{width:34,height:34,borderRadius:"50%",
                               background:"#f0f0f0",border:"1.5px dashed #ddd"}}/>}
-                        <span style={{fontSize:11,color:C.muted,fontWeight:700}}>{d.label}</span>
+                        <span style={{fontFamily:F.b,fontSize:11,color:C.muted,fontWeight:700}}>
+                          {d.label}
+                        </span>
                       </div>
                     );
                   })}
@@ -534,7 +560,7 @@ export default function ParentInsights({ session, children, onClose }) {
                 <Card style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px"}}>
                   <MoodFace type={topMood[0]} size={44}/>
                   <div>
-                    <Label style={{marginBottom:2}}>Most Common Mood</Label>
+                    <Label>Most Common Mood</Label>
                     <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,
                       color:MOOD_COLORS[topMood[0]],margin:0}}>
                       {topMood[0]} — {topMood[1]} time{topMood[1]>1?"s":""}
@@ -543,25 +569,25 @@ export default function ParentInsights({ session, children, onClose }) {
                 </Card>
               )}
 
-              {/* All mood history */}
+              {/* Mood history */}
               {moodLog.length>0 && (
                 <Card>
                   <Label>Full Mood History ({moodLog.length} entries)</Label>
                   {[...moodLog].reverse().slice(0,10).map((e,i)=>(
                     <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,
-                      padding:"9px 0",borderBottom:i<Math.min(9,moodLog.length-1)?"1px solid #F0EAFF":"none"}}>
+                      padding:"9px 0",
+                      borderBottom:i<Math.min(9,moodLog.length-1)?"1px solid #F0EAFF":"none"}}>
                       <MoodFace type={e.mood} size={30}/>
-                      <span style={{flex:1,fontWeight:700,color:MOOD_COLORS[e.mood],fontSize:14}}>
-                        {e.mood}
-                      </span>
-                      <span style={{fontSize:12,color:C.muted}}>
+                      <span style={{flex:1,fontFamily:F.b,fontWeight:700,
+                        color:MOOD_COLORS[e.mood],fontSize:14}}>{e.mood}</span>
+                      <span style={{fontFamily:F.b,fontSize:12,color:C.muted}}>
                         {e.date===today()?"Today":e.date}
                       </span>
                     </div>
                   ))}
-                  {moodLog.length>10&&(
-                    <p style={{color:C.muted,fontSize:13,fontWeight:500,
-                      textAlign:"center",marginTop:10}}>
+                  {moodLog.length>10 && (
+                    <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,
+                      textAlign:"center",margin:"10px 0 0"}}>
                       + {moodLog.length-10} more entries
                     </p>
                   )}
@@ -578,8 +604,8 @@ export default function ParentInsights({ session, children, onClose }) {
                       opacity:badges[b.id]?1:0.3}}>
                       <Icon name={b.icon} size={24} color={badges[b.id]?C.purple:C.muted}
                         style={{margin:"0 auto 6px"}}/>
-                      <div style={{fontSize:11,fontWeight:700,fontFamily:F.b,lineHeight:1.3,
-                        color:badges[b.id]?C.purple:C.muted}}>{b.label}</div>
+                      <p style={{fontFamily:F.b,fontSize:11,fontWeight:700,lineHeight:1.3,
+                        color:badges[b.id]?C.purple:C.muted,margin:0}}>{b.label}</p>
                     </div>
                   ))}
                 </div>
@@ -589,17 +615,19 @@ export default function ParentInsights({ session, children, onClose }) {
               <Card>
                 <Label>Activity</Label>
                 {[
-                  {label:"Affirmations read",  value:selectedChild.affirm_count||0,     icon:"star",  color:C.purple},
-                  {label:"Breathing sessions", value:selectedChild.breath_sessions||0,  icon:"wind",  color:C.sky},
-                  {label:"Journal entries",    value:journals.length,                    icon:"book",  color:C.pink},
+                  {label:"Affirmations read",  value:selectedChild.affirm_count||0,    icon:"star", color:C.purple},
+                  {label:"Breathing sessions", value:selectedChild.breath_sessions||0, icon:"wind", color:C.sky},
+                  {label:"Journal entries",    value:journals.length,                   icon:"book", color:C.pink},
                 ].map((a,i)=>(
                   <div key={a.label} style={{display:"flex",alignItems:"center",gap:12,
-                    padding:"10px 0",borderBottom:i<2?"1px solid #F0EAFF":"none"}}>
+                    padding:"10px 0",
+                    borderBottom:i<2?"1px solid #F0EAFF":"none"}}>
                     <div style={{background:C.bg,borderRadius:12,padding:8,flexShrink:0}}>
                       <Icon name={a.icon} size={20} color={a.color}/>
                     </div>
-                    <span style={{flex:1,fontWeight:600,color:C.text,fontSize:15}}>{a.label}</span>
-                    <span style={{fontFamily:F.h,fontWeight:900,fontSize:20,color:a.color}}>
+                    <span style={{flex:1,fontFamily:F.b,fontWeight:600,
+                      color:C.text,fontSize:15}}>{a.label}</span>
+                    <span style={{fontFamily:F.h,fontWeight:900,fontSize:22,color:a.color}}>
                       {a.value}
                     </span>
                   </div>
@@ -614,23 +642,25 @@ export default function ParentInsights({ session, children, onClose }) {
                     <div key={j.id} style={{padding:"12px 0",
                       borderBottom:i<Math.min(4,journals.length-1)?"1px solid #F0EAFF":"none"}}>
                       <div style={{display:"flex",justifyContent:"space-between",
-                        alignItems:"center",marginBottom:4}}>
-                        <span style={{fontSize:12,fontWeight:700,color:C.purple}}>
+                        alignItems:"center",marginBottom:6}}>
+                        <span style={{fontFamily:F.b,fontSize:12,fontWeight:700,color:C.purple}}>
                           {j.prompt}
                         </span>
-                        <span style={{fontSize:11,color:C.muted,flexShrink:0,marginLeft:8}}>
+                        <span style={{fontFamily:F.b,fontSize:11,color:C.muted,
+                          flexShrink:0,marginLeft:8}}>
                           {j.date===today()?"Today":j.date}
                         </span>
                       </div>
-                      <p style={{color:C.text,fontSize:14,lineHeight:1.6,fontWeight:500,margin:0,
-                        padding:"10px 14px",background:C.bg,borderRadius:12}}>
+                      <p style={{fontFamily:F.b,color:C.text,fontSize:14,lineHeight:1.6,
+                        fontWeight:500,margin:0,padding:"10px 14px",
+                        background:C.bg,borderRadius:12}}>
                         {j.text}
                       </p>
                     </div>
                   ))}
-                  {journals.length>5&&(
-                    <p style={{color:C.muted,fontSize:13,fontWeight:500,
-                      textAlign:"center",marginTop:10}}>
+                  {journals.length>5 && (
+                    <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,
+                      textAlign:"center",margin:"10px 0 0"}}>
                       + {journals.length-5} more entries
                     </p>
                   )}
@@ -640,18 +670,20 @@ export default function ParentInsights({ session, children, onClose }) {
               {/* Tip */}
               <Card style={{background:"linear-gradient(135deg,#F7F4FF,#FCE4EC)"}}>
                 <Label color={C.purple}>Tip for you</Label>
-                <p style={{color:C.text,fontSize:15,lineHeight:1.75,fontWeight:500,margin:0}}>
+                <p style={{fontFamily:F.b,color:C.text,fontSize:15,
+                  lineHeight:1.75,fontWeight:500,margin:0}}>
                   {showAlert
-                    ? `${selectedChild.name} has been experiencing some difficult emotions this week. A gentle conversation or extra hug can make a big difference.`
-                    : streak>=3
-                    ? `${selectedChild.name} is on a ${streak}-day streak! Celebrate this with them — it builds great habits.`
-                    : `Try asking ${selectedChild.name} about their day tonight and encourage them to log how they feel in Bloomy.`}
+                    ?`${selectedChild.name} has been experiencing some difficult emotions this week. A gentle conversation or extra hug can make a big difference.`
+                    :streak>=3
+                    ?`${selectedChild.name} is on a ${streak}-day streak! Celebrate this with them — it builds great habits.`
+                    :`Try asking ${selectedChild.name} about their day tonight and encourage them to log how they feel in Bloomy.`}
                 </p>
               </Card>
-            </>
+
+            </div>
           )}
         </div>
-      </div>
+      </Shell>
     );
   }
 
