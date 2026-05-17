@@ -641,6 +641,7 @@ export default function BloomyApp() {
     setActiveChild(child);setTab("home");
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
     setBreathActive(false);setBreathPhase(0);setBreathCount(0);
+    setSeenTooltips(child.seen_tooltips || {});
     await loadChildData(child);
   };
 
@@ -1306,7 +1307,15 @@ export default function BloomyApp() {
           </p>
           <Tooltip text="Tap a face that matches how you feel right now. You can log your mood every day!"
             seen={seenTooltips.mood} C={theme}
-            onDismiss={()=>setSeenTooltips(p=>({...p,mood:true}))}/>
+            onDismiss={async()=>{
+              const updated={...seenTooltips,mood:true};
+              setSeenTooltips(updated);
+              if(activeChild){
+                await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
+                setActiveChild(prev=>{...prev,seen_tooltips:updated});
+                setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
+              }
+            }}/>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:18}}>
             {MOODS.map(m=>(
               <button key={m} onClick={()=>{setSelectedMood(m);setMoodLogged(false);}} style={{
@@ -1406,9 +1415,20 @@ export default function BloomyApp() {
           <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:theme.text,marginBottom:4}}>
             Daily Affirmations
           </h2>
-          <p style={{color:theme.muted,fontSize:15,marginBottom:20,fontWeight:500}}>
+          <p style={{color:theme.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
             Tap the card to flip to the next one.
           </p>
+          <Tooltip text="Each card has a positive message just for you. Tap to flip through them and earn points!"
+            seen={seenTooltips.affirm} C={theme}
+            onDismiss={async()=>{
+              const updated={...seenTooltips,affirm:true};
+              setSeenTooltips(updated);
+              if(activeChild){
+                await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
+                setActiveChild(prev=>{...prev,seen_tooltips:updated});
+                setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
+              }
+            }}/>
 
           {/* Card deck stack */}
           <div style={{position:"relative",height:260,marginBottom:20,cursor:"pointer"}}
@@ -1501,7 +1521,15 @@ export default function BloomyApp() {
           <div style={{textAlign:"left"}}>
             <Tooltip text="Press Start and follow along — breathe in, hold, and breathe out. Each full cycle earns you points!"
               seen={seenTooltips.breathe} C={theme}
-              onDismiss={()=>setSeenTooltips(p=>({...p,breathe:true}))}/>
+              onDismiss={async()=>{
+              const updated={...seenTooltips,breathe:true};
+              setSeenTooltips(updated);
+              if(activeChild){
+                await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
+                setActiveChild(prev=>{...prev,seen_tooltips:updated});
+                setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
+              }
+            }}/>
           </div>
           <div style={{position:"relative",display:"inline-flex",
             alignItems:"center",justifyContent:"center",marginBottom:28}}>
@@ -1572,7 +1600,15 @@ export default function BloomyApp() {
           </p>
           <Tooltip text="Read the prompt and write whatever comes to mind. There are no wrong answers — your thoughts are private!"
             seen={seenTooltips.journal} C={theme}
-            onDismiss={()=>setSeenTooltips(p=>({...p,journal:true}))}/>
+            onDismiss={async()=>{
+              const updated={...seenTooltips,journal:true};
+              setSeenTooltips(updated);
+              if(activeChild){
+                await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
+                setActiveChild(prev=>{...prev,seen_tooltips:updated});
+                setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
+              }
+            }}/>
 
           <Card style={{background:`linear-gradient(135deg,${theme.pink},${theme.purple})`,marginBottom:14}}>
             <p style={{color:"rgba(255,255,255,0.8)",fontWeight:700,fontSize:12,
