@@ -42,6 +42,9 @@ const DARK = {
 };
 const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
 
+/* Static C for components defined outside main function */
+const C = LIGHT;
+
 /* Stage-based animated backgrounds for home screen */
 const STAGE_BGSANIM = [
   "linear-gradient(160deg,#A5D6A744 0%,#E8F5E944 50%,#F7F4FF 100%)",   // Seedling - soft green
@@ -448,7 +451,7 @@ export default function BloomyApp() {
   const touchStartY                          = useRef(null);
 
   /* ── Derive colour palette from dark mode ── */
-  const C = darkMode ? DARK : LIGHT;
+  const theme = darkMode ? DARK : LIGHT;
 
   /* ── Auth ── */
   useEffect(()=>{
@@ -813,7 +816,7 @@ export default function BloomyApp() {
           {/* CTA button */}
           {isLast ? (
             <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:10}}>
-              <Btn onClick={()=>setScreen("signup")} color="#fff" textColor={C.purple}
+              <Btn onClick={()=>setScreen("signup")} color="#fff" textColor={theme.purple}
                 style={{fontSize:18,padding:"17px 0",width:"100%",justifyContent:"center"}}>
                 Create Free Account
               </Btn>
@@ -830,7 +833,7 @@ export default function BloomyApp() {
             </div>
           ) : (
             <div style={{width:"100%",maxWidth:340}}>
-              <Btn onClick={()=>setOnboardStep(s=>s+1)} color="#fff" textColor={C.purple}
+              <Btn onClick={()=>setOnboardStep(s=>s+1)} color="#fff" textColor={theme.purple}
                 style={{fontSize:17,padding:"16px 0",width:"100%",justifyContent:"center"}}
                 icon="next">
                 Next
@@ -850,14 +853,14 @@ export default function BloomyApp() {
       <div style={{paddingTop:52}}>
         <button onClick={()=>setScreen("landing")} style={{background:"none",border:"none",
           cursor:"pointer",display:"flex",alignItems:"center",gap:6,marginBottom:24,
-          color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
-          <Icon name="back" size={20} color={C.muted}/> Back
+          color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
+          <Icon name="back" size={20} color={theme.muted}/> Back
         </button>
-        <Icon name="flower" size={48} color={C.purple} style={{marginBottom:16}}/>
-        <h2 style={{fontFamily:F.h,fontSize:32,fontWeight:800,color:C.text,marginBottom:4}}>
+        <Icon name="flower" size={48} color={theme.purple} style={{marginBottom:16}}/>
+        <h2 style={{fontFamily:F.h,fontSize:32,fontWeight:800,color:theme.text,marginBottom:4}}>
           Create your account
         </h2>
-        <p style={{color:C.muted,fontSize:15,marginBottom:28,fontWeight:500}}>
+        <p style={{color:theme.muted,fontSize:15,marginBottom:28,fontWeight:500}}>
           Free forever. No credit card needed.
         </p>
         <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
@@ -869,10 +872,10 @@ export default function BloomyApp() {
         <Btn onClick={handleSignup} style={{width:"100%"}} icon="next" loading={authLoading}>
           Create Account
         </Btn>
-        <p style={{textAlign:"center",marginTop:20,color:C.muted,fontSize:14,fontWeight:500}}>
+        <p style={{textAlign:"center",marginTop:20,color:theme.muted,fontSize:14,fontWeight:500}}>
           Already have an account?{" "}
           <span onClick={()=>{setScreen("login");setAuthError("");}}
-            style={{color:C.purple,cursor:"pointer",fontWeight:700}}>Sign in</span>
+            style={{color:theme.purple,cursor:"pointer",fontWeight:700}}>Sign in</span>
         </p>
       </div>
     </Shell>
@@ -886,14 +889,14 @@ export default function BloomyApp() {
       <div style={{paddingTop:52}}>
         <button onClick={()=>setScreen("landing")} style={{background:"none",border:"none",
           cursor:"pointer",display:"flex",alignItems:"center",gap:6,marginBottom:24,
-          color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
-          <Icon name="back" size={20} color={C.muted}/> Back
+          color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:15}}>
+          <Icon name="back" size={20} color={theme.muted}/> Back
         </button>
-        <Icon name="heart" size={48} color={C.pink} style={{marginBottom:16}}/>
-        <h2 style={{fontFamily:F.h,fontSize:32,fontWeight:800,color:C.text,marginBottom:4}}>
+        <Icon name="heart" size={48} color={theme.pink} style={{marginBottom:16}}/>
+        <h2 style={{fontFamily:F.h,fontSize:32,fontWeight:800,color:theme.text,marginBottom:4}}>
           Welcome back
         </h2>
-        <p style={{color:C.muted,fontSize:15,marginBottom:28,fontWeight:500}}>
+        <p style={{color:theme.muted,fontSize:15,marginBottom:28,fontWeight:500}}>
           Sign in to your Bloomy account.
         </p>
         <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:20}}>
@@ -902,10 +905,10 @@ export default function BloomyApp() {
         </div>
         {authError&&<p style={{color:"#E53935",fontSize:14,marginBottom:12,fontWeight:500}}>{authError}</p>}
         <Btn onClick={handleLogin} style={{width:"100%"}} icon="next" loading={authLoading}>Sign In</Btn>
-        <p style={{textAlign:"center",marginTop:20,color:C.muted,fontSize:14,fontWeight:500}}>
+        <p style={{textAlign:"center",marginTop:20,color:theme.muted,fontSize:14,fontWeight:500}}>
           No account yet?{" "}
           <span onClick={()=>{setScreen("signup");setAuthError("");}}
-            style={{color:C.purple,cursor:"pointer",fontWeight:700}}>Sign up free</span>
+            style={{color:theme.purple,cursor:"pointer",fontWeight:700}}>Sign up free</span>
         </p>
       </div>
     </Shell>
@@ -928,18 +931,18 @@ export default function BloomyApp() {
       <div style={{paddingTop:36}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:28}}>
           <div>
-            <p style={{color:C.muted,fontWeight:600,fontSize:13,marginBottom:2}}>Welcome back</p>
-            <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:900,color:C.text}}>{parentName}</h2>
+            <p style={{color:theme.muted,fontWeight:600,fontSize:13,marginBottom:2}}>Welcome back</p>
+            <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:900,color:theme.text}}>{parentName}</h2>
           </div>
-          <button onClick={handleLogout} style={{background:"none",border:`1.5px solid ${C.border}`,
+          <button onClick={handleLogout} style={{background:"none",border:`1.5px solid ${theme.border}`,
             borderRadius:50,padding:"8px 14px",cursor:"pointer",
             display:"flex",alignItems:"center",gap:6,
-            color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
-            <Icon name="logout" size={16} color={C.muted}/> Sign out
+            color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
+            <Icon name="logout" size={16} color={theme.muted}/> Sign out
           </button>
         </div>
 
-        <Card style={{background:`linear-gradient(135deg,${C.purple},${C.pink})`,padding:"22px"}}>
+        <Card style={{background:`linear-gradient(135deg,${theme.purple},${theme.pink})`,padding:"22px"}}>
           <p style={{color:"rgba(255,255,255,0.8)",fontSize:12,fontWeight:700,
             letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>Children's Profiles</p>
           <p style={{color:"#fff",fontSize:17,fontWeight:600,lineHeight:1.5,margin:0}}>
@@ -958,10 +961,10 @@ export default function BloomyApp() {
                   <MascotFace id={m.id} size={44}/>
                 </div>
                 <div style={{flex:1}}>
-                  <h3 style={{fontFamily:F.h,fontSize:20,fontWeight:800,color:C.text,marginBottom:2}}>
+                  <h3 style={{fontFamily:F.h,fontSize:20,fontWeight:800,color:theme.text,marginBottom:2}}>
                     {child.name}
                   </h3>
-                  <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
+                  <p style={{color:theme.muted,fontSize:13,fontWeight:500,margin:0}}>
                     {child.mascot_name} · joined {child.created_at?.split("T")[0]}
                   </p>
                 </div>
@@ -980,28 +983,28 @@ export default function BloomyApp() {
 
         {!addingChild ? (
           <Btn onClick={()=>{setAddingChild(true);setAddStep(1);}} icon="plus"
-            color="#EEE9FF" textColor={C.purple} style={{width:"100%",marginTop:4}}>
+            color="#EEE9FF" textColor={theme.purple} style={{width:"100%",marginTop:4}}>
             Add Child Profile
           </Btn>
         ) : (
-          <Card style={{border:`2px solid ${C.purple}22`}}>
+          <Card style={{border:`2px solid ${theme.purple}22`}}>
             {addStep===1&&(
               <>
-                <h3 style={{fontFamily:F.h,fontSize:20,fontWeight:800,color:C.text,marginBottom:8}}>
+                <h3 style={{fontFamily:F.h,fontSize:20,fontWeight:800,color:theme.text,marginBottom:8}}>
                   What's your child's name?
                 </h3>
                 <TextInput value={newChildName} onChange={e=>setNewChildName(e.target.value)}
                   placeholder="Child's name" style={{marginBottom:16}}/>
                 <div style={{display:"flex",gap:8}}>
                   <Btn small onClick={()=>{if(newChildName.trim())setAddStep(2);}}>Next</Btn>
-                  <Btn small color="#f5f5f5" textColor={C.muted}
+                  <Btn small color="#f5f5f5" textColor={theme.muted}
                     onClick={()=>{setAddingChild(false);setNewChildName("");}}>Cancel</Btn>
                 </div>
               </>
             )}
             {addStep===2&&(
               <>
-                <h3 style={{fontFamily:F.h,fontSize:20,fontWeight:800,color:C.text,marginBottom:8}}>
+                <h3 style={{fontFamily:F.h,fontSize:20,fontWeight:800,color:theme.text,marginBottom:8}}>
                   Pick {newChildName}'s buddy
                 </h3>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:16}}>
@@ -1022,7 +1025,7 @@ export default function BloomyApp() {
                 <div style={{display:"flex",gap:8}}>
                   <Btn small icon="check" disabled={!newChildMascot} loading={addLoading}
                     onClick={handleAddChild}>Create Profile</Btn>
-                  <Btn small color="#f5f5f5" textColor={C.muted} onClick={()=>setAddStep(1)}>Back</Btn>
+                  <Btn small color="#f5f5f5" textColor={theme.muted} onClick={()=>setAddStep(1)}>Back</Btn>
                 </div>
               </>
             )}
@@ -1031,7 +1034,7 @@ export default function BloomyApp() {
 
         {/* Parent Insights button */}
         <button onClick={()=>setShowInsights(true)} style={{
-          width:"100%",background:"#fff",border:`1.5px solid ${C.border}`,
+          width:"100%",background:"#fff",border:`1.5px solid ${theme.border}`,
           borderRadius:20,padding:"18px 20px",cursor:"pointer",marginTop:8,
           display:"flex",alignItems:"center",gap:14,
           boxShadow:"0 2px 18px rgba(124,77,255,0.07)",
@@ -1039,17 +1042,17 @@ export default function BloomyApp() {
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
           <div style={{background:"#EDE7F6",borderRadius:14,padding:10,flexShrink:0}}>
-            <Icon name="lock" size={24} color={C.purple}/>
+            <Icon name="lock" size={24} color={theme.purple}/>
           </div>
           <div style={{flex:1,textAlign:"left"}}>
-            <p style={{fontFamily:F.h,fontWeight:800,fontSize:17,color:C.text,margin:0}}>
+            <p style={{fontFamily:F.h,fontWeight:800,fontSize:17,color:theme.text,margin:0}}>
               Parent Insights
             </p>
-            <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
+            <p style={{color:theme.muted,fontSize:13,fontWeight:500,margin:0}}>
               View activity, mood history and journals
             </p>
           </div>
-          <Icon name="back" size={20} color={C.muted} style={{transform:"rotate(180deg)"}}/>
+          <Icon name="back" size={20} color={theme.muted} style={{transform:"rotate(180deg)"}}/>
         </button>
       </div>
     </Shell>
@@ -1061,7 +1064,7 @@ export default function BloomyApp() {
   const NavBar = ()=>(
     <div style={{position:"fixed",bottom:0,left:0,right:0,
       background:darkMode?"#1e1438":"#fff",
-      borderTop:`1.5px solid ${C.border}`,display:"flex",justifyContent:"space-around",
+      borderTop:`1.5px solid ${theme.border}`,display:"flex",justifyContent:"space-around",
       alignItems:"center",padding:"10px 0 20px",zIndex:100,
       boxShadow:darkMode?"0 -4px 20px rgba(0,0,0,0.3)":"0 -4px 20px rgba(124,77,255,0.07)"}}>
       {[
@@ -1077,9 +1080,9 @@ export default function BloomyApp() {
           opacity:tab===t.id?1:0.35,
           transform:tab===t.id?"scale(1.12)":"scale(1)",
           transition:"all 0.18s"}}>
-          <Icon name={t.icon} size={24} color={tab===t.id?C.purple:C.muted}/>
+          <Icon name={t.icon} size={24} color={tab===t.id?theme.purple:theme.muted}/>
           <span style={{fontSize:11,fontWeight:700,fontFamily:F.b,
-            color:tab===t.id?C.purple:C.muted}}>{t.label}</span>
+            color:tab===t.id?theme.purple:theme.muted}}>{t.label}</span>
         </button>
       ))}
       <button onClick={()=>setShowSettings(true)} style={{
@@ -1088,8 +1091,8 @@ export default function BloomyApp() {
         opacity:0.35,transition:"all 0.18s"}}
         onMouseEnter={e=>e.currentTarget.style.opacity="0.7"}
         onMouseLeave={e=>e.currentTarget.style.opacity="0.35"}>
-        <Icon name="settings" size={24} color={C.muted}/>
-        <span style={{fontSize:11,fontWeight:700,fontFamily:F.b,color:C.muted}}>Settings</span>
+        <Icon name="settings" size={24} color={theme.muted}/>
+        <span style={{fontSize:11,fontWeight:700,fontFamily:F.b,color:theme.muted}}>Settings</span>
       </button>
     </div>
   );
@@ -1106,11 +1109,12 @@ export default function BloomyApp() {
   const stageBg = STAGE_BGSANIM[currentStage.id] || STAGE_BGSANIM[0];
   return (
     <Shell stageBg={darkMode ? undefined : stageBg} dark={darkMode}>
+
       {showSettings && (
         <SettingsPanel
           darkMode={darkMode} setDarkMode={setDarkMode}
           soundOn={soundOn} setSoundOn={setSoundOn}
-          onClose={()=>setShowSettings(false)} C={C}
+          onClose={()=>setShowSettings(false)} C={theme}
         />
       )}
       <NavBar/>
@@ -1127,10 +1131,10 @@ export default function BloomyApp() {
         <button onClick={()=>{setActiveChild(null);setBreathActive(false);}} style={{
           background:"none",border:"none",cursor:"pointer",
           display:"flex",alignItems:"center",gap:5,
-          color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
-          <Icon name="back" size={18} color={C.muted}/> Profiles
+          color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
+          <Icon name="back" size={18} color={theme.muted}/> Profiles
         </button>
-        <span style={{fontSize:13,fontWeight:700,color:C.muted,fontFamily:F.b}}>
+        <span style={{fontSize:13,fontWeight:700,color:theme.muted,fontFamily:F.b}}>
           {activeChild.name}
         </span>
         <div style={{width:64}}/>
@@ -1141,8 +1145,8 @@ export default function BloomyApp() {
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
             <div>
-              <p style={{color:C.muted,fontWeight:600,fontSize:13,marginBottom:2}}>Good morning</p>
-              <h2 style={{fontFamily:F.h,fontSize:30,fontWeight:900,color:C.text}}>{activeChild.name}</h2>
+              <p style={{color:theme.muted,fontWeight:600,fontSize:13,marginBottom:2}}>Good morning</p>
+              <h2 style={{fontFamily:F.h,fontSize:30,fontWeight:900,color:theme.text}}>{activeChild.name}</h2>
             </div>
             <button onClick={()=>setShowMascotRoom(true)} style={{
               background:cm.bg,borderRadius:16,padding:10,border:"none",
@@ -1158,7 +1162,7 @@ export default function BloomyApp() {
           {/* Growth progress bar */}
           <GrowthProgressBar score={growthScore}/>
 
-          <Card style={{background:`linear-gradient(135deg,${cm.color} 0%,${C.pink} 100%)`,padding:"24px 22px"}}>
+          <Card style={{background:`linear-gradient(135deg,${cm.color} 0%,${theme.pink} 100%)`,padding:"24px 22px"}}>
             <p style={{color:"rgba(255,255,255,0.8)",fontSize:12,fontWeight:700,
               letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{cm.name} says</p>
             <p style={{color:"#fff",fontSize:21,fontWeight:700,fontFamily:F.h,lineHeight:1.4,margin:0}}>
@@ -1172,7 +1176,7 @@ export default function BloomyApp() {
             style={{
               width:"100%", display:"flex", alignItems:"center", gap:14,
               padding:"16px 20px", borderRadius:20, marginBottom:14,
-              border: todayEntry ? "none" : `2px dashed ${C.purple}`,
+              border: todayEntry ? "none" : `2px dashed ${theme.purple}`,
               background: todayEntry ? MOOD_BG[todayEntry.mood] : "#F7F4FF",
               boxShadow: todayEntry ? "0 2px 18px rgba(124,77,255,0.09)" : "none",
               cursor:"pointer", textAlign:"left",
@@ -1190,7 +1194,7 @@ export default function BloomyApp() {
                     color:MOOD_COLORS[todayEntry.mood],margin:0}}>
                     Feeling {todayEntry.mood} today
                   </p>
-                  <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
+                  <p style={{color:theme.muted,fontSize:13,fontWeight:500,margin:0}}>
                     Tap to update
                   </p>
                 </div>
@@ -1198,29 +1202,29 @@ export default function BloomyApp() {
               </>
             ) : (
               <>
-                <div style={{background:C.purple+"22",borderRadius:"50%",
+                <div style={{background:theme.purple+"22",borderRadius:"50%",
                   padding:10,flexShrink:0}}>
-                  <Icon name="mood" size={28} color={C.purple}/>
+                  <Icon name="mood" size={28} color={theme.purple}/>
                 </div>
                 <div style={{flex:1}}>
                   <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
-                    color:C.text,margin:0}}>
+                    color:theme.text,margin:0}}>
                     How are you feeling?
                   </p>
-                  <p style={{color:C.purple,fontSize:13,fontWeight:600,margin:0}}>
+                  <p style={{color:theme.purple,fontSize:13,fontWeight:600,margin:0}}>
                     Tap to log today's mood
                   </p>
                 </div>
-                <Icon name="next" size={18} color={C.purple}/>
+                <Icon name="next" size={18} color={theme.purple}/>
               </>
             )}
           </button>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
             {[
-              {label:"Affirmations",icon:"star",  color:C.purple, bg:"#EDE7F6",action:()=>setTab("affirm")},
-              {label:"Breathe",     icon:"wind",  color:C.sky,    bg:"#E1F5FE",action:()=>setTab("breathe")},
-              {label:"My Journal",  icon:"book",  color:C.pink,   bg:"#FCE4EC",action:()=>setTab("journal")},
+              {label:"Affirmations",icon:"star",  color:theme.purple, bg:"#EDE7F6",action:()=>setTab("affirm")},
+              {label:"Breathe",     icon:"wind",  color:theme.sky,    bg:"#E1F5FE",action:()=>setTab("breathe")},
+              {label:"My Journal",  icon:"book",  color:theme.pink,   bg:"#FCE4EC",action:()=>setTab("journal")},
               {label:"My Mood",     icon:"mood",  color:"#43A047",bg:"#E8F5E9",action:()=>setTab("mood")},
             ].map(item=>(
               <button key={item.label} onClick={item.action} style={{
@@ -1256,10 +1260,10 @@ export default function BloomyApp() {
               {BADGE_DEFS.map(b=>(
                 <div key={b.id} style={{background:badges[b.id]?"#F7F4FF":"#fafafa",
                   borderRadius:14,padding:"14px 8px",textAlign:"center",opacity:badges[b.id]?1:0.3}}>
-                  <Icon name={b.icon} size={26} color={badges[b.id]?C.purple:C.muted}
+                  <Icon name={b.icon} size={26} color={badges[b.id]?theme.purple:theme.muted}
                     style={{margin:"0 auto 8px"}}/>
                   <div style={{fontSize:11,fontWeight:700,fontFamily:F.b,lineHeight:1.3,
-                    color:badges[b.id]?C.purple:C.muted}}>{b.label}</div>
+                    color:badges[b.id]?theme.purple:theme.muted}}>{b.label}</div>
                 </div>
               ))}
             </div>
@@ -1270,15 +1274,15 @@ export default function BloomyApp() {
       {/* ── MOOD ── */}
       {tab==="mood"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
-          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
+          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:theme.text,marginBottom:4}}>
             How are you feeling?
           </h2>
-          <p style={{color:C.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
+          <p style={{color:theme.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
             Tap the one that feels right.
           </p>
           <Tooltip text="Tap a face that matches how you feel right now. You can log your mood every day!"
             seen={seenTooltips.mood} C={C}
-            onDismiss={()=>setSeenTooltips(p=>({...p,mood:true}))}/>
+            onDismiss={()=>setSeenTooltips(p=>({...p,mood:true}))} C={theme}/>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:18}}>
             {MOODS.map(m=>(
               <button key={m} onClick={()=>{setSelectedMood(m);setMoodLogged(false);}} style={{
@@ -1305,7 +1309,7 @@ export default function BloomyApp() {
                 color:MOOD_COLORS[selectedMood],marginBottom:6}}>
                 {MOOD_MESSAGES[selectedMood].title}
               </p>
-              <p style={{color:C.muted,marginBottom:18,fontSize:14,fontWeight:500}}>
+              <p style={{color:theme.muted,marginBottom:18,fontSize:14,fontWeight:500}}>
                 {MOOD_MESSAGES[selectedMood].sub}
               </p>
               <Btn onClick={()=>logMood(selectedMood)} color={MOOD_COLORS[selectedMood]} icon="check">
@@ -1318,16 +1322,16 @@ export default function BloomyApp() {
             <Card style={{textAlign:"center",animation:"scaleIn 0.3s ease"}}>
               <div style={{background:"#E0F2F1",borderRadius:"50%",width:68,height:68,
                 display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
-                <Icon name="check" size={36} color={C.mint}/>
+                <Icon name="check" size={36} color={theme.mint}/>
               </div>
-              <p style={{fontFamily:F.h,fontWeight:800,fontSize:22,color:C.text,marginBottom:4}}>
+              <p style={{fontFamily:F.h,fontWeight:800,fontSize:22,color:theme.text,marginBottom:4}}>
                 Mood logged!
               </p>
-              <p style={{color:C.muted,marginBottom:16,fontSize:14,fontWeight:500}}>
+              <p style={{color:theme.muted,marginBottom:16,fontSize:14,fontWeight:500}}>
                 Great job checking in today.
               </p>
               <Btn onClick={()=>{setMoodLogged(false);setSelectedMood(null);}}
-                color="#F7F4FF" textColor={C.purple} small icon="refresh">
+                color="#F7F4FF" textColor={theme.purple} small icon="refresh">
                 Check in again
               </Btn>
             </Card>
@@ -1345,7 +1349,7 @@ export default function BloomyApp() {
                       ?<MoodFace type={entry.mood} size={30}/>
                       :<div style={{width:30,height:30,borderRadius:"50%",
                           background:"#f0f0f0",border:"1.5px dashed #ddd"}}/>}
-                    <span style={{fontSize:11,color:C.muted,fontWeight:700,fontFamily:F.b}}>{d.label}</span>
+                    <span style={{fontSize:11,color:theme.muted,fontWeight:700,fontFamily:F.b}}>{d.label}</span>
                   </div>
                 );
               })}
@@ -1362,7 +1366,7 @@ export default function BloomyApp() {
                   <span style={{flex:1,fontWeight:700,color:MOOD_COLORS[e.mood],fontSize:14,fontFamily:F.b}}>
                     {e.mood}
                   </span>
-                  <span style={{fontSize:12,color:C.muted,fontFamily:F.b}}>
+                  <span style={{fontSize:12,color:theme.muted,fontFamily:F.b}}>
                     {e.date===today()?"Today":e.date}
                   </span>
                 </div>
@@ -1375,10 +1379,10 @@ export default function BloomyApp() {
       {/* ── AFFIRMATIONS (Fix #5 — card deck animation) ── */}
       {tab==="affirm"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
-          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
+          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:theme.text,marginBottom:4}}>
             Daily Affirmations
           </h2>
-          <p style={{color:C.muted,fontSize:15,marginBottom:20,fontWeight:500}}>
+          <p style={{color:theme.muted,fontSize:15,marginBottom:20,fontWeight:500}}>
             Tap the card to flip to the next one.
           </p>
 
@@ -1396,7 +1400,7 @@ export default function BloomyApp() {
             {/* Active card */}
             <div style={{
               position:"absolute",top:0,left:0,right:0,bottom:0,
-              background:`linear-gradient(135deg,${AFFIRMATIONS[affirmIdx].color},${C.pink})`,
+              background:`linear-gradient(135deg,${AFFIRMATIONS[affirmIdx].color},${theme.pink})`,
               borderRadius:24,padding:"36px 28px",
               display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
               boxShadow:`0 10px 36px ${AFFIRMATIONS[affirmIdx].color}44`,
@@ -1424,7 +1428,7 @@ export default function BloomyApp() {
             {AFFIRMATIONS.map((_,i)=>(
               <div key={i} onClick={()=>setAffirmIdx(i)} style={{
                 width:i===affirmIdx?22:7,height:7,borderRadius:50,
-                background:i===affirmIdx?C.purple:"#DDD",
+                background:i===affirmIdx?theme.purple:"#DDD",
                 transition:"all 0.3s",cursor:"pointer"}}/>
             ))}
           </div>
@@ -1432,13 +1436,13 @@ export default function BloomyApp() {
           <Card style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",
             background:"linear-gradient(135deg,#F7F4FF,#FCE4EC)"}}>
             <div style={{background:"#EDE7F6",borderRadius:50,padding:10,flexShrink:0}}>
-              <Icon name="star" size={22} color={C.purple}/>
+              <Icon name="star" size={22} color={theme.purple}/>
             </div>
             <div>
-              <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,color:C.text,margin:0}}>
+              <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,color:theme.text,margin:0}}>
                 {activeChild.affirm_count||0} affirmations read
               </p>
-              <p style={{color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
+              <p style={{color:theme.muted,fontSize:13,fontWeight:500,margin:0}}>
                 {(activeChild.affirm_count||0)>=20
                   ?"Affirmation Pro badge earned!"
                   :`${20-(activeChild.affirm_count||0)} more for the badge`}
@@ -1454,7 +1458,7 @@ export default function BloomyApp() {
                 borderBottom:i<AFFIRMATIONS.length-1?"1px solid #F0EAFF":"none",
                 cursor:"pointer",opacity:affirmIdx===i?1:0.5,transition:"opacity 0.2s"}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:a.color,flexShrink:0}}/>
-                <span style={{fontWeight:600,color:C.text,fontSize:15,fontFamily:F.b}}>{a.text}</span>
+                <span style={{fontWeight:600,color:theme.text,fontSize:15,fontFamily:F.b}}>{a.text}</span>
               </div>
             ))}
           </Card>
@@ -1464,16 +1468,16 @@ export default function BloomyApp() {
       {/* ── BREATHE ── */}
       {tab==="breathe"&&(
         <div style={{paddingTop:12,textAlign:"center",animation:"fadeIn 0.4s ease"}}>
-          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
+          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:theme.text,marginBottom:4}}>
             Breathe With Me
           </h2>
-          <p style={{color:C.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
+          <p style={{color:theme.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
             Let's calm down together.
           </p>
           <div style={{textAlign:"left"}}>
             <Tooltip text="Press Start and follow along — breathe in, hold, and breathe out. Each full cycle earns you points!"
               seen={seenTooltips.breathe} C={C}
-              onDismiss={()=>setSeenTooltips(p=>({...p,breathe:true}))}/>
+              onDismiss={()=>setSeenTooltips(p=>({...p,breathe:true}))} C={theme}/>
           </div>
           <div style={{position:"relative",display:"inline-flex",
             alignItems:"center",justifyContent:"center",marginBottom:28}}>
@@ -1493,7 +1497,7 @@ export default function BloomyApp() {
                 {breathActive?BREATHING[breathPhase].phase:"Ready"}
               </p>
               {breathActive&&(
-                <p style={{color:C.muted,fontSize:13,fontWeight:600,marginBottom:0}}>
+                <p style={{color:theme.muted,fontSize:13,fontWeight:600,marginBottom:0}}>
                   {BREATHING[breathPhase].duration}s
                 </p>
               )}
@@ -1503,7 +1507,7 @@ export default function BloomyApp() {
             {BREATHING.map((b,i)=>(
               <div key={b.phase} style={{
                 background:breathPhase===i&&breathActive?b.color:"#EEE9FF",
-                color:breathPhase===i&&breathActive?"#fff":C.muted,
+                color:breathPhase===i&&breathActive?"#fff":theme.muted,
                 borderRadius:50,padding:"8px 16px",fontSize:13,fontWeight:700,
                 fontFamily:F.b,transition:"all 0.6s"}}>{b.phase}</div>
             ))}
@@ -1511,20 +1515,20 @@ export default function BloomyApp() {
           <Btn onClick={()=>{
             setBreathActive(!breathActive);
             if(!breathActive){setBreathPhase(0);setBreathCount(0);}
-          }} color={breathActive?"#EF5350":C.mint} style={{marginBottom:18}}>
+          }} color={breathActive?"#EF5350":theme.mint} style={{marginBottom:18}}>
             {breathActive?"Stop":"Start Breathing"}
           </Btn>
           {breathCount>0&&(
-            <p style={{color:C.purple,fontWeight:700,fontSize:16,fontFamily:F.b}}>
+            <p style={{color:theme.purple,fontWeight:700,fontSize:16,fontFamily:F.b}}>
               {breathCount} breath{breathCount>1?"s":""} complete — well done!
             </p>
           )}
           <Card style={{marginTop:20,textAlign:"left"}}>
             <Label>Sessions completed</Label>
-            <p style={{fontFamily:F.h,fontWeight:800,fontSize:28,color:C.purple,margin:0}}>
+            <p style={{fontFamily:F.h,fontWeight:800,fontSize:28,color:theme.purple,margin:0}}>
               {activeChild.breath_sessions||0}
             </p>
-            <p style={{color:C.muted,fontSize:14,fontWeight:500,marginTop:4}}>
+            <p style={{color:theme.muted,fontSize:14,fontWeight:500,marginTop:4}}>
               {(activeChild.breath_sessions||0)>=5
                 ?"Calm Champion badge earned!"
                 :`${5-(activeChild.breath_sessions||0)} more for the Calm Champion badge`}
@@ -1536,17 +1540,17 @@ export default function BloomyApp() {
       {/* ── JOURNAL (Fix #2 — no black glitch, cohesive styling) ── */}
       {tab==="journal"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
-          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
+          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:theme.text,marginBottom:4}}>
             My Journal
           </h2>
-          <p style={{color:C.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
+          <p style={{color:theme.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
             Your thoughts are safe here.
           </p>
           <Tooltip text="Read the prompt and write whatever comes to mind. There are no wrong answers — your thoughts are private!"
             seen={seenTooltips.journal} C={C}
-            onDismiss={()=>setSeenTooltips(p=>({...p,journal:true}))}/>
+            onDismiss={()=>setSeenTooltips(p=>({...p,journal:true}))} C={theme}/>
 
-          <Card style={{background:`linear-gradient(135deg,${C.pink},${C.purple})`,marginBottom:14}}>
+          <Card style={{background:`linear-gradient(135deg,${theme.pink},${theme.purple})`,marginBottom:14}}>
             <p style={{color:"rgba(255,255,255,0.8)",fontWeight:700,fontSize:12,
               letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Today's Prompt</p>
             <p style={{color:"#fff",fontSize:18,fontWeight:700,fontFamily:F.h,
@@ -1564,7 +1568,7 @@ export default function BloomyApp() {
           <div style={{background:"#fff",borderRadius:20,marginBottom:14,
             boxShadow:"0 2px 18px rgba(124,77,255,0.09)",overflow:"hidden"}}>
             <div style={{padding:"20px 20px 0"}}>
-              <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:C.muted,
+              <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:theme.muted,
                 letterSpacing:1.3,textTransform:"uppercase",marginBottom:12}}>
                 Write here
               </p>
@@ -1586,17 +1590,17 @@ export default function BloomyApp() {
                   WebkitAppearance:"none",
                   MozAppearance:"none",
                 }}
-                onFocus={e=>{e.target.style.border=`2px solid ${C.purple}`;e.target.style.background="#fff";}}
+                onFocus={e=>{e.target.style.border=`2px solid ${theme.purple}`;e.target.style.background="#fff";}}
                 onBlur={e=>{e.target.style.border="2px solid #EEE9FF";e.target.style.background="#F7F4FF";}}
               />
             </div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
-              padding:"12px 20px",borderTop:`1px solid ${C.border}`,marginTop:12}}>
-              <span style={{color:C.muted,fontSize:13,fontFamily:F.b,fontWeight:500}}>
+              padding:"12px 20px",borderTop:`1px solid ${theme.border}`,marginTop:12}}>
+              <span style={{color:theme.muted,fontSize:13,fontFamily:F.b,fontWeight:500}}>
                 {journalText.length} characters
               </span>
               <Btn onClick={saveJournal} disabled={!journalText.trim()||journalSaved}
-                loading={saveLoading} small color={journalSaved?C.mint:C.pink}
+                loading={saveLoading} small color={journalSaved?theme.mint:theme.pink}
                 icon={journalSaved?"check":null}>
                 {journalSaved?"Saved":"Save Entry"}
               </Btn>
@@ -1630,14 +1634,14 @@ export default function BloomyApp() {
                   borderBottom:i<Math.min(4,journals.length-1)?"1px solid #F0EAFF":"none"}}>
                   <div style={{display:"flex",justifyContent:"space-between",
                     alignItems:"center",marginBottom:4}}>
-                    <span style={{fontSize:12,fontWeight:700,color:C.purple,fontFamily:F.b}}>
+                    <span style={{fontSize:12,fontWeight:700,color:theme.purple,fontFamily:F.b}}>
                       {j.prompt}
                     </span>
-                    <span style={{fontSize:11,color:C.muted,fontFamily:F.b,flexShrink:0,marginLeft:8}}>
+                    <span style={{fontSize:11,color:theme.muted,fontFamily:F.b,flexShrink:0,marginLeft:8}}>
                       {j.date===today()?"Today":j.date}
                     </span>
                   </div>
-                  <p style={{color:C.text,fontSize:14,lineHeight:1.6,fontWeight:500,margin:0,
+                  <p style={{color:theme.text,fontSize:14,lineHeight:1.6,fontWeight:500,margin:0,
                     overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",
                     WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>
                     {j.text}
