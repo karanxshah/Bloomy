@@ -58,25 +58,46 @@ const playSound = (type, enabled) => {
   if (!enabled) return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.connect(gain);
     gain.connect(ctx.destination);
-    const sounds = {
-      chime:   { freq:[523,659,784],      dur:0.1,  type:"sine",     vol:0.13 },
-      whoosh:  { freq:[800,400,200,100],  dur:0.08, type:"sawtooth", vol:0.07 },
-      levelup: { freq:[523,659,784,1047], dur:0.12, type:"sine",     vol:0.16 },
-      tap:     { freq:[440],              dur:0.06, type:"sine",     vol:0.07 },
-    };
-    const s = sounds[type] || sounds.chime;
-    osc.type = s.type;
-    s.freq.forEach((f, i) => {
-      osc.frequency.setValueAtTime(f, ctx.currentTime + i * s.dur);
-    });
-    gain.gain.setValueAtTime(s.vol, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + s.freq.length * s.dur + 0.1);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + s.freq.length * s.dur + 0.15);
+
+    if (type === "whoosh") {
+      // Proper whoosh — noise burst with falling frequency envelope
+      const bufSize = ctx.sampleRate * 0.35;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+      const source = ctx.createBufferSource();
+      source.buffer = buf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(1200, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+      filter.Q.value = 0.8;
+      source.connect(filter);
+      filter.connect(gain);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.32);
+      source.start(ctx.currentTime);
+      source.stop(ctx.currentTime + 0.35);
+    } else {
+      const osc = ctx.createOscillator();
+      osc.connect(gain);
+      const sounds = {
+        chime:   { freq:[523,659,784],      dur:0.1,  type:"sine", vol:0.13 },
+        levelup: { freq:[523,659,784,1047], dur:0.12, type:"sine", vol:0.16 },
+        tap:     { freq:[440],              dur:0.06, type:"sine", vol:0.07 },
+      };
+      const s = sounds[type] || sounds.chime;
+      osc.type = s.type;
+      s.freq.forEach((f, i) => {
+        osc.frequency.setValueAtTime(f, ctx.currentTime + i * s.dur);
+      });
+      gain.gain.setValueAtTime(s.vol, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + s.freq.length * s.dur + 0.1);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + s.freq.length * s.dur + 0.15);
+    }
   } catch(e) { /* audio not supported */ }
 };
 
@@ -1453,12 +1474,12 @@ export default function BloomyApp() {
             </div>
           </Card>
 
-          <Card>
-            <Label>All Affirmations</Label>
+          <Card bg={theme.card} shadow={darkMode?"0 2px 18px rgba(0,0,0,0.3)":undefined}>
+            <Label color={theme.muted}>All Affirmations</Label>
             {AFFIRMATIONS.map((a,i)=>(
               <div key={i} onClick={()=>setAffirmIdx(i)} style={{
                 display:"flex",alignItems:"center",gap:14,padding:"11px 0",
-                borderBottom:i<AFFIRMATIONS.length-1?"1px solid #F0EAFF":"none",
+                borderBottom:i<AFFIRMATIONS.length-1?`1px solid ${theme.border}`:"none",
                 cursor:"pointer",opacity:affirmIdx===i?1:0.5,transition:"opacity 0.2s"}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:a.color,flexShrink:0}}/>
                 <span style={{fontWeight:600,color:theme.text,fontSize:15,fontFamily:F.b}}>{a.text}</span>
