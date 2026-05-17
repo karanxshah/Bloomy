@@ -8,7 +8,7 @@ const SUPABASE_URL = "https://ymfvezvezzmckcdwjvzm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_5CR_k4TEBUYXhqm3AuN7bQ_Csiafdcs";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const FontLoader = () => (
+const FontLoader = ({ dark }) => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Poppins:wght@400;500;600;700&display=swap');
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,17 +21,61 @@ const FontLoader = () => (
                             100%{opacity:0;transform:translateX(-140px) rotate(-12deg) scale(0.9)} }
     @keyframes slideRight { 0%{opacity:0;transform:translateX(100px) rotate(8deg) scale(0.95)}
                             100%{opacity:1;transform:translateX(0) rotate(0deg) scale(1)} }
+    @keyframes bgShift    { 0%{opacity:0.6} 50%{opacity:1} 100%{opacity:0.6} }
+    @keyframes tooltipIn  { from{opacity:0;transform:translateY(8px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
   `}</style>
 );
 
-const C = {
+const LIGHT = {
   purple:"#7C4DFF", pink:"#F06292", yellow:"#FFD54F",
   mint:"#4DB6AC", sky:"#4FC3F7", coral:"#FF7043",
   bg:"#F7F4FF", text:"#2D2040", muted:"#9B8DB5", border:"#EEE9FF",
+  card:"#ffffff", navBg:"#ffffff", navBorder:"#EEE9FF",
+};
+const DARK = {
+  purple:"#9D71FF", pink:"#F48FB1", yellow:"#FFD54F",
+  mint:"#4DB6AC", sky:"#4FC3F7", coral:"#FF7043",
+  bg:"#1a1030", text:"#EEE9FF", muted:"#9B8DB5", border:"#2d2050",
+  card:"#261840", navBg:"#1e1438", navBorder:"#2d2050",
 };
 const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
+
+/* Stage-based animated backgrounds for home screen */
+const STAGE_BGSANIM = [
+  "linear-gradient(160deg,#A5D6A744 0%,#E8F5E944 50%,#F7F4FF 100%)",   // Seedling - soft green
+  "linear-gradient(160deg,#4DB6AC44 0%,#E0F2F144 50%,#F7F4FF 100%)",   // Sprouting - teal
+  "linear-gradient(160deg,#7C4DFF33 0%,#EDE7F644 50%,#F7F4FF 100%)",   // Blooming - purple
+  "linear-gradient(160deg,#FFD54F44 0%,#FFF9C444 50%,#F7F4FF 100%)",   // Thriving - golden
+];
+
+/* Sound utility — uses Web Audio API, no external libs needed */
+const playSound = (type, enabled) => {
+  if (!enabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const sounds = {
+      chime:   { freq:[523,659,784], dur:0.12, type:"sine",     vol:0.15 },
+      whoosh:  { freq:[300,150],     dur:0.18, type:"triangle", vol:0.1  },
+      levelup: { freq:[523,659,784,1047], dur:0.1, type:"sine", vol:0.18 },
+      tap:     { freq:[440],         dur:0.08, type:"sine",     vol:0.08 },
+    };
+    const s = sounds[type] || sounds.chime;
+    osc.type = s.type;
+    s.freq.forEach((f, i) => {
+      osc.frequency.setValueAtTime(f, ctx.currentTime + i * s.dur);
+    });
+    gain.gain.setValueAtTime(s.vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + s.freq.length * s.dur + 0.1);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + s.freq.length * s.dur + 0.15);
+  } catch(e) { /* audio not supported */ }
+};
 
 /* ── Icons ── */
 const Icon = ({ name, size=24, color=C.purple, style: st }) => {
@@ -182,9 +226,12 @@ const last7Days = () => {
 };
 
 /* ── Primitives ── */
-const Card = ({children,style}) => (
-  <div style={{background:"#fff",borderRadius:20,padding:"22px 20px",
-    boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14,...style}}>
+const Card = ({children, style, bg, shadow}) => (
+  <div style={{
+    background: bg || "#fff",
+    borderRadius:20, padding:"22px 20px",
+    boxShadow: shadow || "0 2px 18px rgba(124,77,255,0.09)",
+    marginBottom:14, ...style}}>
     {children}
   </div>
 );
@@ -207,30 +254,219 @@ const Btn = ({children,onClick,color,textColor,style,small,icon,disabled,loading
     {loading?"Loading...":children}
   </button>
 );
-const Label = ({children}) => (
-  <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:C.muted,
+const Label = ({children, color}) => (
+  <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:color||"#9B8DB5",
     letterSpacing:1.3,textTransform:"uppercase",marginBottom:10}}>{children}</p>
 );
 const TextInput = ({value,onChange,placeholder,type="text",style}) => (
   <input value={value} onChange={onChange} placeholder={placeholder} type={type}
     style={{width:"100%",padding:"13px 18px",borderRadius:50,
-      border:`2px solid ${C.border}`,fontSize:16,fontFamily:F.b,
-      fontWeight:500,color:C.text,background:"#fff",...style}}
-    onFocus={e=>e.target.style.border=`2px solid ${C.purple}`}
-    onBlur={e=>e.target.style.border=`2px solid ${C.border}`}
+      border:"2px solid #EEE9FF",fontSize:16,fontFamily:F.b,
+      fontWeight:500,color:"#2D2040",background:"#fff",...style}}
+    onFocus={e=>e.target.style.border="2px solid #7C4DFF"}
+    onBlur={e=>e.target.style.border="2px solid #EEE9FF"}
   />
 );
-const Shell = ({children}) => (
-  <div style={{minHeight:"100vh",background:C.bg,fontFamily:F.b,
+const Shell = ({children, stageBg, dark}) => (
+  <div style={{minHeight:"100vh",background:stageBg||LIGHT.bg,fontFamily:F.b,
     display:"flex",flexDirection:"column",alignItems:"center",
-    padding:"0 0 92px",position:"relative",overflowX:"hidden"}}>
-    <FontLoader/>
+    padding:"0 0 92px",position:"relative",overflowX:"hidden",
+    transition:"background 1.5s ease"}}>
+    <FontLoader dark={dark}/>
     <div style={{position:"fixed",top:-90,right:-90,width:280,height:280,
-      borderRadius:"50%",background:"rgba(124,77,255,0.06)",pointerEvents:"none",zIndex:0}}/>
+      borderRadius:"50%",background:dark?"rgba(157,113,255,0.08)":"rgba(124,77,255,0.06)",
+      pointerEvents:"none",zIndex:0}}/>
     <div style={{position:"fixed",bottom:-90,left:-90,width:320,height:320,
-      borderRadius:"50%",background:"rgba(240,98,146,0.06)",pointerEvents:"none",zIndex:0}}/>
+      borderRadius:"50%",background:dark?"rgba(244,143,177,0.07)":"rgba(240,98,146,0.06)",
+      pointerEvents:"none",zIndex:0}}/>
     <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:430,padding:"0 20px"}}>
       {children}
+    </div>
+  </div>
+);
+
+/* ── Tooltip component ── */
+const Tooltip = ({ text, seen, onDismiss, C }) => {
+  if (seen) return null;
+  return (
+    <div style={{
+      background: dark ? "#2d2050" : "#fff",
+      border: `2px solid ${C.purple}`,
+      borderRadius: 16, padding: "12px 16px",
+      marginBottom: 12, position: "relative",
+      animation: "tooltipIn 0.35s ease forwards",
+      boxShadow: `0 4px 20px ${C.purple}33`,
+    }}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+        <p style={{fontFamily:F.b,fontWeight:600,fontSize:14,
+          color:C.text,margin:0,lineHeight:1.6}}>{text}</p>
+        <button onClick={onDismiss} style={{
+          background:C.purple,border:"none",borderRadius:50,
+          width:24,height:24,cursor:"pointer",flexShrink:0,
+          color:"#fff",fontSize:14,fontWeight:700,fontFamily:F.b,
+          display:"flex",alignItems:"center",justifyContent:"center"}}>
+          ×
+        </button>
+      </div>
+      <div style={{position:"absolute",top:-8,left:20,width:0,height:0,
+        borderLeft:"8px solid transparent",borderRight:"8px solid transparent",
+        borderBottom:`8px solid ${C.purple}`}}/>
+    </div>
+  );
+};
+
+/* ── Settings panel ── */
+const SettingsPanel = ({ darkMode, setDarkMode, soundOn, setSoundOn, onClose, C }) => (
+  <div style={{
+    position:"fixed",top:0,left:0,right:0,bottom:0,
+    background:"rgba(0,0,0,0.5)",zIndex:800,
+    display:"flex",alignItems:"flex-end",justifyContent:"center",
+    backdropFilter:"blur(4px)",
+  }} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{
+      background:darkMode?"#261840":"#fff",
+      borderRadius:"24px 24px 0 0",padding:"28px 24px 48px",
+      width:"100%",maxWidth:430,
+      animation:"slideInUp 0.3s ease",
+      boxShadow:"0 -8px 40px rgba(0,0,0,0.2)",
+    }}>
+      <div style={{width:40,height:4,borderRadius:50,
+        background:darkMode?"#4a3a6a":"#ddd",
+        margin:"0 auto 24px"}}/>
+      <h3 style={{fontFamily:F.h,fontWeight:900,fontSize:24,
+        color:darkMode?"#EEE9FF":"#2D2040",marginBottom:24}}>
+        Settings
+      </h3>
+
+      {/* Dark mode toggle */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+        padding:"16px 0",borderBottom:`1px solid ${darkMode?"#2d2050":"#F0EAFF"}`}}>
+        <div>
+          <p style={{fontFamily:F.b,fontWeight:700,fontSize:16,
+            color:darkMode?"#EEE9FF":"#2D2040",margin:0}}>Dark Mode</p>
+          <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,
+            color:darkMode?"#9B8DB5":"#9B8DB5",margin:0}}>
+            Easier on the eyes at night
+          </p>
+        </div>
+        <button onClick={()=>setDarkMode(d=>!d)} style={{
+          width:52,height:30,borderRadius:50,border:"none",cursor:"pointer",
+          background:darkMode?"#7C4DFF":"#ddd",
+          position:"relative",transition:"background 0.3s",
+          flexShrink:0,
+        }}>
+          <div style={{
+            position:"absolute",top:3,
+            left:darkMode?24:3,
+            width:24,height:24,borderRadius:"50%",
+            background:"#fff",transition:"left 0.3s",
+            boxShadow:"0 2px 6px rgba(0,0,0,0.2)",
+          }}/>
+        </button>
+      </div>
+
+      {/* Sound toggle */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+        padding:"16px 0",borderBottom:`1px solid ${darkMode?"#2d2050":"#F0EAFF"}`}}>
+        <div>
+          <p style={{fontFamily:F.b,fontWeight:700,fontSize:16,
+            color:darkMode?"#EEE9FF":"#2D2040",margin:0}}>Sound Effects</p>
+          <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,
+            color:"#9B8DB5",margin:0}}>Soft chimes and whooshes</p>
+        </div>
+        <button onClick={()=>setSoundOn(s=>!s)} style={{
+          width:52,height:30,borderRadius:50,border:"none",cursor:"pointer",
+          background:soundOn?"#7C4DFF":"#ddd",
+          position:"relative",transition:"background 0.3s",flexShrink:0,
+        }}>
+          <div style={{
+            position:"absolute",top:3,
+            left:soundOn?24:3,
+            width:24,height:24,borderRadius:"50%",
+            background:"#fff",transition:"left 0.3s",
+            boxShadow:"0 2px 6px rgba(0,0,0,0.2)",
+          }}/>
+        </button>
+      </div>
+
+      <button onClick={onClose} style={{
+        width:"100%",marginTop:24,
+        background:"linear-gradient(135deg,#7C4DFF,#F06292)",
+        border:"none",borderRadius:50,padding:"15px",
+        color:"#fff",fontSize:16,fontWeight:700,fontFamily:F.b,
+        cursor:"pointer",boxShadow:"0 4px 16px rgba(124,77,255,0.4)",
+      }}>
+        Done
+      </button>
+    </div>
+  </div>
+);
+
+/* ── Tooltip ── */
+const Tooltip = ({ text, seen, onDismiss, C }) => {
+  if (seen) return null;
+  return (
+    <div style={{background:"#fff",border:`2px solid ${C.purple}`,
+      borderRadius:16,padding:"12px 16px",marginBottom:12,position:"relative",
+      animation:"tooltipIn 0.35s ease forwards",boxShadow:`0 4px 20px ${C.purple}33`}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+        <p style={{fontFamily:F.b,fontWeight:600,fontSize:14,color:C.text,margin:0,lineHeight:1.6}}>
+          {text}
+        </p>
+        <button onClick={onDismiss} style={{background:C.purple,border:"none",borderRadius:50,
+          width:24,height:24,cursor:"pointer",flexShrink:0,color:"#fff",fontSize:16,
+          fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          ×
+        </button>
+      </div>
+      <div style={{position:"absolute",top:-8,left:20,width:0,height:0,
+        borderLeft:"8px solid transparent",borderRight:"8px solid transparent",
+        borderBottom:`8px solid ${C.purple}`}}/>
+    </div>
+  );
+};
+
+/* ── Settings panel ── */
+const SettingsPanel = ({ darkMode, setDarkMode, soundOn, setSoundOn, onClose, C }) => (
+  <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",
+    zIndex:800,display:"flex",alignItems:"flex-end",justifyContent:"center",
+    backdropFilter:"blur(4px)"}} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{background:darkMode?"#261840":"#fff",
+      borderRadius:"24px 24px 0 0",padding:"28px 24px 48px",width:"100%",maxWidth:430,
+      animation:"slideInUp 0.3s ease",boxShadow:"0 -8px 40px rgba(0,0,0,0.2)"}}>
+      <div style={{width:40,height:4,borderRadius:50,background:darkMode?"#4a3a6a":"#ddd",
+        margin:"0 auto 24px"}}/>
+      <h3 style={{fontFamily:F.h,fontWeight:900,fontSize:24,
+        color:darkMode?"#EEE9FF":"#2D2040",marginBottom:24}}>Settings</h3>
+      {[
+        {label:"Dark Mode",     sub:"Easier on the eyes at night", val:darkMode, set:setDarkMode},
+        {label:"Sound Effects", sub:"Soft chimes and whooshes",     val:soundOn,  set:setSoundOn},
+      ].map((s,i)=>(
+        <div key={s.label} style={{display:"flex",justifyContent:"space-between",
+          alignItems:"center",padding:"16px 0",
+          borderBottom:`1px solid ${darkMode?"#2d2050":"#F0EAFF"}`}}>
+          <div>
+            <p style={{fontFamily:F.b,fontWeight:700,fontSize:16,
+              color:darkMode?"#EEE9FF":"#2D2040",margin:0}}>{s.label}</p>
+            <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,color:"#9B8DB5",margin:0}}>
+              {s.sub}
+            </p>
+          </div>
+          <button onClick={()=>s.set(v=>!v)} style={{width:52,height:30,borderRadius:50,
+            border:"none",cursor:"pointer",background:s.val?"#7C4DFF":"#ddd",
+            position:"relative",transition:"background 0.3s",flexShrink:0}}>
+            <div style={{position:"absolute",top:3,left:s.val?24:3,width:24,height:24,
+              borderRadius:"50%",background:"#fff",transition:"left 0.3s",
+              boxShadow:"0 2px 6px rgba(0,0,0,0.2)"}}/>
+          </button>
+        </div>
+      ))}
+      <button onClick={onClose} style={{width:"100%",marginTop:24,
+        background:"linear-gradient(135deg,#7C4DFF,#F06292)",border:"none",
+        borderRadius:50,padding:"15px",color:"#fff",fontSize:16,fontWeight:700,
+        fontFamily:F.b,cursor:"pointer",boxShadow:"0 4px 16px rgba(124,77,255,0.4)"}}>
+        Done
+      </button>
     </div>
   </div>
 );
@@ -272,9 +508,16 @@ export default function BloomyApp() {
   const [showInsights,setShowInsights]       = useState(false);
   const [celebration,setCelebration]         = useState(null);
   const [showMascotRoom,setShowMascotRoom]   = useState(false);
-  const [onboardStep,setOnboardStep]         = useState(0); // 0-3 onboarding slides
+  const [onboardStep,setOnboardStep]         = useState(0);
+  const [darkMode,setDarkMode]               = useState(false);
+  const [soundOn,setSoundOn]                 = useState(true);
+  const [seenTooltips,setSeenTooltips]       = useState({});
+  const [showSettings,setShowSettings]       = useState(false);
   const touchStartX                          = useRef(null);
   const touchStartY                          = useRef(null);
+
+  /* ── Derive colour palette from dark mode ── */
+  const C = darkMode ? DARK : LIGHT;
 
   /* ── Auth ── */
   useEffect(()=>{
@@ -334,6 +577,7 @@ export default function BloomyApp() {
   const nextAffirm = async ()=>{
     if (affirmAnim!=="idle") return;
     setAffirmAnim("swiping");
+    playSound("whoosh", soundOn);
     setTimeout(()=>{
       setAffirmIdx(i=>(i+1)%AFFIRMATIONS.length);
       setAffirmAnim("entering");
@@ -403,6 +647,7 @@ export default function BloomyApp() {
       const newLog = [...moodLog, data];
       setMoodLog(newLog);
       setMoodLogged(true);
+      playSound("chime", soundOn);
       checkGrowthStageUp(newLog, journals);
     }
   };
@@ -415,6 +660,7 @@ export default function BloomyApp() {
     const newStage = getStage(newScore);
     if (newStage.id > oldStage.id) {
       setCelebration(newStage.id);
+      playSound("levelup", soundOn);
     }
   };
 
@@ -428,6 +674,7 @@ export default function BloomyApp() {
       const newJournals = [data, ...journals];
       setJournals(newJournals);
       setJournalSaved(true);
+      playSound("chime", soundOn);
       checkGrowthStageUp(moodLog, newJournals);
     }
     setSaveLoading(false);
@@ -881,10 +1128,11 @@ export default function BloomyApp() {
      CHILD APP
   ════════════════════════════ */
   const NavBar = ()=>(
-    <div style={{position:"fixed",bottom:0,left:0,right:0,background:"#fff",
+    <div style={{position:"fixed",bottom:0,left:0,right:0,
+      background:darkMode?"#1e1438":"#fff",
       borderTop:`1.5px solid ${C.border}`,display:"flex",justifyContent:"space-around",
       alignItems:"center",padding:"10px 0 20px",zIndex:100,
-      boxShadow:"0 -4px 20px rgba(124,77,255,0.07)"}}>
+      boxShadow:darkMode?"0 -4px 20px rgba(0,0,0,0.3)":"0 -4px 20px rgba(124,77,255,0.07)"}}>
       {[
         {id:"home",   icon:"home",  label:"Home"},
         {id:"mood",   icon:"mood",  label:"Mood"},
@@ -903,6 +1151,15 @@ export default function BloomyApp() {
             color:tab===t.id?C.purple:C.muted}}>{t.label}</span>
         </button>
       ))}
+      <button onClick={()=>setShowSettings(true)} style={{
+        background:"none",border:"none",cursor:"pointer",
+        display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+        opacity:0.35,transition:"all 0.18s"}}
+        onMouseEnter={e=>e.currentTarget.style.opacity="0.7"}
+        onMouseLeave={e=>e.currentTarget.style.opacity="0.35"}>
+        <Icon name="settings" size={24} color={C.muted}/>
+        <span style={{fontSize:11,fontWeight:700,fontFamily:F.b,color:C.muted}}>Settings</span>
+      </button>
     </div>
   );
 
@@ -915,8 +1172,16 @@ export default function BloomyApp() {
     />
   );
 
+  const stageBg = STAGE_BGSANIM[currentStage.id] || STAGE_BGSANIM[0];
   return (
-    <Shell>
+    <Shell stageBg={darkMode ? undefined : stageBg} dark={darkMode}>
+      {showSettings && (
+        <SettingsPanel
+          darkMode={darkMode} setDarkMode={setDarkMode}
+          soundOn={soundOn} setSoundOn={setSoundOn}
+          onClose={()=>setShowSettings(false)} C={C}
+        />
+      )}
       <NavBar/>
       {celebration !== null && (
         <GrowthCelebration
@@ -1077,9 +1342,12 @@ export default function BloomyApp() {
           <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
             How are you feeling?
           </h2>
-          <p style={{color:C.muted,fontSize:15,marginBottom:18,fontWeight:500}}>
+          <p style={{color:C.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
             Tap the one that feels right.
           </p>
+          <Tooltip text="Tap a face that matches how you feel right now. You can log your mood every day!"
+            seen={seenTooltips.mood} C={C}
+            onDismiss={()=>setSeenTooltips(p=>({...p,mood:true}))}/>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:18}}>
             {MOODS.map(m=>(
               <button key={m} onClick={()=>{setSelectedMood(m);setMoodLogged(false);}} style={{
@@ -1268,9 +1536,14 @@ export default function BloomyApp() {
           <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
             Breathe With Me
           </h2>
-          <p style={{color:C.muted,fontSize:15,marginBottom:30,fontWeight:500}}>
+          <p style={{color:C.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
             Let's calm down together.
           </p>
+          <div style={{textAlign:"left"}}>
+            <Tooltip text="Press Start and follow along — breathe in, hold, and breathe out. Each full cycle earns you points!"
+              seen={seenTooltips.breathe} C={C}
+              onDismiss={()=>setSeenTooltips(p=>({...p,breathe:true}))}/>
+          </div>
           <div style={{position:"relative",display:"inline-flex",
             alignItems:"center",justifyContent:"center",marginBottom:28}}>
             <div style={{width:220,height:220,borderRadius:"50%",position:"absolute",
@@ -1335,9 +1608,12 @@ export default function BloomyApp() {
           <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:C.text,marginBottom:4}}>
             My Journal
           </h2>
-          <p style={{color:C.muted,fontSize:15,marginBottom:16,fontWeight:500}}>
+          <p style={{color:C.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
             Your thoughts are safe here.
           </p>
+          <Tooltip text="Read the prompt and write whatever comes to mind. There are no wrong answers — your thoughts are private!"
+            seen={seenTooltips.journal} C={C}
+            onDismiss={()=>setSeenTooltips(p=>({...p,journal:true}))}/>
 
           <Card style={{background:`linear-gradient(135deg,${C.pink},${C.purple})`,marginBottom:14}}>
             <p style={{color:"rgba(255,255,255,0.8)",fontWeight:700,fontSize:12,
