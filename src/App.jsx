@@ -291,29 +291,32 @@ const Shell = ({children, stageBg, dark}) => (
 /* ── Tooltip component ── */
 const Tooltip = ({ text, seen, onDismiss, C }) => {
   if (seen) return null;
+  const bg = C && C.card ? C.card : "#fff";
+  const purple = C && C.purple ? C.purple : "#7C4DFF";
+  const textColor = C && C.text ? C.text : "#2D2040";
   return (
     <div style={{
-      background: dark ? "#2d2050" : "#fff",
-      border: `2px solid ${C.purple}`,
+      background: bg,
+      border: `2px solid ${purple}`,
       borderRadius: 16, padding: "12px 16px",
       marginBottom: 12, position: "relative",
       animation: "tooltipIn 0.35s ease forwards",
-      boxShadow: `0 4px 20px ${C.purple}33`,
+      boxShadow: `0 4px 20px ${purple}33`,
     }}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
         <p style={{fontFamily:F.b,fontWeight:600,fontSize:14,
-          color:C.text,margin:0,lineHeight:1.6}}>{text}</p>
+          color:textColor,margin:0,lineHeight:1.6}}>{text}</p>
         <button onClick={onDismiss} style={{
-          background:C.purple,border:"none",borderRadius:50,
+          background:purple,border:"none",borderRadius:50,
           width:24,height:24,cursor:"pointer",flexShrink:0,
-          color:"#fff",fontSize:14,fontWeight:700,fontFamily:F.b,
+          color:"#fff",fontSize:16,fontWeight:700,fontFamily:F.b,
           display:"flex",alignItems:"center",justifyContent:"center"}}>
           ×
         </button>
       </div>
       <div style={{position:"absolute",top:-8,left:20,width:0,height:0,
         borderLeft:"8px solid transparent",borderRight:"8px solid transparent",
-        borderBottom:`8px solid ${C.purple}`}}/>
+        borderBottom:`8px solid ${purple}`}}/>
     </div>
   );
 };
