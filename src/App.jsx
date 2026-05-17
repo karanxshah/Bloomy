@@ -901,16 +901,17 @@ export default function BloomyApp() {
     </div>
   );
 
+  if (showMascotRoom) return (
+    <MascotRoom
+      activeChild={activeChild}
+      moodLog={moodLog}
+      journals={journals}
+      onClose={()=>setShowMascotRoom(false)}
+    />
+  );
+
   return (
     <Shell>
-      {showMascotRoom && (
-        <MascotRoom
-          activeChild={activeChild}
-          moodLog={moodLog}
-          journals={journals}
-          onClose={()=>setShowMascotRoom(false)}
-        />
-      )}
       <NavBar/>
       {celebration !== null && (
         <GrowthCelebration
