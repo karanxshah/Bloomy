@@ -1312,7 +1312,7 @@ export default function BloomyApp() {
               setSeenTooltips(updated);
               if(activeChild){
                 await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
-                setActiveChild(prev=>{...prev,seen_tooltips:updated});
+                setActiveChild(prev=>({...prev,seen_tooltips:updated}));
                 setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
               }
             }}/>
@@ -1425,7 +1425,7 @@ export default function BloomyApp() {
               setSeenTooltips(updated);
               if(activeChild){
                 await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
-                setActiveChild(prev=>{...prev,seen_tooltips:updated});
+                setActiveChild(prev=>({...prev,seen_tooltips:updated}));
                 setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
               }
             }}/>
@@ -1526,7 +1526,7 @@ export default function BloomyApp() {
               setSeenTooltips(updated);
               if(activeChild){
                 await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
-                setActiveChild(prev=>{...prev,seen_tooltips:updated});
+                setActiveChild(prev=>({...prev,seen_tooltips:updated}));
                 setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
               }
             }}/>
@@ -1605,7 +1605,7 @@ export default function BloomyApp() {
               setSeenTooltips(updated);
               if(activeChild){
                 await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
-                setActiveChild(prev=>{...prev,seen_tooltips:updated});
+                setActiveChild(prev=>({...prev,seen_tooltips:updated}));
                 setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
               }
             }}/>
