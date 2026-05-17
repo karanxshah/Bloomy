@@ -320,8 +320,10 @@ export default function BloomyApp() {
         if (activeChild){
           const newCount=(activeChild.breath_sessions||0)+1;
           await supabase.from("children").update({breath_sessions:newCount}).eq("id",activeChild.id);
-          setActiveChild(prev=>({...prev,breath_sessions:newCount}));
-          setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,breath_sessions:newCount}:c));
+          const updatedChild = {...activeChild,breath_sessions:newCount};
+          setActiveChild(updatedChild);
+          setChildren(prev=>prev.map(c=>c.id===activeChild.id?updatedChild:c));
+          checkGrowthStageUp(moodLog, journals, updatedChild);
         }
       }
     },BREATHING[breathPhase].duration*1000);
@@ -340,8 +342,10 @@ export default function BloomyApp() {
     if (activeChild){
       const newCount=(activeChild.affirm_count||0)+1;
       await supabase.from("children").update({affirm_count:newCount}).eq("id",activeChild.id);
-      setActiveChild(prev=>({...prev,affirm_count:newCount}));
-      setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,affirm_count:newCount}:c));
+      const updatedChild = {...activeChild,affirm_count:newCount};
+      setActiveChild(updatedChild);
+      setChildren(prev=>prev.map(c=>c.id===activeChild.id?updatedChild:c));
+      checkGrowthStageUp(moodLog, journals, updatedChild);
     }
   };
 
@@ -402,10 +406,11 @@ export default function BloomyApp() {
       checkGrowthStageUp(newLog, journals);
     }
   };
-  const checkGrowthStageUp = (newMoodLog, newJournals) => {
-    if (!activeChild) return;
+  const checkGrowthStageUp = (newMoodLog, newJournals, updatedChild) => {
+    const child = updatedChild || activeChild;
+    if (!child) return;
     const oldScore = calcGrowthScore(activeChild, moodLog, journals);
-    const newScore = calcGrowthScore(activeChild, newMoodLog, newJournals);
+    const newScore = calcGrowthScore(child, newMoodLog, newJournals);
     const oldStage = getStage(oldScore);
     const newStage = getStage(newScore);
     if (newStage.id > oldStage.id) {
