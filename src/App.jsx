@@ -35,10 +35,10 @@ const LIGHT = {
   card:"#ffffff", navBg:"#ffffff", navBorder:"#EEE9FF",
 };
 const DARK = {
-  purple:"#9D71FF", pink:"#F48FB1", yellow:"#FFD54F",
-  mint:"#4DB6AC", sky:"#4FC3F7", coral:"#FF7043",
-  bg:"#1a1030", text:"#EEE9FF", muted:"#9B8DB5", border:"#2d2050",
-  card:"#261840", navBg:"#1e1438", navBorder:"#2d2050",
+  purple:"#A78BFA", pink:"#F9A8D4", yellow:"#FDE68A",
+  mint:"#6EE7B7", sky:"#7DD3FC", coral:"#FCA5A5",
+  bg:"#0F0A1E", text:"#F3F0FF", muted:"#A78BFA",
+  border:"#2E1F5E", card:"#1A1133", navBg:"#130D27", navBorder:"#2E1F5E",
 };
 const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
 
@@ -63,10 +63,10 @@ const playSound = (type, enabled) => {
     osc.connect(gain);
     gain.connect(ctx.destination);
     const sounds = {
-      chime:   { freq:[523,659,784], dur:0.12, type:"sine",     vol:0.15 },
-      whoosh:  { freq:[300,150],     dur:0.18, type:"triangle", vol:0.1  },
-      levelup: { freq:[523,659,784,1047], dur:0.1, type:"sine", vol:0.18 },
-      tap:     { freq:[440],         dur:0.08, type:"sine",     vol:0.08 },
+      chime:   { freq:[523,659,784],      dur:0.1,  type:"sine",     vol:0.13 },
+      whoosh:  { freq:[800,400,200,100],  dur:0.08, type:"sawtooth", vol:0.07 },
+      levelup: { freq:[523,659,784,1047], dur:0.12, type:"sine",     vol:0.16 },
+      tap:     { freq:[440],              dur:0.06, type:"sine",     vol:0.07 },
     };
     const s = sounds[type] || sounds.chime;
     osc.type = s.type;
@@ -271,7 +271,7 @@ const TextInput = ({value,onChange,placeholder,type="text",style}) => (
   />
 );
 const Shell = ({children, stageBg, dark}) => (
-  <div style={{minHeight:"100vh",background:stageBg||LIGHT.bg,fontFamily:F.b,
+  <div style={{minHeight:"100vh",background:stageBg||(dark?'#0F0A1E':LIGHT.bg),fontFamily:F.b,
     display:"flex",flexDirection:"column",alignItems:"center",
     padding:"0 0 92px",position:"relative",overflowX:"hidden",
     transition:"background 1.5s ease"}}>
@@ -1281,8 +1281,8 @@ export default function BloomyApp() {
             Tap the one that feels right.
           </p>
           <Tooltip text="Tap a face that matches how you feel right now. You can log your mood every day!"
-            seen={seenTooltips.mood} C={C}
-            onDismiss={()=>setSeenTooltips(p=>({...p,mood:true}))} C={theme}/>
+            seen={seenTooltips.mood} C={theme}
+            onDismiss={()=>setSeenTooltips(p=>({...p,mood:true}))}/>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:18}}>
             {MOODS.map(m=>(
               <button key={m} onClick={()=>{setSelectedMood(m);setMoodLogged(false);}} style={{
@@ -1476,8 +1476,8 @@ export default function BloomyApp() {
           </p>
           <div style={{textAlign:"left"}}>
             <Tooltip text="Press Start and follow along — breathe in, hold, and breathe out. Each full cycle earns you points!"
-              seen={seenTooltips.breathe} C={C}
-              onDismiss={()=>setSeenTooltips(p=>({...p,breathe:true}))} C={theme}/>
+              seen={seenTooltips.breathe} C={theme}
+              onDismiss={()=>setSeenTooltips(p=>({...p,breathe:true}))}/>
           </div>
           <div style={{position:"relative",display:"inline-flex",
             alignItems:"center",justifyContent:"center",marginBottom:28}}>
@@ -1547,8 +1547,8 @@ export default function BloomyApp() {
             Your thoughts are safe here.
           </p>
           <Tooltip text="Read the prompt and write whatever comes to mind. There are no wrong answers — your thoughts are private!"
-            seen={seenTooltips.journal} C={C}
-            onDismiss={()=>setSeenTooltips(p=>({...p,journal:true}))} C={theme}/>
+            seen={seenTooltips.journal} C={theme}
+            onDismiss={()=>setSeenTooltips(p=>({...p,journal:true}))}/>
 
           <Card style={{background:`linear-gradient(135deg,${theme.pink},${theme.purple})`,marginBottom:14}}>
             <p style={{color:"rgba(255,255,255,0.8)",fontWeight:700,fontSize:12,
