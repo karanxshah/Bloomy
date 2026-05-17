@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import ParentInsights from "./ParentInsights";
 import { GrowthMascot, GrowthProgressBar, GrowthCelebration, calcGrowthScore, getStage } from "./MascotGrowth";
+import MascotRoom from "./MascotRoom";
 
 const SUPABASE_URL = "https://ymfvezvezzmckcdwjvzm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_5CR_k4TEBUYXhqm3AuN7bQ_Csiafdcs";
@@ -270,6 +271,7 @@ export default function BloomyApp() {
   const [saveLoading,setSaveLoading]         = useState(false);
   const [showInsights,setShowInsights]       = useState(false);
   const [celebration,setCelebration]         = useState(null);
+  const [showMascotRoom,setShowMascotRoom]   = useState(false);
   const [onboardStep,setOnboardStep]         = useState(0); // 0-3 onboarding slides
   const touchStartX                          = useRef(null);
   const touchStartY                          = useRef(null);
@@ -901,6 +903,14 @@ export default function BloomyApp() {
 
   return (
     <Shell>
+      {showMascotRoom && (
+        <MascotRoom
+          activeChild={activeChild}
+          moodLog={moodLog}
+          journals={journals}
+          onClose={()=>setShowMascotRoom(false)}
+        />
+      )}
       <NavBar/>
       {celebration !== null && (
         <GrowthCelebration
@@ -932,9 +942,15 @@ export default function BloomyApp() {
               <p style={{color:C.muted,fontWeight:600,fontSize:13,marginBottom:2}}>Good morning</p>
               <h2 style={{fontFamily:F.h,fontSize:30,fontWeight:900,color:C.text}}>{activeChild.name}</h2>
             </div>
-            <div style={{background:cm.bg,borderRadius:16,padding:10}}>
-              <GrowthMascot id={cm.id} size={52} stage={currentStage.id} />
-            </div>
+            <button onClick={()=>setShowMascotRoom(true)} style={{
+              background:cm.bg,borderRadius:16,padding:10,border:"none",
+              cursor:"pointer",transition:"transform 0.15s",
+              boxShadow:`0 4px 16px ${cm.color}44`,
+            }}
+              onMouseDown={e=>e.currentTarget.style.transform="scale(0.92)"}
+              onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+              <GrowthMascot id={cm.id} size={52} stage={currentStage.id}/>
+            </button>
           </div>
 
           {/* Growth progress bar */}
