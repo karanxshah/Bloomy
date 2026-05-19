@@ -603,8 +603,9 @@ export default function BloomyApp() {
   const logMood = async (mood)=>{
     if (!activeChild) return;
     const {data,error} = await supabase.from("mood_logs")
-      .insert({child_id:activeChild.id,mood,date:today(),note:""}).select().single();
-    if (!error&&data){
+      .insert({child_id:activeChild.id,mood,date:today()}).select().single();
+    if (error) { console.error("logMood error:", error); return; }
+    if (data){
       const newLog = [...moodLog, data];
       setMoodLog(newLog);
       setMoodLogged(true);
