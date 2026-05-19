@@ -1888,8 +1888,7 @@ export default function BloomyApp() {
               {gratitudes.length===0?(
                 <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,
                   color:theme.muted,margin:"20px 0",textAlign:"center"}}>
-                  Your jar is empty.{"
-"}Add your first gratitude!
+                  Your jar is empty. Add your first gratitude!
                 </p>
               ):(
                 <div style={{display:"flex",flexWrap:"wrap",gap:8,
