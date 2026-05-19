@@ -714,20 +714,6 @@ export default function BloomyApp() {
     }
   };
 
-  const saveGratitude = async ()=>{
-    if (!gratitudeText.trim()||!activeChild) return;
-    const {data,error} = await supabase.from("gratitudes")
-      .insert({child_id:activeChild.id,text:gratitudeText.trim(),date:today()})
-      .select().single();
-    if (!error&&data){
-      setGratitudes(prev=>[data,...prev]);
-      setGratitudeText("");
-      setGratitudeSaved(true);
-      playSound("chime",soundOn);
-      setTimeout(()=>setGratitudeSaved(false),2000);
-    }
-  };
-
   const openChild = async (child)=>{
     setActiveChild(child);setTab("home");
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
