@@ -574,15 +574,27 @@ export default function ParentInsights({ session, children, onClose }) {
                 <Card>
                   <Label>Full Mood History ({moodLog.length} entries)</Label>
                   {[...moodLog].reverse().slice(0,10).map((e,i)=>(
-                    <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,
+                    <div key={e.id} style={{
                       padding:"9px 0",
                       borderBottom:i<Math.min(9,moodLog.length-1)?"1px solid #F0EAFF":"none"}}>
-                      <MoodFace type={e.mood} size={30}/>
-                      <span style={{flex:1,fontFamily:F.b,fontWeight:700,
-                        color:MOOD_COLORS[e.mood],fontSize:14}}>{e.mood}</span>
-                      <span style={{fontFamily:F.b,fontSize:12,color:C.muted}}>
-                        {e.date===today()?"Today":e.date}
-                      </span>
+                      <div style={{display:"flex",alignItems:"center",gap:12}}>
+                        <MoodFace type={e.mood} size={30}/>
+                        <span style={{flex:1,fontFamily:F.b,fontWeight:700,
+                          color:MOOD_COLORS[e.mood],fontSize:14}}>{e.mood}</span>
+                        <span style={{fontFamily:F.b,fontSize:12,color:C.muted}}>
+                          {e.date===today()?"Today":e.date}
+                        </span>
+                      </div>
+                      {e.note&&(
+                        <div style={{display:"flex",alignItems:"flex-start",gap:8,
+                          marginTop:6,marginLeft:38,
+                          background:"#F7F4FF",borderRadius:10,padding:"7px 12px"}}>
+                          <p style={{fontFamily:F.b,fontSize:13,fontWeight:500,
+                            color:C.purple,margin:0,fontStyle:"italic",lineHeight:1.5}}>
+                            "{e.note}"
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {moodLog.length>10 && (

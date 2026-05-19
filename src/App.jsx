@@ -454,6 +454,9 @@ export default function BloomyApp() {
   const [tab,setTab]                         = useState("home");
   const [selectedMood,setSelectedMood]       = useState(null);
   const [moodLogged,setMoodLogged]           = useState(false);
+  const [moodNote,setMoodNote]               = useState("");
+  const [moodNoteStep,setMoodNoteStep]       = useState("log"); // log | note | done
+  const [savingNote,setSavingNote]           = useState(false);
   const [affirmIdx,setAffirmIdx]             = useState(0);
   const [affirmAnim,setAffirmAnim]           = useState("idle"); // idle | swiping | entering
   const [breathPhase,setBreathPhase]         = useState(0);
@@ -600,14 +603,29 @@ export default function BloomyApp() {
   const logMood = async (mood)=>{
     if (!activeChild) return;
     const {data,error} = await supabase.from("mood_logs")
-      .insert({child_id:activeChild.id,mood,date:today()}).select().single();
+      .insert({child_id:activeChild.id,mood,date:today(),note:""}).select().single();
     if (!error&&data){
       const newLog = [...moodLog, data];
       setMoodLog(newLog);
       setMoodLogged(true);
+      setMoodNoteStep("note");
+      setMoodNote("");
       playSound("chime", soundOn);
       checkGrowthStageUp(newLog, journals);
     }
+  };
+
+  const saveMoodNote = async ()=>{
+    if (!moodNote.trim()) { setMoodNoteStep("done"); return; }
+    setSavingNote(true);
+    const lastEntry = moodLog[moodLog.length-1];
+    if (lastEntry) {
+      await supabase.from("mood_logs").update({note:moodNote.trim()}).eq("id",lastEntry.id);
+      const updated = moodLog.map((e,i)=>i===moodLog.length-1?{...e,note:moodNote.trim()}:e);
+      setMoodLog(updated);
+    }
+    setSavingNote(false);
+    setMoodNoteStep("done");
   };
   const checkGrowthStageUp = (newMoodLog, newJournals, updatedChild) => {
     const child = updatedChild || activeChild;
@@ -1351,7 +1369,44 @@ export default function BloomyApp() {
             </Card>
           )}
 
-          {moodLogged&&(
+          {moodLogged&&moodNoteStep==="note"&&(
+            <Card style={{animation:"scaleIn 0.3s ease",background:MOOD_BG[selectedMood]}}>
+              <p style={{fontFamily:F.h,fontWeight:800,fontSize:20,
+                color:MOOD_COLORS[selectedMood],marginBottom:4}}>
+                Want to share why?
+              </p>
+              <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,
+                color:theme.muted,marginBottom:14,lineHeight:1.6}}>
+                You can write a little note about how you are feeling.
+                Only you and your parent can see this.
+              </p>
+              <textarea
+                value={moodNote}
+                onChange={e=>setMoodNote(e.target.value)}
+                placeholder="I feel this way because..."
+                maxLength={200}
+                style={{width:"100%",minHeight:90,border:`2px solid ${MOOD_COLORS[selectedMood]}44`,
+                  borderRadius:16,padding:"12px 14px",fontSize:15,fontFamily:F.b,
+                  fontWeight:500,color:theme.text,background:"rgba(255,255,255,0.7)",
+                  lineHeight:1.7,resize:"none",outline:"none",display:"block",marginBottom:12}}
+                onFocus={e=>e.target.style.border=`2px solid ${MOOD_COLORS[selectedMood]}`}
+                onBlur={e=>e.target.style.border=`2px solid ${MOOD_COLORS[selectedMood]}44`}
+              />
+              <div style={{display:"flex",gap:10}}>
+                <Btn onClick={saveMoodNote} loading={savingNote}
+                  color={MOOD_COLORS[selectedMood]} style={{flex:1}} icon="check">
+                  Save Note
+                </Btn>
+                <Btn onClick={()=>setMoodNoteStep("done")}
+                  color="#fff" textColor={theme.muted}
+                  style={{flex:1,border:`1.5px solid ${theme.border}`}} small>
+                  Skip
+                </Btn>
+              </div>
+            </Card>
+          )}
+
+          {moodLogged&&moodNoteStep==="done"&&(
             <Card style={{textAlign:"center",animation:"scaleIn 0.3s ease"}}>
               <div style={{background:"#E0F2F1",borderRadius:"50%",width:68,height:68,
                 display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
@@ -1363,7 +1418,7 @@ export default function BloomyApp() {
               <p style={{color:theme.muted,marginBottom:16,fontSize:14,fontWeight:500}}>
                 Great job checking in today.
               </p>
-              <Btn onClick={()=>{setMoodLogged(false);setSelectedMood(null);}}
+              <Btn onClick={()=>{setMoodLogged(false);setSelectedMood(null);setMoodNoteStep('log');setMoodNote('');}}
                 color="#F7F4FF" textColor={theme.purple} small icon="refresh">
                 Check in again
               </Btn>
@@ -1393,15 +1448,24 @@ export default function BloomyApp() {
             <Card>
               <Label>Recent Moods</Label>
               {[...moodLog].reverse().slice(0,5).map((e,i)=>(
-                <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,
-                  padding:"10px 0",borderBottom:i<4?"1px solid #F0EAFF":"none"}}>
-                  <MoodFace type={e.mood} size={32}/>
-                  <span style={{flex:1,fontWeight:700,color:MOOD_COLORS[e.mood],fontSize:14,fontFamily:F.b}}>
-                    {e.mood}
-                  </span>
-                  <span style={{fontSize:12,color:theme.muted,fontFamily:F.b}}>
-                    {e.date===today()?"Today":e.date}
-                  </span>
+                <div key={e.id} style={{
+                  padding:"10px 0",borderBottom:i<4?`1px solid ${theme.border}`:"none"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <MoodFace type={e.mood} size={32}/>
+                    <span style={{flex:1,fontWeight:700,color:MOOD_COLORS[e.mood],fontSize:14,fontFamily:F.b}}>
+                      {e.mood}
+                    </span>
+                    <span style={{fontSize:12,color:theme.muted,fontFamily:F.b}}>
+                      {e.date===today()?"Today":e.date}
+                    </span>
+                  </div>
+                  {e.note&&(
+                    <p style={{fontFamily:F.b,fontSize:13,fontWeight:500,
+                      color:theme.muted,margin:"6px 0 0 44px",
+                      fontStyle:"italic",lineHeight:1.5}}>
+                      "{e.note}"
+                    </p>
+                  )}
                 </div>
               ))}
             </Card>
