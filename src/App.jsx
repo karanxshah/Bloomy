@@ -701,11 +701,15 @@ export default function BloomyApp() {
     setSaveLoading(false);
   };
   const saveGratitude = async ()=>{
-    if (!gratitudeText.trim()||!activeChild) return;
+    if (!gratitudeText.trim()||!activeChild) {
+      console.log("saveGratitude blocked:", {hasText:!!gratitudeText.trim(), hasChild:!!activeChild});
+      return;
+    }
     const {data,error} = await supabase.from("gratitudes")
       .insert({child_id:activeChild.id,text:gratitudeText.trim(),date:today()})
       .select().single();
-    if (!error&&data){
+    if (error) { console.error("Gratitude save error:", error); return; }
+    if (data){
       setGratitudes(prev=>[data,...prev]);
       setGratitudeText("");
       setGratitudeSaved(true);
@@ -1853,57 +1857,69 @@ export default function BloomyApp() {
             What are you grateful for today?
           </p>
 
-          {/* Jar visual */}
+          {/* SVG Gratitude Jar */}
           <div style={{textAlign:"center",marginBottom:20}}>
-            <div style={{
-              display:"inline-block",
-              background:`linear-gradient(135deg,${theme.mint}33,${theme.purple}22)`,
-              border:`3px solid ${theme.mint}66`,
-              borderRadius:"0 0 40px 40px",
-              borderTop:"none",
-              padding:"20px 24px 28px",
-              minWidth:200,
-              position:"relative",
-            }}>
-              {/* Jar lid */}
-              <div style={{
-                position:"absolute",top:-18,left:-4,right:-4,
-                background:theme.mint,borderRadius:"12px 12px 0 0",
-                height:18,opacity:0.8,
-              }}/>
+            <svg viewBox="0 0 260 280" width="220" height="240"
+              style={{overflow:"visible",display:"block",margin:"0 auto"}}>
+
+              {/* Jar shadow */}
+              <ellipse cx="130" cy="268" rx="70" ry="8" fill="rgba(0,0,0,0.08)"/>
+
+              {/* Jar body */}
+              <path d="M 60 100 Q 55 100 52 105 L 40 240 Q 38 260 60 265 L 200 265 Q 222 260 220 240 L 208 105 Q 205 100 200 100 Z"
+                fill={darkMode?"#2a1f4a":"#E8F5E9"} stroke={darkMode?"#4DB6AC":"#4DB6AC"} strokeWidth="3"/>
+
+              {/* Jar shine */}
+              <path d="M 75 115 Q 72 130 74 155" stroke="rgba(255,255,255,0.5)" strokeWidth="4"
+                fill="none" strokeLinecap="round"/>
+
+              {/* Jar neck */}
+              <rect x="75" y="80" width="110" height="24" rx="6"
+                fill={darkMode?"#2a1f4a":"#C8E6C9"} stroke="#4DB6AC" strokeWidth="3"/>
+
+              {/* Lid base */}
+              <rect x="65" y="58" width="130" height="28" rx="8"
+                fill="#4DB6AC"/>
+              {/* Lid top */}
+              <rect x="80" y="44" width="100" height="20" rx="6"
+                fill="#26A69A"/>
+              {/* Lid knob */}
+              <rect x="112" y="34" width="36" height="14" rx="7"
+                fill="#00897B"/>
+
+              {/* Gratitude slips inside jar */}
               {gratitudes.length===0?(
-                <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,
-                  color:theme.muted,margin:"20px 0",textAlign:"center"}}>
-                  Your jar is empty. Add your first gratitude!
-                </p>
+                <text x="130" y="190" textAnchor="middle"
+                  fontFamily={F.b} fontSize="12" fill={darkMode?"#9B8DB5":"#9B8DB5"}>
+                  Add your first gratitude!
+                </text>
               ):(
-                <div style={{display:"flex",flexWrap:"wrap",gap:8,
-                  justifyContent:"center",maxHeight:180,overflow:"hidden"}}>
-                  {gratitudes.slice(0,12).map((g,i)=>(
-                    <div key={g.id||i} style={{
-                      background:["#FFD54F","#F06292","#7C4DFF","#4DB6AC","#FF7043","#4FC3F7"][i%6],
-                      borderRadius:50,padding:"6px 14px",
-                      transform:`rotate(${(i%2===0?-1:1)*(Math.random()*4+1)}deg)`,
-                    }}>
-                      <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
-                        color:"#fff",margin:0,maxWidth:120,
-                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                        {g.text}
-                      </p>
-                    </div>
-                  ))}
-                  {gratitudes.length>12&&(
-                    <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
-                      color:theme.muted,margin:"4px 0 0",width:"100%",textAlign:"center"}}>
-                      +{gratitudes.length-12} more
-                    </p>
-                  )}
-                </div>
+                gratitudes.slice(0,8).map((g,i)=>{
+                  const colors=["#FFD54F","#F06292","#CE93D8","#4DB6AC","#FF8A65","#4FC3F7","#A5D6A7","#FFD54F"];
+                  const xPos = 70 + (i%3)*50 + (i%2)*8;
+                  const yPos = 130 + Math.floor(i/3)*40 + (i%2)*12;
+                  const rot = (i%2===0?-1:1)*(i*3%8+2);
+                  return (
+                    <g key={g.id||i} transform={`translate(${xPos},${yPos}) rotate(${rot})`}>
+                      <rect x="-28" y="-10" width="56" height="22" rx="4"
+                        fill={colors[i%colors.length]} opacity="0.95"/>
+                      <text x="0" y="6" textAnchor="middle"
+                        fontFamily={F.b} fontSize="9" fontWeight="700" fill="#fff">
+                        {g.text.length>10?g.text.slice(0,10)+"…":g.text}
+                      </text>
+                    </g>
+                  );
+                })
               )}
-            </div>
+
+              {/* Jar shine overlay — keeps shine on top of slips */}
+              <path d="M 75 115 Q 72 130 74 155" stroke="rgba(255,255,255,0.4)" strokeWidth="4"
+                fill="none" strokeLinecap="round"/>
+            </svg>
+
             <p style={{fontFamily:F.b,fontWeight:600,fontSize:13,
-              color:theme.muted,marginTop:8}}>
-              {gratitudes.length} gratitude{gratitudes.length!==1?"s":""} collected
+              color:theme.muted,marginTop:4}}>
+              {gratitudes.length} gratitude{gratitudes.length!==1?"s":""} in your jar
             </p>
           </div>
 
