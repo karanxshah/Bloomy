@@ -718,6 +718,12 @@ export default function BloomyApp() {
     }
   };
 
+  const loadGratitudes = async (childId)=>{
+    const {data,error} = await supabase.from("gratitudes")
+      .select("*").eq("child_id",childId).order("created_at",{ascending:false});
+    if (!error&&data) setGratitudes(data);
+  };
+
   const openChild = async (child)=>{
     setActiveChild(child);setTab("home");
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
