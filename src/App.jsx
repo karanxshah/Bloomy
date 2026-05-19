@@ -198,16 +198,57 @@ const MOOD_MESSAGES = {
   Worried: { title:"It's okay to feel worried.", sub:"You are safe and supported. One breath at a time." },
 };
 
-const AFFIRMATIONS = [
-  {text:"I am brave and strong.",   color:"#FF7043"},
-  {text:"I am loved just as I am.", color:"#EC407A"},
-  {text:"My feelings are valid.",   color:"#7E57C2"},
-  {text:"I can do hard things.",    color:"#1E88E5"},
-  {text:"I am kind and caring.",    color:"#43A047"},
-  {text:"I believe in myself.",     color:"#FF7043"},
-  {text:"Today is a great day.",    color:"#F9A825"},
-  {text:"I am enough.",             color:"#EC407A"},
+const ALL_AFFIRMATIONS = [
+  /* Uplifting — shown first when Amazing or Good */
+  {text:"I am brave and strong.",            color:"#FF7043", mood:"uplifting"},
+  {text:"Today is a great day.",             color:"#F9A825", mood:"uplifting"},
+  {text:"I believe in myself.",              color:"#FF7043", mood:"uplifting"},
+  {text:"I am capable of great things.",     color:"#F9A825", mood:"uplifting"},
+  {text:"I spread joy wherever I go.",       color:"#43A047", mood:"uplifting"},
+  {text:"My smile can light up a room.",     color:"#4FC3F7", mood:"uplifting"},
+  {text:"I am full of energy and life.",     color:"#FF7043", mood:"uplifting"},
+  {text:"Great things are coming my way.",   color:"#F9A825", mood:"uplifting"},
+  {text:"I make the world better.",          color:"#43A047", mood:"uplifting"},
+  {text:"I am proud of who I am.",           color:"#EC407A", mood:"uplifting"},
+  /* Comforting — shown first when Sad, Worried or Angry */
+  {text:"I am loved just as I am.",          color:"#EC407A", mood:"comforting"},
+  {text:"My feelings are valid.",            color:"#7E57C2", mood:"comforting"},
+  {text:"I am enough.",                      color:"#EC407A", mood:"comforting"},
+  {text:"It is okay to have hard days.",     color:"#7E57C2", mood:"comforting"},
+  {text:"I am never alone.",                 color:"#4DB6AC", mood:"comforting"},
+  {text:"I am safe and I am loved.",         color:"#EC407A", mood:"comforting"},
+  {text:"I can ask for help anytime.",       color:"#7E57C2", mood:"comforting"},
+  {text:"Hard feelings always pass.",        color:"#4DB6AC", mood:"comforting"},
+  {text:"I am stronger than I think.",       color:"#7E57C2", mood:"comforting"},
+  {text:"My heart is big and full of love.", color:"#EC407A", mood:"comforting"},
+  /* Growth — shown when Okay or no mood logged */
+  {text:"I am kind and caring.",             color:"#43A047", mood:"growth"},
+  {text:"I can do hard things.",             color:"#1E88E5", mood:"growth"},
+  {text:"Every day I grow a little more.",   color:"#43A047", mood:"growth"},
+  {text:"I learn something new every day.",  color:"#1E88E5", mood:"growth"},
+  {text:"I am curious and creative.",        color:"#FF7043", mood:"growth"},
+  {text:"Mistakes help me grow.",            color:"#4DB6AC", mood:"growth"},
+  {text:"I keep going even when it is hard.",color:"#1E88E5", mood:"growth"},
+  {text:"I am getting better every day.",    color:"#43A047", mood:"growth"},
+  {text:"I choose to be kind today.",        color:"#4DB6AC", mood:"growth"},
+  {text:"I am on my own special journey.",   color:"#F9A825", mood:"growth"},
 ];
+
+/* Sort affirmations by mood context */
+const getSortedAffirmations = (lastMood) => {
+  if (lastMood==="Amazing"||lastMood==="Good") {
+    return [...ALL_AFFIRMATIONS.filter(a=>a.mood==="uplifting"),
+            ...ALL_AFFIRMATIONS.filter(a=>a.mood!=="uplifting")];
+  }
+  if (lastMood==="Sad"||lastMood==="Worried"||lastMood==="Angry") {
+    return [...ALL_AFFIRMATIONS.filter(a=>a.mood==="comforting"),
+            ...ALL_AFFIRMATIONS.filter(a=>a.mood!=="comforting")];
+  }
+  return [...ALL_AFFIRMATIONS.filter(a=>a.mood==="growth"),
+          ...ALL_AFFIRMATIONS.filter(a=>a.mood!=="growth")];
+};
+
+const AFFIRMATIONS = ALL_AFFIRMATIONS; // keep for home card
 const BREATHING = [
   {phase:"Breathe In",  duration:4, color:C.sky},
   {phase:"Hold",        duration:2, color:C.purple},
@@ -457,6 +498,9 @@ export default function BloomyApp() {
   const [moodNote,setMoodNote]               = useState("");
   const [moodNoteStep,setMoodNoteStep]       = useState("log"); // log | note | done
   const [savingNote,setSavingNote]           = useState(false);
+  const [gratitudes,setGratitudes]           = useState([]);
+  const [gratitudeText,setGratitudeText]     = useState("");
+  const [gratitudeSaved,setGratitudeSaved]   = useState(false);
   const [affirmIdx,setAffirmIdx]             = useState(0);
   const [affirmAnim,setAffirmAnim]           = useState("idle"); // idle | swiping | entering
   const [breathPhase,setBreathPhase]         = useState(0);
@@ -656,12 +700,42 @@ export default function BloomyApp() {
     }
     setSaveLoading(false);
   };
+  const saveGratitude = async ()=>{
+    if (!gratitudeText.trim()||!activeChild) return;
+    const {data,error} = await supabase.from("gratitudes")
+      .insert({child_id:activeChild.id,text:gratitudeText.trim(),date:today()})
+      .select().single();
+    if (!error&&data){
+      setGratitudes(prev=>[data,...prev]);
+      setGratitudeText("");
+      setGratitudeSaved(true);
+      playSound("chime",soundOn);
+      setTimeout(()=>setGratitudeSaved(false),2000);
+    }
+  };
+
+  const saveGratitude = async ()=>{
+    if (!gratitudeText.trim()||!activeChild) return;
+    const {data,error} = await supabase.from("gratitudes")
+      .insert({child_id:activeChild.id,text:gratitudeText.trim(),date:today()})
+      .select().single();
+    if (!error&&data){
+      setGratitudes(prev=>[data,...prev]);
+      setGratitudeText("");
+      setGratitudeSaved(true);
+      playSound("chime",soundOn);
+      setTimeout(()=>setGratitudeSaved(false),2000);
+    }
+  };
+
   const openChild = async (child)=>{
     setActiveChild(child);setTab("home");
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
     setBreathActive(false);setBreathPhase(0);setBreathCount(0);
     setSeenTooltips(child.seen_tooltips || {});
+    setGratitudes([]);
     await loadChildData(child);
+    await loadGratitudes(child.id);
   };
 
   /* ── Computed ── */
@@ -670,6 +744,7 @@ export default function BloomyApp() {
   const streak = getStreak(moodLog);
   const week   = last7Days();
   const todayEntry = moodLog.slice().reverse().find(e=>e.date===today());
+  const lastMood = moodLog.length>0 ? moodLog[moodLog.length-1].mood : null;
   const badges = activeChild
     ? Object.fromEntries(BADGE_DEFS.map(b=>[b.id,b.check(moodLog,journals,
         activeChild.breath_sessions||0,activeChild.affirm_count||0)]))
@@ -1112,11 +1187,11 @@ export default function BloomyApp() {
       alignItems:"center",padding:"10px 0 20px",zIndex:100,
       boxShadow:darkMode?"0 -4px 20px rgba(0,0,0,0.3)":"0 -4px 20px rgba(124,77,255,0.07)"}}>
       {[
-        {id:"home",   icon:"home",  label:"Home"},
-        {id:"mood",   icon:"mood",  label:"Mood"},
-        {id:"affirm", icon:"star",  label:"Affirm"},
-        {id:"breathe",icon:"wind",  label:"Breathe"},
-        {id:"journal",icon:"book",  label:"Journal"},
+        {id:"home",      icon:"home",  label:"Home"},
+        {id:"mood",      icon:"mood",  label:"Mood"},
+        {id:"affirm",    icon:"star",  label:"Affirm"},
+        {id:"breathe",   icon:"wind",  label:"Breathe"},
+        {id:"gratitude", icon:"heart", label:"Grateful"},
       ].map(t=>(
         <button key={t.id} onClick={()=>setTab(t.id)} style={{
           background:"none",border:"none",cursor:"pointer",
@@ -1187,71 +1262,71 @@ export default function BloomyApp() {
       {/* ── HOME ── */}
       {tab==="home"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-            <div>
-              <p style={{color:theme.muted,fontWeight:600,fontSize:13,marginBottom:2}}>Good morning</p>
-              <h2 style={{fontFamily:F.h,fontSize:30,fontWeight:900,color:theme.text}}>{activeChild.name}</h2>
-            </div>
+
+          {/* Hero — mascot centred and prominent */}
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <p style={{color:theme.muted,fontWeight:600,fontSize:13,marginBottom:4}}>
+              Good morning
+            </p>
+            <h2 style={{fontFamily:F.h,fontSize:32,fontWeight:900,
+              color:theme.text,marginBottom:16}}>{activeChild.name}</h2>
             <button onClick={()=>setShowMascotRoom(true)} style={{
-              background:cm.bg,borderRadius:16,padding:10,border:"none",
-              cursor:"pointer",transition:"transform 0.15s",
-              boxShadow:`0 4px 16px ${cm.color}44`,
+              background:`linear-gradient(135deg,${cm.color}22,${theme.pink}11)`,
+              borderRadius:28,padding:"20px 24px",border:`2px solid ${cm.color}33`,
+              cursor:"pointer",display:"inline-flex",flexDirection:"column",
+              alignItems:"center",gap:12,transition:"transform 0.15s",
+              boxShadow:`0 8px 28px ${cm.color}33`,
             }}
-              onMouseDown={e=>e.currentTarget.style.transform="scale(0.92)"}
+              onMouseDown={e=>e.currentTarget.style.transform="scale(0.95)"}
               onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-              <GrowthMascot id={cm.id} size={52} stage={currentStage.id}/>
+              <GrowthMascot id={cm.id} size={110} stage={currentStage.id}/>
+              <div style={{display:"flex",alignItems:"center",gap:6,
+                background:cm.color,borderRadius:50,padding:"5px 14px"}}>
+                <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
+                  color:"#fff",margin:0,letterSpacing:0.5}}>
+                  {currentStage.name} · Tap to visit
+                </p>
+              </div>
             </button>
           </div>
 
           {/* Growth progress bar */}
           <GrowthProgressBar score={growthScore}/>
 
-          <Card style={{background:`linear-gradient(135deg,${cm.color} 0%,${theme.pink} 100%)`,padding:"24px 22px"}}>
-            <p style={{color:"rgba(255,255,255,0.8)",fontSize:12,fontWeight:700,
-              letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{cm.name} says</p>
-            <p style={{color:"#fff",fontSize:21,fontWeight:700,fontFamily:F.h,lineHeight:1.4,margin:0}}>
-              "{AFFIRMATIONS[affirmIdx].text}"
-            </p>
-          </Card>
-
-          {/* Mood card — always a real button so it's always clickable */}
-          <button
-            onClick={()=>setTab("mood")}
-            style={{
-              width:"100%", display:"flex", alignItems:"center", gap:14,
-              padding:"16px 20px", borderRadius:20, marginBottom:14,
-              border: todayEntry ? "none" : `2px dashed ${theme.purple}`,
-              background: todayEntry ? MOOD_BG[todayEntry.mood] : "#F7F4FF",
-              boxShadow: todayEntry ? "0 2px 18px rgba(124,77,255,0.09)" : "none",
-              cursor:"pointer", textAlign:"left",
-              transition:"transform 0.15s, box-shadow 0.15s",
-            }}
+          {/* Mood — hero action */}
+          <button onClick={()=>setTab("mood")} style={{
+            width:"100%",display:"flex",alignItems:"center",gap:14,
+            padding:"18px 20px",borderRadius:20,marginBottom:14,
+            border:todayEntry?"none":`2px dashed ${theme.purple}`,
+            background:todayEntry?MOOD_BG[todayEntry.mood]:theme.card,
+            boxShadow:todayEntry?"0 2px 18px rgba(124,77,255,0.09)":"none",
+            cursor:"pointer",textAlign:"left",transition:"transform 0.15s",
+          }}
             onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"}
             onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}
-            onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}
-          >
-            {todayEntry ? (
+            onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+            {todayEntry?(
               <>
-                <MoodFace type={todayEntry.mood} size={44}/>
+                <MoodFace type={todayEntry.mood} size={48}/>
                 <div style={{flex:1}}>
-                  <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
+                  <p style={{fontFamily:F.h,fontWeight:800,fontSize:17,
                     color:MOOD_COLORS[todayEntry.mood],margin:0}}>
                     Feeling {todayEntry.mood} today
                   </p>
                   <p style={{color:theme.muted,fontSize:13,fontWeight:500,margin:0}}>
-                    Tap to update
+                    Tap to update your mood
                   </p>
                 </div>
                 <Icon name="next" size={18} color={MOOD_COLORS[todayEntry.mood]}/>
               </>
-            ) : (
+            ):(
               <>
                 <div style={{background:theme.purple+"22",borderRadius:"50%",
-                  padding:10,flexShrink:0}}>
-                  <Icon name="mood" size={28} color={theme.purple}/>
+                  padding:12,flexShrink:0}}>
+                  <Icon name="mood" size={32} color={theme.purple}/>
                 </div>
                 <div style={{flex:1}}>
-                  <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
+                  <p style={{fontFamily:F.h,fontWeight:800,fontSize:17,
                     color:theme.text,margin:0}}>
                     How are you feeling?
                   </p>
@@ -1264,54 +1339,58 @@ export default function BloomyApp() {
             )}
           </button>
 
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+          {/* Affirmation of the day */}
+          <div style={{background:`linear-gradient(135deg,${cm.color},${theme.pink})`,
+            borderRadius:20,padding:"18px 20px",marginBottom:14,cursor:"pointer"}}
+            onClick={()=>setTab("affirm")}>
+            <p style={{color:"rgba(255,255,255,0.75)",fontSize:11,fontWeight:700,
+              letterSpacing:1,textTransform:"uppercase",margin:"0 0 6px"}}>
+              {cm.name}'s affirmation for you
+            </p>
+            <p style={{color:"#fff",fontSize:17,fontWeight:700,fontFamily:F.h,
+              lineHeight:1.4,margin:"0 0 10px"}}>
+              "{getSortedAffirmations(lastMood)[affirmIdx % 30].text}"
+            </p>
+            <p style={{color:"rgba(255,255,255,0.65)",fontSize:12,
+              fontWeight:600,margin:0}}>Tap to see more →</p>
+          </div>
+
+          {/* Quick actions — 3 clean tiles */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
             {[
-              {label:"Affirmations",icon:"star",  color:theme.purple, bg:"#EDE7F6",action:()=>setTab("affirm")},
-              {label:"Breathe",     icon:"wind",  color:theme.sky,    bg:"#E1F5FE",action:()=>setTab("breathe")},
-              {label:"My Journal",  icon:"book",  color:theme.pink,   bg:"#FCE4EC",action:()=>setTab("journal")},
-              {label:"My Mood",     icon:"mood",  color:"#43A047",bg:"#E8F5E9",action:()=>setTab("mood")},
+              {label:"Breathe",   icon:"wind",   color:theme.sky,  bg:"#E1F5FE", action:()=>setTab("breathe")},
+              {label:"Journal",   icon:"book",   color:theme.pink, bg:"#FCE4EC", action:()=>setTab("journal")},
+              {label:"Grateful",  icon:"heart",  color:"#43A047",  bg:"#E8F5E9", action:()=>setTab("gratitude")},
             ].map(item=>(
               <button key={item.label} onClick={item.action} style={{
                 background:item.bg,border:`1.5px solid ${item.color}22`,
-                borderRadius:18,padding:"18px 14px",cursor:"pointer",textAlign:"left",
+                borderRadius:18,padding:"16px 10px",cursor:"pointer",textAlign:"center",
                 transition:"transform 0.15s"}}
                 onMouseDown={e=>e.currentTarget.style.transform="scale(0.95)"}
                 onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-                <Icon name={item.icon} size={28} color={item.color} style={{marginBottom:10}}/>
-                <div style={{fontSize:14,fontWeight:700,color:item.color,fontFamily:F.b}}>{item.label}</div>
+                <Icon name={item.icon} size={26} color={item.color}
+                  style={{margin:"0 auto 8px"}}/>
+                <div style={{fontSize:13,fontWeight:700,color:item.color,
+                  fontFamily:F.b}}>{item.label}</div>
               </button>
             ))}
           </div>
 
+          {/* Streak */}
           {streak>0&&(
-            <Card style={{background:"linear-gradient(135deg,#FFD54F,#FF7043)",
-              display:"flex",alignItems:"center",gap:14,padding:"18px 20px"}}>
-              <Icon name="fire" size={36} color="#fff"/>
+            <div style={{background:"linear-gradient(135deg,#FFD54F,#FF7043)",
+              borderRadius:20,display:"flex",alignItems:"center",gap:14,
+              padding:"16px 20px",marginBottom:14}}>
+              <Icon name="fire" size={32} color="#fff"/>
               <div>
-                <p style={{color:"#fff",fontFamily:F.h,fontWeight:800,fontSize:20,margin:0}}>
+                <p style={{color:"#fff",fontFamily:F.h,fontWeight:800,fontSize:19,margin:0}}>
                   {streak}-Day Streak!
                 </p>
-                <p style={{color:"rgba(255,255,255,0.85)",fontSize:13,fontWeight:500,margin:0}}>
-                  Keep it up — you are doing great!
-                </p>
+                <p style={{color:"rgba(255,255,255,0.85)",fontSize:13,
+                  fontWeight:500,margin:0}}>Keep it up — you are doing great!</p>
               </div>
-            </Card>
-          )}
-
-          <Card>
-            <Label>My Badges</Label>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-              {BADGE_DEFS.map(b=>(
-                <div key={b.id} style={{background:badges[b.id]?"#F7F4FF":"#fafafa",
-                  borderRadius:14,padding:"14px 8px",textAlign:"center",opacity:badges[b.id]?1:0.3}}>
-                  <Icon name={b.icon} size={26} color={badges[b.id]?theme.purple:theme.muted}
-                    style={{margin:"0 auto 8px"}}/>
-                  <div style={{fontSize:11,fontWeight:700,fontFamily:F.b,lineHeight:1.3,
-                    color:badges[b.id]?theme.purple:theme.muted}}>{b.label}</div>
-                </div>
-              ))}
             </div>
-          </Card>
+          )}
         </div>
       )}
 
@@ -1509,7 +1588,7 @@ export default function BloomyApp() {
             {/* Active card */}
             <div style={{
               position:"absolute",top:0,left:0,right:0,bottom:0,
-              background:`linear-gradient(135deg,${AFFIRMATIONS[affirmIdx].color},${theme.pink})`,
+              background:`linear-gradient(135deg,${getSortedAffirmations(lastMood)[affirmIdx%30].color},${theme.pink})`,
               borderRadius:24,padding:"36px 28px",
               display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
               boxShadow:`0 10px 36px ${AFFIRMATIONS[affirmIdx].color}44`,
@@ -1523,7 +1602,7 @@ export default function BloomyApp() {
               <Icon name="star" size={40} color="rgba(255,255,255,0.6)" style={{marginBottom:16}}/>
               <p style={{color:"#fff",fontSize:24,fontWeight:800,fontFamily:F.h,
                 lineHeight:1.35,margin:"0 0 16px"}}>
-                {AFFIRMATIONS[affirmIdx].text}
+                {getSortedAffirmations(lastMood)[affirmIdx%30].text}
               </p>
               <div style={{display:"flex",alignItems:"center",gap:6,
                 color:"rgba(255,255,255,0.65)",fontSize:13,fontWeight:600}}>
@@ -1534,10 +1613,10 @@ export default function BloomyApp() {
 
           {/* Dot indicators */}
           <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:20}}>
-            {AFFIRMATIONS.map((_,i)=>(
+            {Array.from({length:10},(_,i)=>(
               <div key={i} onClick={()=>setAffirmIdx(i)} style={{
-                width:i===affirmIdx?22:7,height:7,borderRadius:50,
-                background:i===affirmIdx?theme.purple:"#DDD",
+                width:i===(affirmIdx%10)?22:7,height:7,borderRadius:50,
+                background:i===(affirmIdx%10)?theme.purple:"#DDD",
                 transition:"all 0.3s",cursor:"pointer"}}/>
             ))}
           </div>
@@ -1561,11 +1640,11 @@ export default function BloomyApp() {
 
           <Card bg={theme.card} shadow={darkMode?"0 2px 18px rgba(0,0,0,0.3)":undefined}>
             <Label color={theme.muted}>All Affirmations</Label>
-            {AFFIRMATIONS.map((a,i)=>(
+            {getSortedAffirmations(lastMood).map((a,i)=>(
               <div key={i} onClick={()=>setAffirmIdx(i)} style={{
                 display:"flex",alignItems:"center",gap:14,padding:"11px 0",
-                borderBottom:i<AFFIRMATIONS.length-1?`1px solid ${theme.border}`:"none",
-                cursor:"pointer",opacity:affirmIdx===i?1:0.5,transition:"opacity 0.2s"}}>
+                borderBottom:i<29?`1px solid ${theme.border}`:"none",
+                cursor:"pointer",opacity:(affirmIdx%30)===i?1:0.5,transition:"opacity 0.2s"}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:a.color,flexShrink:0}}/>
                 <span style={{fontWeight:600,color:theme.text,fontSize:15,fontFamily:F.b}}>{a.text}</span>
               </div>
@@ -1774,6 +1853,128 @@ export default function BloomyApp() {
                 </div>
               ))}
             </Card>
+          )}
+        </div>
+      )}
+
+      {/* ── GRATITUDE JAR ── */}
+      {tab==="gratitude"&&(
+        <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
+          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:theme.text,marginBottom:4}}>
+            Gratitude Jar
+          </h2>
+          <p style={{color:theme.muted,fontSize:15,marginBottom:18,fontWeight:500}}>
+            What are you grateful for today?
+          </p>
+
+          {/* Jar visual */}
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{
+              display:"inline-block",
+              background:`linear-gradient(135deg,${theme.mint}33,${theme.purple}22)`,
+              border:`3px solid ${theme.mint}66`,
+              borderRadius:"0 0 40px 40px",
+              borderTop:"none",
+              padding:"20px 24px 28px",
+              minWidth:200,
+              position:"relative",
+            }}>
+              {/* Jar lid */}
+              <div style={{
+                position:"absolute",top:-18,left:-4,right:-4,
+                background:theme.mint,borderRadius:"12px 12px 0 0",
+                height:18,opacity:0.8,
+              }}/>
+              {gratitudes.length===0?(
+                <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,
+                  color:theme.muted,margin:"20px 0",textAlign:"center"}}>
+                  Your jar is empty.{"
+"}Add your first gratitude!
+                </p>
+              ):(
+                <div style={{display:"flex",flexWrap:"wrap",gap:8,
+                  justifyContent:"center",maxHeight:180,overflow:"hidden"}}>
+                  {gratitudes.slice(0,12).map((g,i)=>(
+                    <div key={g.id||i} style={{
+                      background:["#FFD54F","#F06292","#7C4DFF","#4DB6AC","#FF7043","#4FC3F7"][i%6],
+                      borderRadius:50,padding:"6px 14px",
+                      transform:`rotate(${(i%2===0?-1:1)*(Math.random()*4+1)}deg)`,
+                    }}>
+                      <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
+                        color:"#fff",margin:0,maxWidth:120,
+                        overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        {g.text}
+                      </p>
+                    </div>
+                  ))}
+                  {gratitudes.length>12&&(
+                    <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
+                      color:theme.muted,margin:"4px 0 0",width:"100%",textAlign:"center"}}>
+                      +{gratitudes.length-12} more
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+            <p style={{fontFamily:F.b,fontWeight:600,fontSize:13,
+              color:theme.muted,marginTop:8}}>
+              {gratitudes.length} gratitude{gratitudes.length!==1?"s":""} collected
+            </p>
+          </div>
+
+          {/* Add new gratitude */}
+          <div style={{background:theme.card,borderRadius:20,padding:"20px",
+            boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14}}>
+            <p style={{fontFamily:F.h,fontWeight:800,fontSize:17,
+              color:theme.text,margin:"0 0 12px"}}>
+              Add to your jar
+            </p>
+            <textarea
+              value={gratitudeText}
+              onChange={e=>setGratitudeText(e.target.value)}
+              placeholder="I am grateful for..."
+              maxLength={150}
+              style={{width:"100%",minHeight:80,border:`2px solid ${theme.border}`,
+                borderRadius:16,padding:"12px 14px",fontSize:15,fontFamily:F.b,
+                fontWeight:500,color:theme.text,background:theme.bg,
+                lineHeight:1.7,resize:"none",outline:"none",display:"block",
+                marginBottom:12}}
+              onFocus={e=>e.target.style.border=`2px solid ${theme.mint}`}
+              onBlur={e=>e.target.style.border=`2px solid ${theme.border}`}
+            />
+            <Btn onClick={saveGratitude} disabled={!gratitudeText.trim()}
+              color={gratitudeSaved?theme.mint:"#43A047"}
+              style={{width:"100%",justifyContent:"center"}}
+              icon={gratitudeSaved?"check":"plus"}>
+              {gratitudeSaved?"Added to your jar!":"Add to Jar"}
+            </Btn>
+          </div>
+
+          {/* Past gratitudes */}
+          {gratitudes.length>0&&(
+            <div style={{background:theme.card,borderRadius:20,padding:"20px",
+              boxShadow:"0 2px 18px rgba(124,77,255,0.09)"}}>
+              <Label color={theme.muted}>Recent Gratitudes</Label>
+              {gratitudes.slice(0,8).map((g,i)=>(
+                <div key={g.id||i} style={{
+                  display:"flex",alignItems:"flex-start",gap:12,
+                  padding:"10px 0",
+                  borderBottom:i<Math.min(7,gratitudes.length-1)?`1px solid ${theme.border}`:"none"}}>
+                  <div style={{
+                    width:10,height:10,borderRadius:"50%",flexShrink:0,marginTop:5,
+                    background:["#FFD54F","#F06292","#7C4DFF","#4DB6AC","#FF7043","#4FC3F7"][i%6],
+                  }}/>
+                  <div style={{flex:1}}>
+                    <p style={{fontFamily:F.b,fontWeight:600,fontSize:14,
+                      color:theme.text,margin:0,lineHeight:1.6}}>{g.text}</p>
+                    <p style={{fontFamily:F.b,fontWeight:500,fontSize:11,
+                      color:theme.muted,margin:"2px 0 0"}}>
+                      {g.date===today()?"Today":g.date}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
