@@ -60,6 +60,159 @@ const nextStage = (score) => {
 /* ══════════════════════════════════════════════
    GARDEN SCENE — evolves per stage
 ══════════════════════════════════════════════ */
+export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
+  const s = size;
+  const vb = "0 0 80 80";
+
+  const bases = {
+    fox: <>
+      <ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/>
+      <polygon points="13,18 26,44 38,24" fill="#FF7043"/>
+      <polygon points="67,18 54,44 42,24" fill="#FF7043"/>
+      <ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/>
+      <circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/>
+      <circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/>
+      <circle cx="32" cy="41" r="1" fill="#fff"/><circle cx="52" cy="41" r="1" fill="#fff"/>
+      <ellipse cx="40" cy="53" rx="5" ry="3.5" fill="#EF5350"/>
+      {stage>=1?<path d="M34 57 Q40 63 46 57" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
+               :<path d="M36 56 Q40 60 44 56" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+    </>,
+    bunny: <>
+      <ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
+      <ellipse cx="53" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
+      <ellipse cx="40" cy="50" rx="26" ry="22" fill="#FCE4EC"/>
+      <ellipse cx="40" cy="55" rx="14" ry="10" fill="#F8BBD0"/>
+      <circle cx="30" cy="46" r="5" fill="#fff"/><circle cx="50" cy="46" r="5" fill="#fff"/>
+      <circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/>
+      <circle cx="32" cy="46" r="1" fill="#fff"/><circle cx="52" cy="46" r="1" fill="#fff"/>
+      <ellipse cx="40" cy="57" rx="5" ry="3" fill="#F48FB1"/>
+      {stage>=1?<path d="M34 61 Q40 67 46 61" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
+               :<path d="M36 60 Q40 64 44 60" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+    </>,
+    bear: <>
+      <circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/>
+      <ellipse cx="40" cy="50" rx="27" ry="23" fill="#8D6E63"/>
+      <ellipse cx="40" cy="56" rx="16" ry="11" fill="#BCAAA4"/>
+      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
+      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
+      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
+      <ellipse cx="40" cy="58" rx="5" ry="3.5" fill="#795548"/>
+      {stage>=1?<path d="M34 62 Q40 68 46 62" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
+               :<path d="M36 61 Q40 65 44 61" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+    </>,
+    owl: <>
+      <ellipse cx="40" cy="48" rx="26" ry="26" fill="#7E57C2"/>
+      <ellipse cx="40" cy="52" rx="18" ry="18" fill="#B39DDB"/>
+      <ellipse cx="22" cy="24" rx="7" ry="9" fill="#7E57C2"/>
+      <ellipse cx="58" cy="24" rx="7" ry="9" fill="#7E57C2"/>
+      <circle cx="29" cy="43" r="9" fill="#fff"/><circle cx="51" cy="43" r="9" fill="#fff"/>
+      <circle cx="29" cy="44" r="5" fill="#4527A0"/><circle cx="51" cy="44" r="5" fill="#4527A0"/>
+      <circle cx="30" cy="43" r="2" fill="#fff"/><circle cx="52" cy="43" r="2" fill="#fff"/>
+      <polygon points="40,51 37,56 43,56" fill="#FFA726"/>
+      {stage>=1&&<path d="M34 60 Q40 65 46 60" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>}
+    </>,
+    cat: <>
+      <polygon points="17,30 12,10 30,26" fill="#26A69A"/>
+      <polygon points="63,30 68,10 50,26" fill="#26A69A"/>
+      <ellipse cx="40" cy="50" rx="26" ry="23" fill="#4DB6AC"/>
+      <ellipse cx="40" cy="55" rx="15" ry="11" fill="#B2DFDB"/>
+      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
+      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
+      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
+      <ellipse cx="40" cy="57" rx="5" ry="3" fill="#FF8A80"/>
+      {stage>=1?<path d="M34 61 Q40 67 46 61" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
+               :<path d="M36 60 Q40 64 44 60" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+    </>,
+    dog: <>
+      <ellipse cx="16" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(-20 16 36)"/>
+      <ellipse cx="64" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(20 64 36)"/>
+      <ellipse cx="40" cy="50" rx="27" ry="23" fill="#FFB74D"/>
+      <ellipse cx="40" cy="56" rx="17" ry="12" fill="#FFE0B2"/>
+      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
+      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
+      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
+      <ellipse cx="40" cy="58" rx="6" ry="4" fill="#FF7043"/>
+      {stage>=1?<path d="M34 63 Q40 69 46 63" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
+               :<path d="M36 62 Q40 66 44 62" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+    </>,
+  };
+
+  const LeafCrown = () => (
+    <g>
+      {[-20,-10,0,10,20].map((x,i)=>(
+        <ellipse key={i} cx={40+x} cy={14} rx={5} ry={8}
+          fill="#66BB6A" transform={`rotate(${x*1.5} ${40+x} 14)`} opacity="0.9"/>
+      ))}
+    </g>
+  );
+
+  const FlowerCrown = () => (
+    <g>
+      <ellipse cx="40" cy="16" rx="22" ry="4" fill="#CE93D8" opacity="0.5"/>
+      {[20,30,40,50,60].map((x,i)=>(
+        <g key={i}>
+          <circle cx={x} cy={13} r={4} fill={["#F48FB1","#FFD54F","#A5D6A7","#F48FB1","#FFD54F"][i]}/>
+          <circle cx={x} cy={13} r={2} fill="#fff" opacity="0.6"/>
+        </g>
+      ))}
+    </g>
+  );
+
+  const GlowEffect = () => (
+    <g>
+      <circle cx="40" cy="42" r="38" fill="none" stroke="#FFD54F" strokeWidth="2" opacity="0.3"/>
+      {[{x:8,y:10},{x:72,y:10},{x:5,y:50},{x:75,y:50},{x:20,y:76},{x:60,y:76}].map((p,i)=>(
+        <g key={i}>
+          <line x1={p.x} y1={p.y-4} x2={p.x} y2={p.y+4} stroke="#FFD54F" strokeWidth="1.5" opacity="0.8"/>
+          <line x1={p.x-4} y1={p.y} x2={p.x+4} y2={p.y} stroke="#FFD54F" strokeWidth="1.5" opacity="0.8"/>
+        </g>
+      ))}
+    </g>
+  );
+
+  const RainbowHalo = () => (
+    <g>
+      {["#FF7043","#FFD54F","#66BB6A","#4FC3F7","#7C4DFF","#F48FB1"].map((c,i)=>(
+        <circle key={i} cx="40" cy="42" r={36+i*2} fill="none"
+          stroke={c} strokeWidth="1.5" opacity={0.2-i*0.02}/>
+      ))}
+      <polygon points="40,2 42,10 50,10 44,15 46,23 40,18 34,23 36,15 30,10 38,10"
+        fill="#FFD54F" opacity="0.9"/>
+    </g>
+  );
+
+  const LegendaryCrown = () => (
+    <g>
+      {["#FF7043","#FFD54F","#66BB6A","#4FC3F7","#7C4DFF","#F48FB1"].map((c,i)=>(
+        <circle key={i} cx="40" cy="42" r={36+i*2.5} fill="none"
+          stroke={c} strokeWidth="2" opacity={0.25-i*0.03}/>
+      ))}
+      <polygon points="40,0 43,9 52,9 45,14 48,23 40,17 32,23 35,14 28,9 37,9"
+        fill="#FFD54F"/>
+      {[-14,0,14].map((x,i)=>(
+        <circle key={i} cx={40+x} cy={6} r={3}
+          fill={["#FF7043","#fff","#4FC3F7"][i]}/>
+      ))}
+    </g>
+  );
+
+  return (
+    <svg width={s} height={s} viewBox={vb}>
+      {stage>=6&&<LegendaryCrown/>}
+      {stage===5&&<RainbowHalo/>}
+      {stage>=4&&stage<5&&<GlowEffect/>}
+      {bases[id]||bases.fox}
+      {stage===1&&<LeafCrown/>}
+      {(stage===2||stage===3)&&<FlowerCrown/>}
+      {stage>=4&&stage<5&&<FlowerCrown/>}
+      {stage>=5&&<FlowerCrown/>}
+    </svg>
+  );
+};
+
+/* ══════════════════════════════════════════════
+   SEED EARNING POPUP
+══════════════════════════════════════════════ */
 export const GardenScene = ({ stage, mascotId, size = 280, dark }) => {
   const w = size;
   const h = size * 0.75;
@@ -239,159 +392,6 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark }) => {
 
 /* ══════════════════════════════════════════════
    GROWTH MASCOT (face only — used in small contexts)
-══════════════════════════════════════════════ */
-export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
-  const s = size;
-  const vb = "0 0 80 80";
-
-  const bases = {
-    fox: <>
-      <ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/>
-      <polygon points="13,18 26,44 38,24" fill="#FF7043"/>
-      <polygon points="67,18 54,44 42,24" fill="#FF7043"/>
-      <ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/>
-      <circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/>
-      <circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/>
-      <circle cx="32" cy="41" r="1" fill="#fff"/><circle cx="52" cy="41" r="1" fill="#fff"/>
-      <ellipse cx="40" cy="53" rx="5" ry="3.5" fill="#EF5350"/>
-      {stage>=1?<path d="M34 57 Q40 63 46 57" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 56 Q40 60 44 56" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
-    </>,
-    bunny: <>
-      <ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
-      <ellipse cx="53" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
-      <ellipse cx="40" cy="50" rx="26" ry="22" fill="#FCE4EC"/>
-      <ellipse cx="40" cy="55" rx="14" ry="10" fill="#F8BBD0"/>
-      <circle cx="30" cy="46" r="5" fill="#fff"/><circle cx="50" cy="46" r="5" fill="#fff"/>
-      <circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/>
-      <circle cx="32" cy="46" r="1" fill="#fff"/><circle cx="52" cy="46" r="1" fill="#fff"/>
-      <ellipse cx="40" cy="57" rx="5" ry="3" fill="#F48FB1"/>
-      {stage>=1?<path d="M34 61 Q40 67 46 61" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 60 Q40 64 44 60" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
-    </>,
-    bear: <>
-      <circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/>
-      <ellipse cx="40" cy="50" rx="27" ry="23" fill="#8D6E63"/>
-      <ellipse cx="40" cy="56" rx="16" ry="11" fill="#BCAAA4"/>
-      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
-      <ellipse cx="40" cy="58" rx="5" ry="3.5" fill="#795548"/>
-      {stage>=1?<path d="M34 62 Q40 68 46 62" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 61 Q40 65 44 61" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
-    </>,
-    owl: <>
-      <ellipse cx="40" cy="48" rx="26" ry="26" fill="#7E57C2"/>
-      <ellipse cx="40" cy="52" rx="18" ry="18" fill="#B39DDB"/>
-      <ellipse cx="22" cy="24" rx="7" ry="9" fill="#7E57C2"/>
-      <ellipse cx="58" cy="24" rx="7" ry="9" fill="#7E57C2"/>
-      <circle cx="29" cy="43" r="9" fill="#fff"/><circle cx="51" cy="43" r="9" fill="#fff"/>
-      <circle cx="29" cy="44" r="5" fill="#4527A0"/><circle cx="51" cy="44" r="5" fill="#4527A0"/>
-      <circle cx="30" cy="43" r="2" fill="#fff"/><circle cx="52" cy="43" r="2" fill="#fff"/>
-      <polygon points="40,51 37,56 43,56" fill="#FFA726"/>
-      {stage>=1&&<path d="M34 60 Q40 65 46 60" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>}
-    </>,
-    cat: <>
-      <polygon points="17,30 12,10 30,26" fill="#26A69A"/>
-      <polygon points="63,30 68,10 50,26" fill="#26A69A"/>
-      <ellipse cx="40" cy="50" rx="26" ry="23" fill="#4DB6AC"/>
-      <ellipse cx="40" cy="55" rx="15" ry="11" fill="#B2DFDB"/>
-      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
-      <ellipse cx="40" cy="57" rx="5" ry="3" fill="#FF8A80"/>
-      {stage>=1?<path d="M34 61 Q40 67 46 61" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 60 Q40 64 44 60" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
-    </>,
-    dog: <>
-      <ellipse cx="16" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(-20 16 36)"/>
-      <ellipse cx="64" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(20 64 36)"/>
-      <ellipse cx="40" cy="50" rx="27" ry="23" fill="#FFB74D"/>
-      <ellipse cx="40" cy="56" rx="17" ry="12" fill="#FFE0B2"/>
-      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
-      <ellipse cx="40" cy="58" rx="6" ry="4" fill="#FF7043"/>
-      {stage>=1?<path d="M34 63 Q40 69 46 63" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 62 Q40 66 44 62" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
-    </>,
-  };
-
-  const LeafCrown = () => (
-    <g>
-      {[-20,-10,0,10,20].map((x,i)=>(
-        <ellipse key={i} cx={40+x} cy={14} rx={5} ry={8}
-          fill="#66BB6A" transform={`rotate(${x*1.5} ${40+x} 14)`} opacity="0.9"/>
-      ))}
-    </g>
-  );
-
-  const FlowerCrown = () => (
-    <g>
-      <ellipse cx="40" cy="16" rx="22" ry="4" fill="#CE93D8" opacity="0.5"/>
-      {[20,30,40,50,60].map((x,i)=>(
-        <g key={i}>
-          <circle cx={x} cy={13} r={4} fill={["#F48FB1","#FFD54F","#A5D6A7","#F48FB1","#FFD54F"][i]}/>
-          <circle cx={x} cy={13} r={2} fill="#fff" opacity="0.6"/>
-        </g>
-      ))}
-    </g>
-  );
-
-  const GlowEffect = () => (
-    <g>
-      <circle cx="40" cy="42" r="38" fill="none" stroke="#FFD54F" strokeWidth="2" opacity="0.3"/>
-      {[{x:8,y:10},{x:72,y:10},{x:5,y:50},{x:75,y:50},{x:20,y:76},{x:60,y:76}].map((p,i)=>(
-        <g key={i}>
-          <line x1={p.x} y1={p.y-4} x2={p.x} y2={p.y+4} stroke="#FFD54F" strokeWidth="1.5" opacity="0.8"/>
-          <line x1={p.x-4} y1={p.y} x2={p.x+4} y2={p.y} stroke="#FFD54F" strokeWidth="1.5" opacity="0.8"/>
-        </g>
-      ))}
-    </g>
-  );
-
-  const RainbowHalo = () => (
-    <g>
-      {["#FF7043","#FFD54F","#66BB6A","#4FC3F7","#7C4DFF","#F48FB1"].map((c,i)=>(
-        <circle key={i} cx="40" cy="42" r={36+i*2} fill="none"
-          stroke={c} strokeWidth="1.5" opacity={0.2-i*0.02}/>
-      ))}
-      <polygon points="40,2 42,10 50,10 44,15 46,23 40,18 34,23 36,15 30,10 38,10"
-        fill="#FFD54F" opacity="0.9"/>
-    </g>
-  );
-
-  const LegendaryCrown = () => (
-    <g>
-      {["#FF7043","#FFD54F","#66BB6A","#4FC3F7","#7C4DFF","#F48FB1"].map((c,i)=>(
-        <circle key={i} cx="40" cy="42" r={36+i*2.5} fill="none"
-          stroke={c} strokeWidth="2" opacity={0.25-i*0.03}/>
-      ))}
-      <polygon points="40,0 43,9 52,9 45,14 48,23 40,17 32,23 35,14 28,9 37,9"
-        fill="#FFD54F"/>
-      {[-14,0,14].map((x,i)=>(
-        <circle key={i} cx={40+x} cy={6} r={3}
-          fill={["#FF7043","#fff","#4FC3F7"][i]}/>
-      ))}
-    </g>
-  );
-
-  return (
-    <svg width={s} height={s} viewBox={vb}>
-      {stage>=6&&<LegendaryCrown/>}
-      {stage===5&&<RainbowHalo/>}
-      {stage>=4&&stage<5&&<GlowEffect/>}
-      {bases[id]||bases.fox}
-      {stage===1&&<LeafCrown/>}
-      {(stage===2||stage===3)&&<FlowerCrown/>}
-      {stage>=4&&stage<5&&<FlowerCrown/>}
-      {stage>=5&&<FlowerCrown/>}
-    </svg>
-  );
-};
-
-/* ══════════════════════════════════════════════
-   SEED EARNING POPUP
 ══════════════════════════════════════════════ */
 export const SeedPopup = ({ amount, visible }) => {
   if (!visible) return null;
