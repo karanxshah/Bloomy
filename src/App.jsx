@@ -521,8 +521,15 @@ export default function BloomyApp() {
   const [dailyMissions,setDailyMissions]     = useState([]);
   const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0});
   const [streakShield,setStreakShield]       = useState(false);
+  const [showAllAffirm,setShowAllAffirm]    = useState(false);
   const touchStartX                          = useRef(null);
   const touchStartY                          = useRef(null);
+
+  /* ── Seed popup helper ── */
+  const showSeedPopup = (amount) => {
+    setSeedPopup({visible:true, amount});
+    setTimeout(()=>setSeedPopup({visible:false, amount:0}), 1800);
+  };
 
   /* ── Derive colour palette from dark mode ── */
   const theme = darkMode ? DARK : LIGHT;
@@ -1253,6 +1260,7 @@ export default function BloomyApp() {
           onClose={()=>setShowSettings(false)} C={theme}
         />
       )}
+      <SeedPopup visible={seedPopup.visible} amount={seedPopup.amount}/>
       <NavBar/>
       {celebration !== null && (
         <GrowthCelebration
@@ -1264,12 +1272,23 @@ export default function BloomyApp() {
       )}
       <div style={{paddingTop:18,display:"flex",justifyContent:"space-between",
         alignItems:"center",marginBottom:4}}>
-        <button onClick={()=>{setActiveChild(null);setBreathActive(false);}} style={{
-          background:"none",border:"none",cursor:"pointer",
-          display:"flex",alignItems:"center",gap:5,
-          color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
-          <Icon name="back" size={18} color={theme.muted}/> Profiles
-        </button>
+        {tab!=="home" ? (
+          /* Sub-tabs: back arrow returns to child home only */
+          <button onClick={()=>setTab("home")} style={{
+            background:"none",border:"none",cursor:"pointer",
+            display:"flex",alignItems:"center",gap:5,
+            color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
+            <Icon name="back" size={18} color={theme.muted}/> Home
+          </button>
+        ) : (
+          /* Child home: back arrow goes to parent profiles */
+          <button onClick={()=>{setActiveChild(null);setBreathActive(false);}} style={{
+            background:"none",border:"none",cursor:"pointer",
+            display:"flex",alignItems:"center",gap:5,
+            color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
+            <Icon name="back" size={18} color={theme.muted}/> Profiles
+          </button>
+        )}
         <span style={{fontSize:13,fontWeight:700,color:theme.muted,fontFamily:F.b}}>
           {activeChild.name}
         </span>
@@ -1320,8 +1339,16 @@ export default function BloomyApp() {
                 </div>
               </div>
               {dailyMissions.map((m,i)=>(
-                <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,
-                  padding:"8px 0",borderBottom:i<dailyMissions.length-1?`1px solid ${theme.border}`:"none"}}>
+                <button key={m.id} onClick={()=>!m.done && setTab(m.id)} style={{
+                  display:"flex",alignItems:"center",gap:12,
+                  padding:"10px 12px",
+                  borderBottom:i<dailyMissions.length-1?`1px solid ${theme.border}`:"none",
+                  background:m.done?"transparent":theme.bg,
+                  border:"none",width:"100%",textAlign:"left",cursor:m.done?"default":"pointer",
+                  borderRadius:12,marginBottom:i<dailyMissions.length-1?2:0,
+                  transition:"background 0.15s"}}
+                  onMouseEnter={e=>{if(!m.done)e.currentTarget.style.background=theme.border;}}
+                  onMouseLeave={e=>e.currentTarget.style.background=m.done?"transparent":theme.bg}>
                   <div style={{width:22,height:22,borderRadius:"50%",flexShrink:0,
                     background:m.done?"#43A047":"#f0f0f0",
                     border:`2px solid ${m.done?"#43A047":theme.border}`,
@@ -1342,7 +1369,8 @@ export default function BloomyApp() {
                     <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
                       color:"#43A047",margin:0}}>+{m.seeds}</p>
                   </div>
-                </div>
+                  {!m.done&&<Icon name="next" size={14} color={theme.muted}/>}
+                </button>
               ))}
             </div>
           )}
@@ -1707,27 +1735,44 @@ export default function BloomyApp() {
           </Card>
 
           <Card bg={theme.card} shadow={darkMode?"0 2px 18px rgba(0,0,0,0.3)":undefined}>
-            <Label color={theme.muted}>All Affirmations</Label>
-            {getSortedAffirmations(lastMood).map((a,i)=>(
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <Label color={theme.muted} style={{margin:0}}>All Affirmations</Label>
+              <button onClick={()=>setShowAllAffirm(s=>!s)} style={{
+                background:theme.purple+"18",border:"none",borderRadius:50,
+                padding:"4px 12px",cursor:"pointer",
+                color:theme.purple,fontFamily:F.b,fontWeight:700,fontSize:12}}>
+                {showAllAffirm?"Show less":"See all 30"}
+              </button>
+            </div>
+            {getSortedAffirmations(lastMood).slice(0, showAllAffirm?30:5).map((a,i)=>(
               <div key={i} onClick={()=>setAffirmIdx(i)} style={{
                 display:"flex",alignItems:"center",gap:14,padding:"11px 0",
-                borderBottom:i<29?`1px solid ${theme.border}`:"none",
+                borderBottom:i<(showAllAffirm?29:4)?`1px solid ${theme.border}`:"none",
                 cursor:"pointer",opacity:(affirmIdx%30)===i?1:0.5,transition:"opacity 0.2s"}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:a.color,flexShrink:0}}/>
                 <span style={{fontWeight:600,color:theme.text,fontSize:15,fontFamily:F.b}}>{a.text}</span>
               </div>
             ))}
+            {!showAllAffirm&&(
+              <button onClick={()=>setShowAllAffirm(true)} style={{
+                width:"100%",marginTop:8,background:theme.purple+"10",
+                border:`1.5px dashed ${theme.purple}44`,borderRadius:12,
+                padding:"10px",cursor:"pointer",
+                color:theme.purple,fontFamily:F.b,fontWeight:700,fontSize:13}}>
+                + Show 25 more affirmations
+              </button>
+            )}
           </Card>
         </div>
       )}
 
       {/* ── BREATHE ── */}
       {tab==="breathe"&&(
-        <div style={{paddingTop:12,textAlign:"center",animation:"fadeIn 0.4s ease"}}>
-          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:theme.text,marginBottom:4}}>
+        <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
+          <h2 style={{fontFamily:F.h,fontSize:28,fontWeight:800,color:theme.text,marginBottom:4,textAlign:"center"}}>
             Breathe With Me
           </h2>
-          <p style={{color:theme.muted,fontSize:15,marginBottom:12,fontWeight:500}}>
+          <p style={{color:theme.muted,fontSize:15,marginBottom:16,fontWeight:500,textAlign:"center"}}>
             Let's calm down together.
           </p>
           <div style={{textAlign:"left"}}>
@@ -1743,31 +1788,9 @@ export default function BloomyApp() {
               }
             }}/>
           </div>
-          <div style={{position:"relative",display:"inline-flex",
-            alignItems:"center",justifyContent:"center",marginBottom:28}}>
-            <div style={{width:220,height:220,borderRadius:"50%",position:"absolute",
-              background:`radial-gradient(circle,${BREATHING[breathPhase].color}20,transparent 70%)`,
-              border:`3px solid ${BREATHING[breathPhase].color}40`,
-              animation:breathActive?"pulse 2s ease-in-out infinite":"none",
-              transition:"all 1.2s ease"}}/>
-            <div style={{width:160,height:160,borderRadius:"50%",
-              background:`${BREATHING[breathPhase].color}16`,
-              border:`2.5px solid ${BREATHING[breathPhase].color}80`,
-              display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-              transition:"all 1.2s ease"}}>
-              <GrowthMascot id={cm.id} size={62} stage={currentStage.id} />
-              <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
-                color:BREATHING[breathPhase].color,marginTop:6,marginBottom:0}}>
-                {breathActive?BREATHING[breathPhase].phase:"Ready"}
-              </p>
-              {breathActive&&(
-                <p style={{color:theme.muted,fontSize:13,fontWeight:600,marginBottom:0}}>
-                  {BREATHING[breathPhase].duration}s
-                </p>
-              )}
-            </div>
-          </div>
-          <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:28}}>
+
+          {/* Phase labels row */}
+          <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:20}}>
             {BREATHING.map((b,i)=>(
               <div key={b.phase} style={{
                 background:breathPhase===i&&breathActive?b.color:"#EEE9FF",
@@ -1776,18 +1799,52 @@ export default function BloomyApp() {
                 fontFamily:F.b,transition:"all 0.6s"}}>{b.phase}</div>
             ))}
           </div>
-          <Btn onClick={()=>{
-            setBreathActive(!breathActive);
-            if(!breathActive){setBreathPhase(0);setBreathCount(0);}
-          }} color={breathActive?"#EF5350":theme.mint} style={{marginBottom:18}}>
-            {breathActive?"Stop":"Start Breathing"}
-          </Btn>
+
+          {/* Breathing circle — contained, no overflow */}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:24}}>
+            <div style={{position:"relative",width:220,height:220,
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <div style={{width:220,height:220,borderRadius:"50%",position:"absolute",
+                background:`radial-gradient(circle,${BREATHING[breathPhase].color}20,transparent 70%)`,
+                border:`3px solid ${BREATHING[breathPhase].color}40`,
+                animation:breathActive?"pulse 2s ease-in-out infinite":"none",
+                transition:"all 1.2s ease"}}/>
+              <div style={{width:160,height:160,borderRadius:"50%",
+                background:`${BREATHING[breathPhase].color}16`,
+                border:`2.5px solid ${BREATHING[breathPhase].color}80`,
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                transition:"all 1.2s ease"}}>
+                <GrowthMascot id={cm.id} size={62} stage={currentStage.id} />
+                <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
+                  color:BREATHING[breathPhase].color,marginTop:6,marginBottom:0}}>
+                  {breathActive?BREATHING[breathPhase].phase:"Ready"}
+                </p>
+                {breathActive&&(
+                  <p style={{color:theme.muted,fontSize:13,fontWeight:600,marginBottom:0}}>
+                    {BREATHING[breathPhase].duration}s
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Start/Stop button */}
+          <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
+            <Btn onClick={()=>{
+              setBreathActive(!breathActive);
+              if(!breathActive){setBreathPhase(0);setBreathCount(0);}
+            }} color={breathActive?"#EF5350":theme.mint}>
+              {breathActive?"Stop":"Start Breathing"}
+            </Btn>
+          </div>
+
           {breathCount>0&&(
-            <p style={{color:theme.purple,fontWeight:700,fontSize:16,fontFamily:F.b}}>
+            <p style={{color:theme.purple,fontWeight:700,fontSize:16,fontFamily:F.b,
+              textAlign:"center",marginBottom:16}}>
               {breathCount} breath{breathCount>1?"s":""} complete — well done!
             </p>
           )}
-          <Card style={{marginTop:20,textAlign:"left"}}>
+          <Card style={{marginTop:4,textAlign:"left"}}>
             <Label>Sessions completed</Label>
             <p style={{fontFamily:F.h,fontWeight:800,fontSize:28,color:theme.purple,margin:0}}>
               {activeChild.breath_sessions||0}

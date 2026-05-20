@@ -442,18 +442,19 @@ export const SeedPopup = ({ amount, visible }) => {
   if (!visible) return null;
   return (
     <div style={{
-      position:"fixed", top:"30%", left:"50%",
+      position:"fixed", top:"20%", left:"50%",
       transform:"translateX(-50%)",
       background:"linear-gradient(135deg,#66BB6A,#4DB6AC)",
-      borderRadius:50, padding:"10px 24px",
-      display:"flex", alignItems:"center", gap:8,
-      boxShadow:"0 6px 24px rgba(76,175,80,0.4)",
+      borderRadius:50, padding:"12px 28px",
+      display:"flex", alignItems:"center", gap:10,
+      boxShadow:"0 8px 32px rgba(76,175,80,0.45), 0 2px 8px rgba(0,0,0,0.1)",
       zIndex:9999, pointerEvents:"none",
-      animation:"seedPop 0.8s ease forwards",
+      animation:"seedPop 1s ease forwards",
+      backdropFilter:"blur(2px)",
     }}>
-      <style>{`@keyframes seedPop{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(0.7)}30%{opacity:1;transform:translateX(-50%) translateY(-20px) scale(1.1)}70%{opacity:1;transform:translateX(-50%) translateY(-30px) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-50px) scale(0.9)}}`}</style>
-      <span style={{fontSize:18}}>🌱</span>
-      <p style={{fontFamily:F.b,fontWeight:800,fontSize:16,color:"#fff",margin:0}}>
+      <style>{`@keyframes seedPop{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(0.6)}20%{opacity:1;transform:translateX(-50%) translateY(-24px) scale(1.12)}70%{opacity:1;transform:translateX(-50%) translateY(-32px) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-56px) scale(0.85)}}`}</style>
+      <span style={{fontSize:22}}>🌱</span>
+      <p style={{fontFamily:F.b,fontWeight:800,fontSize:18,color:"#fff",margin:0,letterSpacing:0.5}}>
         +{amount} {amount===1?"seed":"seeds"}
       </p>
     </div>

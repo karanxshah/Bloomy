@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { GrowthMascot, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
+import { GrowthMascot, GardenScene, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
 
 const C = {
   purple:"#7C4DFF", pink:"#F06292", yellow:"#FFD54F",
@@ -468,23 +468,36 @@ const StageEvolution = ({ currentScore, mascotId, stageId }) => (
     boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14}}>
     <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:C.muted,
       letterSpacing:1.2,textTransform:"uppercase",margin:"0 0 16px"}}>Growth Journey</p>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:8}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:6}}>
       {STAGES.map((stage,i)=>{
         const unlocked = currentScore>=stage.minScore;
         return (
           <div key={stage.id} style={{flex:1,textAlign:"center",
             opacity:unlocked?1:0.3,transition:"opacity 0.4s"}}>
-            <div style={{background:unlocked?stage.bg:"#f5f5f5",borderRadius:16,
-              padding:"10px 4px",border:`2px solid ${unlocked?stage.color:"#eee"}`,
-              marginBottom:6}}>
-              <GrowthMascot id={mascotId} size={44} stage={i}/>
+            <div style={{
+              background:unlocked?stage.bg:"#f5f5f5",
+              borderRadius:12,
+              border:`2px solid ${unlocked?stage.color:"#eee"}`,
+              marginBottom:5,
+              width:"100%",
+              aspectRatio:"1",
+              display:"flex",
+              flexDirection:"column",
+              alignItems:"center",
+              justifyContent:"center",
+              overflow:"hidden",
+              padding:2,
+            }}>
+              <GrowthMascot id={mascotId} size={36} stage={i}/>
             </div>
-            <p style={{fontFamily:F.h,fontWeight:800,fontSize:11,
-              color:unlocked?stage.color:C.muted,margin:0}}>{stage.name}</p>
-            {!unlocked&&<p style={{fontFamily:F.b,fontWeight:500,fontSize:10,
-              color:C.muted,margin:0}}>{stage.minScore} pts</p>}
-            {unlocked&&<div style={{width:8,height:8,borderRadius:"50%",
-              background:stage.color,margin:"4px auto 0"}}/>}
+            <p style={{fontFamily:F.h,fontWeight:800,fontSize:9,
+              color:unlocked?stage.color:C.muted,margin:0,lineHeight:1.2}}>
+              {stage.name.split(" ")[0]}
+            </p>
+            {!unlocked&&<p style={{fontFamily:F.b,fontWeight:500,fontSize:8,
+              color:C.muted,margin:0}}>{stage.minScore}🌱</p>}
+            {unlocked&&<div style={{width:6,height:6,borderRadius:"50%",
+              background:stage.color,margin:"3px auto 0"}}/>}
           </div>
         );
       })}
@@ -760,6 +773,46 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
             color:"#fff",margin:"0 0 4px"}}>{personality.trait}</p>
           <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,
             color:"rgba(255,255,255,0.85)",margin:0}}>Loves: {personality.loves}</p>
+        </div>
+
+        {/* Garden — big, immersive */}
+        <div style={{background:"#fff",borderRadius:24,overflow:"hidden",
+          boxShadow:"0 4px 28px rgba(124,77,255,0.14)",marginBottom:14}}>
+          <div style={{padding:"16px 18px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,color:C.text,margin:0}}>
+                {cm.name}'s Garden
+              </p>
+              <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,color:C.muted,margin:0}}>
+                {STAGES[stage.id]?.desc||"Your garden journey begins!"}
+              </p>
+            </div>
+            <div style={{background:stage.bg,borderRadius:50,padding:"4px 12px",
+              display:"flex",alignItems:"center",gap:5}}>
+              <span style={{fontSize:14}}>🌱</span>
+              <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:stage.color,margin:0}}>
+                Stage {stage.id+1}/{STAGES.length}
+              </p>
+            </div>
+          </div>
+          <GardenScene stage={stage.id} mascotId={cm.id} size={382} dark={false}/>
+          <div style={{padding:"12px 18px 16px"}}>
+            <div style={{background:stage.bg,borderRadius:16,padding:"10px 16px",
+              display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:22}}>
+                {["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]||"🌱"}
+              </span>
+              <p style={{fontFamily:F.b,fontWeight:600,fontSize:13,color:stage.color,margin:0,flex:1}}>
+                {stage.id===0&&"Plant your first seed by logging your mood!"}
+                {stage.id===1&&"Tiny shoots are sprouting — keep checking in!"}
+                {stage.id===2&&"Your first flowers are blooming beautifully!"}
+                {stage.id===3&&"Butterflies visit your flourishing garden!"}
+                {stage.id===4&&"Glowing flowers fill your lush garden!"}
+                {stage.id===5&&"Magic fireflies dance in your enchanted garden!"}
+                {stage.id===6&&"Stars rain down on your legendary Full Bloom garden!"}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Our Journey */}
