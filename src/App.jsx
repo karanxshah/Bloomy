@@ -518,6 +518,12 @@ export default function BloomyApp() {
   const [soundOn,setSoundOn]                 = useState(true);
   const [seenTooltips,setSeenTooltips]       = useState({});
   const [showSettings,setShowSettings]       = useState(false);
+  const [dailyMissions,setDailyMissions]     = useState([]);
+  const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0});
+  const [streakShield,setStreakShield]       = useState(false);
+  const [dailyMissions,setDailyMissions]     = useState([]);
+  const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0});
+  const [streakShield,setStreakShield]       = useState(false);
   const touchStartX                          = useRef(null);
   const touchStartY                          = useRef(null);
 
@@ -565,6 +571,7 @@ export default function BloomyApp() {
       setBreathPhase(next);
       if (next===0){
         setBreathCount(c=>c+1);
+        showSeedPopup(2);
         if (activeChild){
           const newCount=(activeChild.breath_sessions||0)+1;
           await supabase.from("children").update({breath_sessions:newCount}).eq("id",activeChild.id);
@@ -656,6 +663,7 @@ export default function BloomyApp() {
       setMoodNoteStep("note");
       setMoodNote("");
       playSound("chime", soundOn);
+      showSeedPopup(1);
       checkGrowthStageUp(newLog, journals);
     }
   };
@@ -714,6 +722,7 @@ export default function BloomyApp() {
       setGratitudeText("");
       setGratitudeSaved(true);
       playSound("chime",soundOn);
+      showSeedPopup(1);
       setTimeout(()=>setGratitudeSaved(false),2000);
     }
   };
@@ -729,13 +738,28 @@ export default function BloomyApp() {
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
     setBreathActive(false);setBreathPhase(0);setBreathCount(0);
     setSeenTooltips(child.seen_tooltips || {});
+    // Generate daily missions
+    const today = new Date().toISOString().split("T")[0];
+    const all = [
+      {id:"mood",      label:"Log your mood today",          seeds:1, icon:"mood",  done:false},
+      {id:"journal",   label:"Write a journal entry",        seeds:2, icon:"book",  done:false},
+      {id:"breathe",   label:"Complete a breathing session", seeds:2, icon:"wind",  done:false},
+      {id:"affirm",    label:"Read 3 affirmations",          seeds:1, icon:"star",  done:false},
+      {id:"gratitude", label:"Add a gratitude",              seeds:1, icon:"heart", done:false},
+    ];
+    const shuffled = [...all].sort(()=>Math.random()-0.5).slice(0,2);
+    setDailyMissions(shuffled);
+    // Check streak shield (resets weekly)
+    const lastShieldDate = child.last_shield_date || "";
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+    setStreakShield(new Date(lastShieldDate) < weekAgo);
     setGratitudes([]);
     await loadChildData(child);
     await loadGratitudes(child.id);
   };
 
   /* ── Computed ── */
-  const growthScore  = activeChild ? calcGrowthScore(activeChild, moodLog, journals) : 0;
+  const growthScore  = activeChild ? calcGrowthScore(activeChild, moodLog, journals, gratitudes) : 0;
   const currentStage = getStage(growthScore);
   const streak = getStreak(moodLog);
   const week   = last7Days();
@@ -1259,32 +1283,72 @@ export default function BloomyApp() {
       {tab==="home"&&(
         <div style={{paddingTop:12,animation:"fadeIn 0.4s ease"}}>
 
-          {/* Hero — mascot centred and prominent */}
-          <div style={{textAlign:"center",marginBottom:20}}>
-            <p style={{color:theme.muted,fontWeight:600,fontSize:13,marginBottom:4}}>
+          {/* Hero — garden scene */}
+          <div style={{textAlign:"center",marginBottom:16}}>
+            <p style={{color:theme.muted,fontWeight:600,fontSize:13,marginBottom:2}}>
               Good morning
             </p>
-            <h2 style={{fontFamily:F.h,fontSize:32,fontWeight:900,
-              color:theme.text,marginBottom:16}}>{activeChild.name}</h2>
+            <h2 style={{fontFamily:F.h,fontSize:30,fontWeight:900,
+              color:theme.text,marginBottom:12}}>{activeChild.name}</h2>
             <button onClick={()=>setShowMascotRoom(true)} style={{
-              background:`linear-gradient(135deg,${cm.color}22,${theme.pink}11)`,
-              borderRadius:28,padding:"20px 24px",border:`2px solid ${cm.color}33`,
-              cursor:"pointer",display:"inline-flex",flexDirection:"column",
-              alignItems:"center",gap:12,transition:"transform 0.15s",
-              boxShadow:`0 8px 28px ${cm.color}33`,
+              border:"none",background:"none",cursor:"pointer",
+              transition:"transform 0.15s",display:"block",margin:"0 auto",
             }}
-              onMouseDown={e=>e.currentTarget.style.transform="scale(0.95)"}
+              onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
               onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-              <GrowthMascot id={cm.id} size={110} stage={currentStage.id}/>
-              <div style={{display:"flex",alignItems:"center",gap:6,
-                background:cm.color,borderRadius:50,padding:"5px 14px"}}>
+              <GardenScene stage={currentStage.id} mascotId={cm.id} size={320} dark={darkMode}/>
+              <div style={{display:"inline-flex",alignItems:"center",gap:6,
+                background:currentStage.color,borderRadius:50,padding:"5px 16px",marginTop:8}}>
+                <span style={{fontSize:14}}>🌱</span>
                 <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
-                  color:"#fff",margin:0,letterSpacing:0.5}}>
-                  {currentStage.name} · Tap to visit
+                  color:"#fff",margin:0}}>
+                  {currentStage.name} · {growthScore} seeds · Tap to visit
                 </p>
               </div>
             </button>
           </div>
+
+          {/* Daily missions */}
+          {dailyMissions.length>0&&(
+            <div style={{background:theme.card,borderRadius:20,padding:"16px 18px",
+              marginBottom:14,boxShadow:"0 2px 18px rgba(124,77,255,0.09)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,color:theme.text,margin:0}}>
+                  Today's Missions
+                </p>
+                <div style={{background:"#E8F5E9",borderRadius:50,padding:"3px 10px"}}>
+                  <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:"#43A047",margin:0}}>
+                    +3 seeds if completed
+                  </p>
+                </div>
+              </div>
+              {dailyMissions.map((m,i)=>(
+                <div key={m.id} style={{display:"flex",alignItems:"center",gap:12,
+                  padding:"8px 0",borderBottom:i<dailyMissions.length-1?`1px solid ${theme.border}`:"none"}}>
+                  <div style={{width:22,height:22,borderRadius:"50%",flexShrink:0,
+                    background:m.done?"#43A047":"#f0f0f0",
+                    border:`2px solid ${m.done?"#43A047":theme.border}`,
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {m.done&&<svg viewBox="0 0 24 24" width={14} height={14} fill="none"
+                      stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>}
+                  </div>
+                  <p style={{fontFamily:F.b,fontWeight:m.done?500:600,fontSize:14,
+                    color:m.done?theme.muted:theme.text,margin:0,
+                    textDecoration:m.done?"line-through":"none",flex:1}}>
+                    {m.label}
+                  </p>
+                  <div style={{background:"#E8F5E9",borderRadius:50,padding:"2px 8px",
+                    display:"flex",alignItems:"center",gap:3}}>
+                    <span style={{fontSize:10}}>🌱</span>
+                    <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
+                      color:"#43A047",margin:0}}>+{m.seeds}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Growth progress bar */}
           <GrowthProgressBar score={growthScore}/>
@@ -1372,19 +1436,30 @@ export default function BloomyApp() {
             ))}
           </div>
 
-          {/* Streak */}
+          {/* Streak + shield */}
           {streak>0&&(
             <div style={{background:"linear-gradient(135deg,#FFD54F,#FF7043)",
               borderRadius:20,display:"flex",alignItems:"center",gap:14,
               padding:"16px 20px",marginBottom:14}}>
               <Icon name="fire" size={32} color="#fff"/>
-              <div>
+              <div style={{flex:1}}>
                 <p style={{color:"#fff",fontFamily:F.h,fontWeight:800,fontSize:19,margin:0}}>
                   {streak}-Day Streak!
                 </p>
                 <p style={{color:"rgba(255,255,255,0.85)",fontSize:13,
                   fontWeight:500,margin:0}}>Keep it up — you are doing great!</p>
               </div>
+              {streakShield&&(
+                <div style={{background:"rgba(255,255,255,0.25)",borderRadius:50,
+                  padding:"6px 12px",display:"flex",alignItems:"center",gap:4}}>
+                  <svg viewBox="0 0 24 24" width={16} height={16} fill="none"
+                    stroke="#fff" strokeWidth="2" strokeLinecap="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
+                    color:"#fff",margin:0}}>Shield</p>
+                </div>
+              )}
             </div>
           )}
         </div>
