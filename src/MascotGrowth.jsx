@@ -373,9 +373,54 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark }) => {
         </g>
       ))}
 
-      {/* Mascot face centered */}
+      {/* Mascot face centered — inline to avoid forward reference */}
       <g transform={`translate(${w/2-40},${h*0.3})`}>
-        <GrowthMascot id={mascotId} size={80} stage={stageId}/>
+        {mascotId==="fox"&&<>
+          <ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/>
+          <polygon points="13,18 26,44 38,24" fill="#FF7043"/>
+          <polygon points="67,18 54,44 42,24" fill="#FF7043"/>
+          <ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/>
+          <circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/>
+          <circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/>
+        </>}
+        {mascotId==="bunny"&&<>
+          <ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
+          <ellipse cx="53" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
+          <ellipse cx="40" cy="50" rx="26" ry="22" fill="#FCE4EC"/>
+          <circle cx="30" cy="46" r="5" fill="#fff"/><circle cx="50" cy="46" r="5" fill="#fff"/>
+          <circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/>
+        </>}
+        {mascotId==="bear"&&<>
+          <circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/>
+          <ellipse cx="40" cy="50" rx="27" ry="23" fill="#8D6E63"/>
+          <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
+          <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
+        </>}
+        {mascotId==="owl"&&<>
+          <ellipse cx="40" cy="48" rx="26" ry="26" fill="#7E57C2"/>
+          <ellipse cx="40" cy="52" rx="18" ry="18" fill="#B39DDB"/>
+          <circle cx="29" cy="43" r="9" fill="#fff"/><circle cx="51" cy="43" r="9" fill="#fff"/>
+          <circle cx="29" cy="44" r="5" fill="#4527A0"/><circle cx="51" cy="44" r="5" fill="#4527A0"/>
+        </>}
+        {mascotId==="cat"&&<>
+          <polygon points="17,30 12,10 30,26" fill="#26A69A"/>
+          <polygon points="63,30 68,10 50,26" fill="#26A69A"/>
+          <ellipse cx="40" cy="50" rx="26" ry="23" fill="#4DB6AC"/>
+          <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
+          <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
+        </>}
+        {mascotId==="dog"&&<>
+          <ellipse cx="16" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(-20 16 36)"/>
+          <ellipse cx="64" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(20 64 36)"/>
+          <ellipse cx="40" cy="50" rx="27" ry="23" fill="#FFB74D"/>
+          <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
+          <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
+        </>}
+        {(!mascotId||mascotId==="fox")&&<>
+          <ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/>
+          <circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/>
+          <circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/>
+        </>}
       </g>
 
       {/* Stage label */}
