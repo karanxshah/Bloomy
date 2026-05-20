@@ -521,9 +521,6 @@ export default function BloomyApp() {
   const [dailyMissions,setDailyMissions]     = useState([]);
   const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0});
   const [streakShield,setStreakShield]       = useState(false);
-  const [dailyMissions,setDailyMissions]     = useState([]);
-  const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0});
-  const [streakShield,setStreakShield]       = useState(false);
   const touchStartX                          = useRef(null);
   const touchStartY                          = useRef(null);
 
