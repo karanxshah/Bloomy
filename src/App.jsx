@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import ParentInsights from "./ParentInsights";
-import { GrowthMascot, GrowthProgressBar, GrowthCelebration, calcGrowthScore, getStage } from "./MascotGrowth";
+import { GrowthMascot, GardenScene, GrowthProgressBar, GrowthCelebration, SeedPopup, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
 import MascotRoom from "./MascotRoom";
 
 const SUPABASE_URL = "https://ymfvezvezzmckcdwjvzm.supabase.co";
