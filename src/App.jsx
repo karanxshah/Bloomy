@@ -531,6 +531,11 @@ export default function BloomyApp() {
     setTimeout(()=>setSeedPopup({visible:false, amount:0}), 1800);
   };
 
+  /* ── Mark a daily mission as done (turns it gold) ── */
+  const completeMission = (id) => {
+    setDailyMissions(prev=>prev.map(m=>m.id===id?{...m,done:true}:m));
+  };
+
   /* ── Derive colour palette from dark mode ── */
   const theme = darkMode ? DARK : LIGHT;
 
@@ -576,6 +581,7 @@ export default function BloomyApp() {
       if (next===0){
         setBreathCount(c=>c+1);
         showSeedPopup(2);
+        completeMission("breathe");
         if (activeChild){
           const newCount=(activeChild.breath_sessions||0)+1;
           await supabase.from("children").update({breath_sessions:newCount}).eq("id",activeChild.id);
@@ -605,6 +611,8 @@ export default function BloomyApp() {
       const updatedChild = {...activeChild,affirm_count:newCount};
       setActiveChild(updatedChild);
       setChildren(prev=>prev.map(c=>c.id===activeChild.id?updatedChild:c));
+      showSeedPopup(1);
+      if (newCount % 3 === 0) completeMission("affirm");
       checkGrowthStageUp(moodLog, journals, updatedChild);
     }
   };
@@ -668,6 +676,7 @@ export default function BloomyApp() {
       setMoodNote("");
       playSound("chime", soundOn);
       showSeedPopup(1);
+      completeMission("mood");
       checkGrowthStageUp(newLog, journals);
     }
   };
@@ -708,6 +717,8 @@ export default function BloomyApp() {
       setJournals(newJournals);
       setJournalSaved(true);
       playSound("chime", soundOn);
+      showSeedPopup(2);
+      completeMission("journal");
       checkGrowthStageUp(moodLog, newJournals);
     }
     setSaveLoading(false);
@@ -727,6 +738,7 @@ export default function BloomyApp() {
       setGratitudeSaved(true);
       playSound("chime",soundOn);
       showSeedPopup(1);
+      completeMission("gratitude");
       setTimeout(()=>setGratitudeSaved(false),2000);
     }
   };
@@ -1342,34 +1354,37 @@ export default function BloomyApp() {
                 <button key={m.id} onClick={()=>!m.done && setTab(m.id)} style={{
                   display:"flex",alignItems:"center",gap:12,
                   padding:"10px 12px",
-                  borderBottom:i<dailyMissions.length-1?`1px solid ${theme.border}`:"none",
-                  background:m.done?"transparent":theme.bg,
+                  borderBottom:i<dailyMissions.length-1?`1px solid ${m.done?"#F9A82555":theme.border}`:"none",
+                  background:m.done?"linear-gradient(135deg,#F9A825,#FFB300)":theme.bg,
                   border:"none",width:"100%",textAlign:"left",cursor:m.done?"default":"pointer",
                   borderRadius:12,marginBottom:i<dailyMissions.length-1?2:0,
-                  transition:"background 0.15s"}}
+                  transition:"all 0.4s ease",
+                  boxShadow:m.done?"0 2px 12px rgba(249,168,37,0.35)":"none"}}
                   onMouseEnter={e=>{if(!m.done)e.currentTarget.style.background=theme.border;}}
-                  onMouseLeave={e=>e.currentTarget.style.background=m.done?"transparent":theme.bg}>
+                  onMouseLeave={e=>e.currentTarget.style.background=m.done?"linear-gradient(135deg,#F9A825,#FFB300)":theme.bg}>
                   <div style={{width:22,height:22,borderRadius:"50%",flexShrink:0,
-                    background:m.done?"#43A047":"#f0f0f0",
-                    border:`2px solid ${m.done?"#43A047":theme.border}`,
+                    background:m.done?"rgba(255,255,255,0.3)":"#f0f0f0",
+                    border:`2px solid ${m.done?"rgba(255,255,255,0.6)":theme.border}`,
                     display:"flex",alignItems:"center",justifyContent:"center"}}>
                     {m.done&&<svg viewBox="0 0 24 24" width={14} height={14} fill="none"
                       stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
                       <path d="M20 6L9 17l-5-5"/>
                     </svg>}
                   </div>
-                  <p style={{fontFamily:F.b,fontWeight:m.done?500:600,fontSize:14,
-                    color:m.done?theme.muted:theme.text,margin:0,
-                    textDecoration:m.done?"line-through":"none",flex:1}}>
+                  <p style={{fontFamily:F.b,fontWeight:m.done?700:600,fontSize:14,
+                    color:m.done?"#fff":theme.text,margin:0,flex:1}}>
                     {m.label}
                   </p>
-                  <div style={{background:"#E8F5E9",borderRadius:50,padding:"2px 8px",
+                  <div style={{
+                    background:m.done?"rgba(255,255,255,0.25)":"#E8F5E9",
+                    borderRadius:50,padding:"2px 8px",
                     display:"flex",alignItems:"center",gap:3}}>
                     <span style={{fontSize:10}}>🌱</span>
                     <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
-                      color:"#43A047",margin:0}}>+{m.seeds}</p>
+                      color:m.done?"#fff":"#43A047",margin:0}}>+{m.seeds}</p>
                   </div>
                   {!m.done&&<Icon name="next" size={14} color={theme.muted}/>}
+                  {m.done&&<span style={{fontSize:14}}>⭐</span>}
                 </button>
               ))}
             </div>

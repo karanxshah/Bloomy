@@ -463,47 +463,59 @@ const EnergyBar = ({ level }) => {
 };
 
 /* ── Stage evolution ── */
-const StageEvolution = ({ currentScore, mascotId, stageId }) => (
-  <div style={{background:"#fff",borderRadius:20,padding:"20px",
-    boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14}}>
-    <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:C.muted,
-      letterSpacing:1.2,textTransform:"uppercase",margin:"0 0 16px"}}>Growth Journey</p>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:6}}>
-      {STAGES.map((stage,i)=>{
-        const unlocked = currentScore>=stage.minScore;
-        return (
-          <div key={stage.id} style={{flex:1,textAlign:"center",
-            opacity:unlocked?1:0.3,transition:"opacity 0.4s"}}>
-            <div style={{
-              background:unlocked?stage.bg:"#f5f5f5",
-              borderRadius:12,
-              border:`2px solid ${unlocked?stage.color:"#eee"}`,
-              marginBottom:5,
-              width:"100%",
-              aspectRatio:"1",
-              display:"flex",
-              flexDirection:"column",
-              alignItems:"center",
-              justifyContent:"center",
-              overflow:"hidden",
-              padding:2,
-            }}>
-              <GrowthMascot id={mascotId} size={36} stage={i}/>
-            </div>
-            <p style={{fontFamily:F.h,fontWeight:800,fontSize:9,
-              color:unlocked?stage.color:C.muted,margin:0,lineHeight:1.2}}>
-              {stage.name.split(" ")[0]}
-            </p>
-            {!unlocked&&<p style={{fontFamily:F.b,fontWeight:500,fontSize:8,
-              color:C.muted,margin:0}}>{stage.minScore}🌱</p>}
-            {unlocked&&<div style={{width:6,height:6,borderRadius:"50%",
-              background:stage.color,margin:"3px auto 0"}}/>}
+const StageEvolution = ({ currentScore, mascotId, stageId }) => {
+  const topRow = STAGES.slice(0, 4);
+  const botRow = STAGES.slice(4, 7);
+  const StageCell = ({ stage, i }) => {
+    const unlocked = currentScore >= stage.minScore;
+    return (
+      <div style={{flex:1,textAlign:"center",opacity:unlocked?1:0.35,transition:"opacity 0.4s"}}>
+        <div style={{
+          background:unlocked?stage.bg:"#f5f5f5",
+          borderRadius:12,
+          border:`2px solid ${unlocked?stage.color:"#eee"}`,
+          marginBottom:4,
+          aspectRatio:"1",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          overflow:"hidden",
+          position:"relative",
+        }}>
+          <GrowthMascot id={mascotId} size={34} stage={stage.id}/>
+          {unlocked&&(
+            <div style={{position:"absolute",bottom:2,right:2,
+              width:8,height:8,borderRadius:"50%",background:stage.color}}/>
+          )}
+        </div>
+        <p style={{fontFamily:F.h,fontWeight:800,fontSize:8,
+          color:unlocked?stage.color:C.muted,margin:0,lineHeight:1.2,
+          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+          {stage.name.split(" ")[0]}
+        </p>
+        {!unlocked&&<p style={{fontFamily:F.b,fontWeight:500,fontSize:7,
+          color:C.muted,margin:0}}>{stage.minScore}🌱</p>}
+      </div>
+    );
+  };
+  return (
+    <div style={{background:"#fff",borderRadius:20,padding:"18px 16px",
+      boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14}}>
+      <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:C.muted,
+        letterSpacing:1.2,textTransform:"uppercase",margin:"0 0 14px"}}>Growth Journey</p>
+      {/* Top row — 4 stages */}
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        {topRow.map((stage,i)=><StageCell key={stage.id} stage={stage} i={i}/>)}
+      </div>
+      {/* Bottom row — 3 stages, centered */}
+      <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+        {botRow.map((stage,i)=>(
+          <div key={stage.id} style={{flex:"0 0 calc(25% - 6px)"}}>
+            <StageCell stage={stage} i={i+4}/>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ══════════════════════════════════════════════
    MAIN EXPORT — renders as a full page screen
@@ -645,7 +657,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
       <div style={{padding:"0 24px",maxWidth:430,margin:"0 auto"}}>
 
         {/* Stage badge */}
-        <div style={{textAlign:"center",marginBottom:16}}>
+        <div style={{textAlign:"center",marginBottom:12}}>
           <div style={{background:stage.bg,borderRadius:50,
             padding:"5px 18px",display:"inline-block",
             boxShadow:`0 2px 12px ${stage.color}33`}}>
@@ -656,65 +668,76 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
           </div>
         </div>
 
-        {/* ── FULL BODY MASCOT STAGE ── */}
+        {/* ── GARDEN + MASCOT HERO — garden is the backdrop ── */}
         <div style={{
-          position:"relative",
-          display:"flex",
-          flexDirection:"column",
-          alignItems:"center",
-          marginBottom:8,
-          minHeight:280,
+          position:"relative",borderRadius:28,overflow:"hidden",
+          marginBottom:14,boxShadow:`0 8px 32px ${stage.color}33`,
         }}>
-          {/* Speech bubble */}
-          {speech && (
-            <div style={{position:"relative",width:"100%",display:"flex",
-              justifyContent:"center",marginBottom:8}}>
-              <SpeechBubble text={speech} onDone={dismissSpeech}/>
-            </div>
-          )}
+          {/* Garden scene fills the full card */}
+          <GardenScene stage={stage.id} mascotId={cm.id} size={382} dark={false}/>
 
-          {/* Mascot with shadow */}
-          <div style={{position:"relative",display:"inline-block"}}>
+          {/* Mascot floats centered over the garden */}
+          <div style={{
+            position:"absolute",bottom:0,left:0,right:0,
+            display:"flex",flexDirection:"column",alignItems:"center",
+            paddingBottom:12,
+          }}>
+            {/* Speech bubble above mascot */}
+            {speech && (
+              <div style={{marginBottom:6,width:"100%",display:"flex",justifyContent:"center"}}>
+                <SpeechBubble text={speech} onDone={dismissSpeech}/>
+              </div>
+            )}
+
             <div
               onClick={handleTap}
               style={{
                 display:"inline-block",cursor:"pointer",
                 userSelect:"none",animation:mascotAnim,
-                filter:`drop-shadow(0 12px 24px ${cm.color}55)`,
+                filter:`drop-shadow(0 8px 20px ${cm.color}88)`,
+                position:"relative",
               }}>
-              <FullBodyMascot id={cm.id} size={200} stage={stage.id}/>
+              <FullBodyMascot id={cm.id} size={170} stage={stage.id}/>
               {sparkles.map(sp=>(
                 <Sparkle key={sp.id} x={sp.x} y={sp.y} color={sp.color} delay={sp.delay}/>
               ))}
             </div>
 
-            {/* Ground shadow */}
-            <div style={{
-              width:120,height:16,borderRadius:"50%",
-              background:"rgba(0,0,0,0.12)",
-              margin:"-8px auto 0",
-              animation:"groundShadow 3s ease-in-out infinite",
-            }}/>
+            {/* Droopy badge */}
+            {mascotState==="droopy"&&(
+              <div style={{background:"rgba(238,233,255,0.95)",borderRadius:50,
+                padding:"4px 12px",marginTop:4}}>
+                <p style={{fontFamily:F.b,fontSize:11,fontWeight:700,
+                  color:C.purple,margin:0,animation:"pulse 2s infinite"}}>
+                  {cm.name} misses you!
+                </p>
+              </div>
+            )}
+
+            <p style={{fontFamily:F.b,fontWeight:600,fontSize:12,
+              color:"rgba(255,255,255,0.9)",marginTop:4,textAlign:"center",
+              textShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>
+              Tap {cm.name} to say hi!
+            </p>
           </div>
 
-          {/* Droopy badge */}
-          {mascotState==="droopy"&&(
-            <div style={{background:"#EEE9FF",borderRadius:50,
-              padding:"6px 14px",marginTop:8}}>
-              <p style={{fontFamily:F.b,fontSize:12,fontWeight:700,
-                color:C.purple,margin:0,animation:"pulse 2s infinite"}}>
-                {cm.name} misses you!
-              </p>
-            </div>
-          )}
-
-          <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,
-            color:C.muted,marginTop:10,textAlign:"center"}}>
-            Tap {cm.name} to say hi!
-          </p>
+          {/* Stage flavor text — bottom overlay strip */}
+          <div style={{
+            position:"absolute",top:10,right:10,
+            background:"rgba(255,255,255,0.88)",borderRadius:12,
+            padding:"6px 10px",display:"flex",alignItems:"center",gap:6,
+            backdropFilter:"blur(4px)",
+          }}>
+            <span style={{fontSize:16}}>
+              {["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]||"🌱"}
+            </span>
+            <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:stage.color,margin:0}}>
+              {STAGES[stage.id]?.name}
+            </p>
+          </div>
         </div>
 
-        {/* State messages */}
+        {/* State / mood message */}
         {mascotState==="droopy"&&(
           <div style={{background:"#EEE9FF",borderRadius:20,padding:"14px 18px",
             marginBottom:14,textAlign:"center",animation:"fadeInUp 0.4s ease"}}>
@@ -727,7 +750,6 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
             </p>
           </div>
         )}
-
         {lastMood&&lastMoodDate===todayStr()&&(
           <div style={{
             background:["Sad","Worried","Angry"].includes(lastMood)?"#EDE7F6":"#E8F5E9",
@@ -774,48 +796,6 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
           <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,
             color:"rgba(255,255,255,0.85)",margin:0}}>Loves: {personality.loves}</p>
         </div>
-
-        {/* Garden — big, immersive */}
-        <div style={{background:"#fff",borderRadius:24,overflow:"hidden",
-          boxShadow:"0 4px 28px rgba(124,77,255,0.14)",marginBottom:14}}>
-          <div style={{padding:"16px 18px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div>
-              <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,color:C.text,margin:0}}>
-                {cm.name}'s Garden
-              </p>
-              <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,color:C.muted,margin:0}}>
-                {STAGES[stage.id]?.desc||"Your garden journey begins!"}
-              </p>
-            </div>
-            <div style={{background:stage.bg,borderRadius:50,padding:"4px 12px",
-              display:"flex",alignItems:"center",gap:5}}>
-              <span style={{fontSize:14}}>🌱</span>
-              <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:stage.color,margin:0}}>
-                Stage {stage.id+1}/{STAGES.length}
-              </p>
-            </div>
-          </div>
-          <GardenScene stage={stage.id} mascotId={cm.id} size={382} dark={false}/>
-          <div style={{padding:"12px 18px 16px"}}>
-            <div style={{background:stage.bg,borderRadius:16,padding:"10px 16px",
-              display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:22}}>
-                {["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]||"🌱"}
-              </span>
-              <p style={{fontFamily:F.b,fontWeight:600,fontSize:13,color:stage.color,margin:0,flex:1}}>
-                {stage.id===0&&"Plant your first seed by logging your mood!"}
-                {stage.id===1&&"Tiny shoots are sprouting — keep checking in!"}
-                {stage.id===2&&"Your first flowers are blooming beautifully!"}
-                {stage.id===3&&"Butterflies visit your flourishing garden!"}
-                {stage.id===4&&"Glowing flowers fill your lush garden!"}
-                {stage.id===5&&"Magic fireflies dance in your enchanted garden!"}
-                {stage.id===6&&"Stars rain down on your legendary Full Bloom garden!"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Our Journey */}
         <button onClick={()=>setShowStats(s=>!s)} style={{
           width:"100%",background:"#fff",
           borderRadius:showStats?"20px 20px 0 0":20,
