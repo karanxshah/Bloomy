@@ -163,8 +163,11 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
       </svg>
     ),
 
-    bunny: (
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+    bunny: (()=>{
+      const pad = Math.round(h * 0.07);
+      return (
+      <svg width={w} height={h+pad} viewBox={`0 0 ${w} ${h+pad}`}>
+        <g transform={`translate(0,${pad})`}>
         {stage===3 && <GlowRings/>}
         {/* Long ears */}
         <ellipse cx={w*0.38} cy={h*0.1} rx={w*0.07} ry={h*0.14} fill="#FCE4EC"/>
@@ -204,8 +207,10 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
               stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
         {stage>=1 && <Scarf y={h*0.44}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.08}/>}
+        </g>
       </svg>
-    ),
+      );
+    })(),
 
     bear: (
       <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
