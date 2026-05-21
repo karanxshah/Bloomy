@@ -625,142 +625,139 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
   return (
     <div style={{
       minHeight:"100vh",
+      background:C.bg,
       fontFamily:F.b,
       paddingBottom:80,
-      position:"relative",
-      overflow:"hidden",
     }}>
       <FontLoader/>
 
-      {/* ── GARDEN — full page background ── */}
-      <div style={{
-        position:"fixed", top:0, left:0, right:0, bottom:0,
-        zIndex:0, overflow:"hidden",
-      }}>
-        <GardenScene
-          stage={stage.id}
-          mascotId={null}
-          size={500}
-          dark={false}
-          showMascot={false}
-        />
-        {/* Gradient fade at bottom so cards read cleanly */}
-        <div style={{
-          position:"absolute", bottom:0, left:0, right:0, height:"45%",
-          background:`linear-gradient(to bottom, transparent, ${C.bg}dd 60%, ${C.bg} 100%)`,
-        }}/>
-      </div>
+      {/* ══ HERO SECTION — garden is the background, scrolls with content ══ */}
+      <div style={{position:"relative", overflow:"hidden", paddingBottom:32}}>
 
-      {/* ── All content scrolls on top of the fixed garden ── */}
-      <div style={{position:"relative", zIndex:1}}>
+        {/* Garden fills the hero section as background */}
+        <div style={{position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:0}}>
+          <GardenScene
+            stage={stage.id}
+            mascotId={null}
+            size={500}
+            dark={false}
+            showMascot={false}
+          />
+          {/* Fade to app bg at bottom so cards transition cleanly */}
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0, height:"50%",
+            background:`linear-gradient(to bottom, transparent, ${C.bg} 100%)`,
+          }}/>
+        </div>
 
-        {/* Header */}
-        <div style={{
-          display:"flex",justifyContent:"space-between",alignItems:"center",
-          padding:"52px 24px 16px",
-        }}>
-          <button onClick={onClose} style={{
-            background:"rgba(255,255,255,0.85)",border:`1.5px solid ${C.border}`,
-            borderRadius:50,padding:"8px 16px",cursor:"pointer",
-            display:"flex",alignItems:"center",gap:6,
-            color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:14,
-            boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-            <svg viewBox="0 0 24 24" width={16} height={16} fill="none"
-              stroke={C.muted} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7"/>
-            </svg>
-            Back
-          </button>
-          <h2 style={{fontFamily:F.h,fontSize:22,fontWeight:900,color:C.text,margin:0,
-            textShadow:"0 2px 8px rgba(255,255,255,0.8)"}}>
-            {cm.name}'s Room
-          </h2>
-          {/* Stage + score pill */}
-          <div style={{display:"flex",alignItems:"center",gap:4,
-            background:"rgba(255,255,255,0.88)",borderRadius:50,
-            padding:"5px 12px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
-            <span style={{fontSize:12}}>{["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]}</span>
-            <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:stage.color,margin:0}}>
-              {score}
+        {/* Content sits above the garden */}
+        <div style={{position:"relative", zIndex:1}}>
+
+          {/* Header */}
+          <div style={{
+            display:"flex",justifyContent:"space-between",alignItems:"center",
+            padding:"52px 24px 16px",
+          }}>
+            <button onClick={onClose} style={{
+              background:"rgba(255,255,255,0.85)",border:`1.5px solid ${C.border}`,
+              borderRadius:50,padding:"8px 16px",cursor:"pointer",
+              display:"flex",alignItems:"center",gap:6,
+              color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:14,
+              boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+              <svg viewBox="0 0 24 24" width={16} height={16} fill="none"
+                stroke={C.muted} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 5l-7 7 7 7"/>
+              </svg>
+              Back
+            </button>
+            <h2 style={{fontFamily:F.h,fontSize:22,fontWeight:900,color:C.text,margin:0,
+              textShadow:"0 2px 8px rgba(255,255,255,0.9)"}}>
+              {cm.name}'s Room
+            </h2>
+            <div style={{display:"flex",alignItems:"center",gap:4,
+              background:"rgba(255,255,255,0.88)",borderRadius:50,
+              padding:"5px 12px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+              <span style={{fontSize:12}}>{["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]}</span>
+              <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:stage.color,margin:0}}>
+                {score} seeds
+              </p>
+            </div>
+          </div>
+
+          {/* ── MASCOT — floats over garden ── */}
+          <div style={{
+            display:"flex",flexDirection:"column",alignItems:"center",
+            paddingTop:8,paddingBottom:0,
+            minHeight:300,
+          }}>
+            {speech && (
+              <div style={{marginBottom:8,width:"80%",display:"flex",justifyContent:"center"}}>
+                <SpeechBubble text={speech} onDone={dismissSpeech}/>
+              </div>
+            )}
+
+            <div
+              onClick={handleTap}
+              style={{
+                display:"inline-block",cursor:"pointer",
+                userSelect:"none",animation:mascotAnim,
+                filter:`drop-shadow(0 16px 32px ${cm.color}77)`,
+                position:"relative",
+              }}>
+              <FullBodyMascot id={cm.id} size={210} stage={stage.id}/>
+              {sparkles.map(sp=>(
+                <Sparkle key={sp.id} x={sp.x} y={sp.y} color={sp.color} delay={sp.delay}/>
+              ))}
+            </div>
+
+            <div style={{
+              width:110,height:14,borderRadius:"50%",
+              background:"rgba(0,0,0,0.1)",
+              marginTop:-10,
+              animation:"groundShadow 3s ease-in-out infinite",
+            }}/>
+
+            <div style={{marginTop:10}}>
+              {mascotState==="droopy" ? (
+                <div style={{background:"rgba(238,233,255,0.92)",borderRadius:50,
+                  padding:"5px 16px",backdropFilter:"blur(4px)"}}>
+                  <p style={{fontFamily:F.b,fontSize:12,fontWeight:700,
+                    color:C.purple,margin:0,animation:"pulse 2s infinite"}}>
+                    {cm.name} misses you — tap to say hi! 💜
+                  </p>
+                </div>
+              ) : (
+                <p style={{fontFamily:F.b,fontWeight:600,fontSize:12,
+                  color:"rgba(60,40,80,0.85)",margin:0,
+                  textShadow:"0 1px 4px rgba(255,255,255,0.7)"}}>
+                  Tap {cm.name} to say hi! 👋
+                </p>
+              )}
+            </div>
+          </div>
+
+        </div>{/* end zIndex:1 */}
+      </div>{/* end hero section */}
+
+      {/* ── Cards section — normal background, scrolls below hero ── */}
+      <div style={{padding:"0 24px",maxWidth:430,margin:"0 auto"}}>
+
+        {/* Stage strip */}
+        <div style={{textAlign:"center",marginBottom:16,marginTop:4}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:6,
+            background:stage.bg,borderRadius:50,
+            padding:"6px 18px",boxShadow:`0 2px 12px ${stage.color}33`}}>
+            <span style={{fontSize:14}}>{["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]}</span>
+            <p style={{fontFamily:F.b,fontWeight:700,fontSize:13,color:stage.color,margin:0}}>
+              {stage.name}
+            </p>
+            <p style={{fontFamily:F.b,fontWeight:500,fontSize:12,color:C.muted,margin:0}}>
+              {["Plant your first seed!","Keep checking in!","Flowers are blooming!",
+                "Butterflies are visiting!","Your garden glows!","Fireflies are dancing!",
+                "Full Bloom achieved!"][stage.id]}
             </p>
           </div>
         </div>
-
-        {/* ── MASCOT HERO — floats above garden background ── */}
-        <div style={{
-          display:"flex",flexDirection:"column",alignItems:"center",
-          paddingTop:8,paddingBottom:0,
-          minHeight:300,
-        }}>
-          {/* Speech bubble */}
-          {speech && (
-            <div style={{marginBottom:8,width:"80%",display:"flex",justifyContent:"center"}}>
-              <SpeechBubble text={speech} onDone={dismissSpeech}/>
-            </div>
-          )}
-
-          {/* Original FullBodyMascot — untouched character design */}
-          <div
-            onClick={handleTap}
-            style={{
-              display:"inline-block",cursor:"pointer",
-              userSelect:"none",animation:mascotAnim,
-              filter:`drop-shadow(0 16px 32px ${cm.color}77)`,
-              position:"relative",
-            }}>
-            <FullBodyMascot id={cm.id} size={210} stage={stage.id}/>
-            {sparkles.map(sp=>(
-              <Sparkle key={sp.id} x={sp.x} y={sp.y} color={sp.color} delay={sp.delay}/>
-            ))}
-          </div>
-
-          {/* Ground shadow */}
-          <div style={{
-            width:110,height:14,borderRadius:"50%",
-            background:"rgba(0,0,0,0.1)",
-            marginTop:-10,
-            animation:"groundShadow 3s ease-in-out infinite",
-          }}/>
-
-          {/* Droopy / tap hint */}
-          <div style={{marginTop:10}}>
-            {mascotState==="droopy" ? (
-              <div style={{background:"rgba(238,233,255,0.92)",borderRadius:50,
-                padding:"5px 16px",backdropFilter:"blur(4px)"}}>
-                <p style={{fontFamily:F.b,fontSize:12,fontWeight:700,
-                  color:C.purple,margin:0,animation:"pulse 2s infinite"}}>
-                  {cm.name} misses you — tap to say hi! 💜
-                </p>
-              </div>
-            ) : (
-              <p style={{fontFamily:F.b,fontWeight:600,fontSize:12,
-                color:"rgba(255,255,255,0.95)",margin:0,
-                textShadow:"0 1px 6px rgba(0,0,0,0.35)"}}>
-                Tap {cm.name} to say hi! 👋
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div style={{padding:"0 24px",maxWidth:430,margin:"0 auto"}}>
-
-          {/* Stage name strip */}
-          <div style={{textAlign:"center",marginBottom:16,marginTop:4}}>
-            <div style={{display:"inline-flex",alignItems:"center",gap:6,
-              background:"rgba(255,255,255,0.88)",borderRadius:50,
-              padding:"6px 18px",boxShadow:`0 2px 12px ${stage.color}33`,
-              backdropFilter:"blur(4px)"}}>
-              <span style={{fontSize:14}}>{["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]}</span>
-              <p style={{fontFamily:F.b,fontWeight:700,fontSize:13,color:stage.color,margin:0}}>
-                {stage.name}
-              </p>
-              <p style={{fontFamily:F.b,fontWeight:500,fontSize:12,color:C.muted,margin:0}}>
-                {["Plant your first seed!","Keep checking in!","Flowers are blooming!",
-                  "Butterflies are visiting!","Your garden glows!","Fireflies are dancing!",
-                  "Full Bloom achieved!"][stage.id]}
-              </p>
-            </div>
-          </div>
 
         {/* State / mood message */}
         {mascotState==="droopy"&&(
@@ -904,8 +901,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
             The more you share your feelings, the more you both bloom together!
           </p>
         </div>
-        </div>{/* end padding div */}
-      </div>{/* end zIndex:1 content div */}
+      </div>{/* end cards padding div */}
     </div>
   );
 }
