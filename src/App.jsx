@@ -538,12 +538,14 @@ export default function BloomyApp() {
   /* ── Mark a daily mission as done, persist bonus seeds, queue gold popup ── */
   const completeMission = (id) => {
     setDailyMissions(prev => {
-      const alreadyDone = prev.find(m => m.id === id)?.done;
-      if (alreadyDone) return prev; // don't double-award
+      // Only act if this task is actually one of today's missions
+      const mission = prev.find(m => m.id === id);
+      if (!mission) return prev;           // not a mission today — do nothing
+      if (mission.done) return prev;       // already done — no double award
 
       const updated = prev.map(m => m.id === id ? {...m, done:true} : m);
 
-      // Persist to Supabase and update local state so score recalculates
+      // Persist missions_completed to Supabase so seed total updates
       setActiveChild(child => {
         if (!child) return child;
         const newCount = (child.missions_completed || 0) + 1;
@@ -551,12 +553,12 @@ export default function BloomyApp() {
         supabase.from("children")
           .update({missions_completed: newCount})
           .eq("id", child.id)
-          .then(({error}) => { if (error) console.error("mission bonus save error:", error); });
+          .then(({error}) => { if (error) console.error("mission bonus save:", error); });
         setChildren(cs => cs.map(c => c.id === child.id ? updatedChild : c));
         return updatedChild;
       });
 
-      // If this completing action finishes ALL missions, queue the gold bonus popup
+      // Only queue the gold bonus popup when ALL of today's missions are now done
       const allDone = updated.every(m => m.done);
       if (allDone) setPendingBonusPopup(true);
 
@@ -805,6 +807,7 @@ export default function BloomyApp() {
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
     setBreathActive(false);setBreathPhase(0);setBreathCount(0);
     setTodayMood(null);
+    setPendingBonusPopup(false);
     setSeenTooltips(child.seen_tooltips || {});
     // Show intro if this child has never seen it
     if (!child.seen_tooltips?.intro) setShowChildIntro(true);
