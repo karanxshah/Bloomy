@@ -542,22 +542,24 @@ export default function BloomyApp() {
   };
 
   /* ── Berry helpers ── */
-  const earnBerry = async () => {
+  const earnBerry = () => {
     // Reset first so consecutive calls always re-trigger the animation
     setFloatingBerry(false);
     setTimeout(() => setFloatingBerry(true), 30);
 
-    // Use functional update to always get fresh berry count
+    const todayStr = new Date().toISOString().split("T")[0];
+
     setBerries(prev => {
       const newCount = prev + 1;
-      // Persist to Supabase using the fresh count
       if (activeChild) {
+        // Save berries and reset last_activity_date so depletion clock restarts
         supabase.from("children")
-          .update({berries: newCount})
+          .update({berries: newCount, last_activity_date: todayStr})
           .eq("id", activeChild.id)
-          .then(({error}) => { if (error) console.error("berry save error:", error); });
-        setActiveChild(ac => ac ? {...ac, berries: newCount} : ac);
-        setChildren(cs => cs.map(c => c.id === activeChild?.id ? {...c, berries: newCount} : c));
+          .then(({error}) => { if (error) console.error("berry save:", error); });
+        setActiveChild(ac => ac ? {...ac, berries: newCount, last_activity_date: todayStr} : ac);
+        setChildren(cs => cs.map(c => c.id === activeChild.id
+          ? {...c, berries: newCount, last_activity_date: todayStr} : c));
       }
       return newCount;
     });
@@ -566,16 +568,15 @@ export default function BloomyApp() {
   const feedMascot = async () => {
     if (!activeChild || berries <= 0 || energy >= 100) return;
     const newBerries = berries - 1;
-    const newEnergy  = Math.min(100, energy + 30);
+    const newEnergy  = Math.min(100, energy + 25);
     setBerries(newBerries);
     setEnergy(newEnergy);
-    await supabase.from("children").update({
-      berries: newBerries,
-      energy:  newEnergy,
-      last_activity_date: new Date().toISOString().split("T")[0],
-    }).eq("id", activeChild.id);
+    // Only update berries and energy — last_activity_date is for task activity only
+    await supabase.from("children")
+      .update({berries: newBerries, energy: newEnergy})
+      .eq("id", activeChild.id);
     setActiveChild(prev => prev ? {...prev, berries:newBerries, energy:newEnergy} : prev);
-    setChildren(cs => cs.map(c => c.id === activeChild?.id
+    setChildren(cs => cs.map(c => c.id === activeChild.id
       ? {...c, berries:newBerries, energy:newEnergy} : c));
   };
 

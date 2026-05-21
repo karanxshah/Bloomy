@@ -42,13 +42,6 @@ const getMascotState = (lastMoodDate, lastMood) => {
   if (days <= 1) return "away";
   return "droopy";
 };
-const getEnergyLevel = (child, moodLog, journals) => {
-  const lastDate = moodLog?.slice(-1)[0]?.date;
-  const days = daysSince(lastDate);
-  const base = Math.min(100, calcGrowthScore(child, moodLog, journals) * 2);
-  return Math.max(0, base - Math.min(base, days * 15));
-};
-
 /* ── Personalities ── */
 const PERSONALITIES = {
   fox:   { trait:"Adventurous and brave",  loves:"Exploring new feelings",  color:"#FF7043" },
