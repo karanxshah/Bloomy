@@ -533,15 +533,33 @@ export default function BloomyApp() {
     setTimeout(()=>setSeedPopup({visible:false, amount:0}), 1800);
   };
 
-  /* ── Mark a daily mission as done (turns it gold + shows seed bonus popup) ── */
+  /* ── Mark a daily mission as done, persist bonus seeds, show popup ── */
   const completeMission = (id) => {
     setDailyMissions(prev => {
+      const alreadyDone = prev.find(m => m.id === id)?.done;
+      if (alreadyDone) return prev; // don't double-award
+
       const updated = prev.map(m => m.id === id ? {...m, done:true} : m);
-      const mission = updated.find(m => m.id === id);
-      if (mission && !prev.find(m => m.id === id)?.done) {
-        // Small delay so it fires after the action's own seed popup clears
+      const mission  = updated.find(m => m.id === id);
+
+      if (mission) {
+        // 1. Show popup after the action's own popup clears
         setTimeout(() => showSeedPopup(mission.seeds), 2000);
+
+        // 2. Persist to Supabase and update local state so score recalculates
+        setActiveChild(prev => {
+          if (!prev) return prev;
+          const newCount = (prev.missions_completed || 0) + 1;
+          const updated  = {...prev, missions_completed: newCount};
+          supabase.from("children")
+            .update({missions_completed: newCount})
+            .eq("id", prev.id)
+            .then(({error}) => { if (error) console.error("mission bonus save error:", error); });
+          setChildren(cs => cs.map(c => c.id === prev.id ? updated : c));
+          return updated;
+        });
       }
+
       return updated;
     });
   };
@@ -667,7 +685,7 @@ export default function BloomyApp() {
       parent_id:session.user.id, name:newChildName.trim(),
       mascot_id:newChildMascot.id, mascot_name:newChildMascot.name,
       mascot_color:newChildMascot.color, mascot_bg:newChildMascot.bg,
-      affirm_count:0, breath_sessions:0,
+      affirm_count:0, breath_sessions:0, missions_completed:0,
     }).select().single();
     if (!error&&data){
       setChildren(prev=>[...prev,data]);
