@@ -525,6 +525,7 @@ export default function BloomyApp() {
   const [dailyMissions,setDailyMissions]     = useState([]);
   const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0,gold:false});
   const [pendingBonusPopup,setPendingBonusPopup] = useState(false);
+  const [deleteConfirm,setDeleteConfirm]         = useState(null); // holds child object to confirm delete
   const [berries,setBerries]                     = useState(0);
   const [energy,setEnergy]                       = useState(100);
   const [floatingBerry,setFloatingBerry]         = useState(false);
@@ -1280,7 +1281,7 @@ export default function BloomyApp() {
               </div>
               <div style={{display:"flex",gap:8}}>
                 <Btn small style={{flex:1}} onClick={()=>openChild(child)}>Open Profile</Btn>
-                <button onClick={()=>handleDeleteChild(child.id)} style={{
+                <button onClick={()=>setDeleteConfirm(child)} style={{
                   background:"#FFF5F5",border:"1.5px solid #FFCDD2",borderRadius:50,
                   padding:"8px 14px",cursor:"pointer",display:"flex",alignItems:"center"}}>
                   <Icon name="trash" size={16} color="#E53935"/>
@@ -1450,6 +1451,82 @@ export default function BloomyApp() {
         targetRef={basketRef}
         onDone={()=>setFloatingBerry(false)}
       />
+
+      {/* ── Delete confirmation modal ── */}
+      {deleteConfirm && (
+        <div style={{
+          position:"fixed", inset:0, zIndex:9995,
+          background:"rgba(0,0,0,0.45)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          padding:"0 24px",
+          backdropFilter:"blur(4px)",
+        }} onClick={()=>setDeleteConfirm(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{
+            background:"#fff", borderRadius:24, padding:"28px 24px",
+            width:"100%", maxWidth:360,
+            boxShadow:"0 16px 48px rgba(0,0,0,0.18)",
+            animation:"scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+          }}>
+            {/* Icon */}
+            <div style={{
+              width:56, height:56, borderRadius:"50%",
+              background:"#FFF5F5", border:"2px solid #FFCDD2",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              margin:"0 auto 18px",
+            }}>
+              <Icon name="trash" size={24} color="#E53935"/>
+            </div>
+
+            {/* Title */}
+            <h2 style={{
+              fontFamily:F.h, fontWeight:900, fontSize:22,
+              color:theme.text, textAlign:"center", margin:"0 0 10px",
+            }}>
+              Delete {deleteConfirm.name}'s profile?
+            </h2>
+
+            {/* Message */}
+            <p style={{
+              fontFamily:F.b, fontWeight:500, fontSize:14,
+              color:theme.muted, textAlign:"center", lineHeight:1.7,
+              margin:"0 0 24px",
+            }}>
+              This will permanently remove <strong>{deleteConfirm.name}'s</strong> profile, including all their mood logs, journal entries, and garden progress. <strong>This cannot be undone.</strong>
+            </p>
+
+            {/* Buttons */}
+            <div style={{display:"flex", gap:10}}>
+              <button
+                onClick={()=>setDeleteConfirm(null)}
+                style={{
+                  flex:1, borderRadius:50, padding:"13px",
+                  background:theme.bg, border:`1.5px solid ${theme.border}`,
+                  cursor:"pointer",
+                  fontFamily:F.b, fontWeight:700, fontSize:14,
+                  color:theme.muted,
+                }}>
+                Keep Profile
+              </button>
+              <button
+                onClick={async()=>{
+                  await handleDeleteChild(deleteConfirm.id);
+                  setDeleteConfirm(null);
+                }}
+                style={{
+                  flex:1, borderRadius:50, padding:"13px",
+                  background:"linear-gradient(135deg,#E53935,#EF5350)",
+                  border:"none", cursor:"pointer",
+                  fontFamily:F.b, fontWeight:700, fontSize:14,
+                  color:"#fff",
+                  boxShadow:"0 4px 14px rgba(229,57,53,0.4)",
+                }}>
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <NavBar/>
       {celebration !== null && (
         <GrowthCelebration
