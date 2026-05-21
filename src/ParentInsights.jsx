@@ -33,14 +33,31 @@ const MASCOTS = [
   {id:"dog",   name:"Sunny",   color:"#FFA726", bg:"#FFF8E1"},
 ];
 
-const BADGE_DEFS = [
-  {id:"first_checkin", icon:"star",   label:"First Check-in"},
-  {id:"mood_explorer", icon:"mood",   label:"Mood Explorer"},
-  {id:"brave_heart",   icon:"heart",  label:"Brave Heart"},
-  {id:"week_streak",   icon:"fire",   label:"7-Day Streak"},
-  {id:"affirm_pro",    icon:"trophy", label:"Affirmation Pro"},
-  {id:"calm_champ",    icon:"wind",   label:"Calm Champion"},
+const STAGES = [
+  {id:0,name:"Seedling",    color:"#66BB6A", bg:"#E8F5E9", minScore:0},
+  {id:1,name:"Sprouting",   color:"#43A047", bg:"#E8F5E9", minScore:8},
+  {id:2,name:"Blooming",    color:"#7C4DFF", bg:"#EDE7F6", minScore:20},
+  {id:3,name:"Flourishing", color:"#FF7043", bg:"#FFF3E0", minScore:38},
+  {id:4,name:"Thriving",    color:"#F9A825", bg:"#FFF9C4", minScore:60},
+  {id:5,name:"Blossoming",  color:"#EC407A", bg:"#FCE4EC", minScore:88},
+  {id:6,name:"Full Bloom",  color:"#FFD54F", bg:"#FFFDE7", minScore:120},
 ];
+
+const calcGrowthScore = (child, moodLog, journals, gratitudes) => {
+  const moodSeeds      = (moodLog?.length || 0) * 1;
+  const journalSeeds   = (journals?.length || 0) * 2;
+  const breathSeeds    = (child?.breath_sessions || 0) * 2;
+  const affirmSeeds    = Math.floor((child?.affirm_count || 0) * 0.5);
+  const gratitudeSeeds = (gratitudes?.length || 0) * 1;
+  const missionBonus   = (child?.missions_completed || 0) * 3;
+  return moodSeeds + journalSeeds + breathSeeds + affirmSeeds + gratitudeSeeds + missionBonus;
+};
+
+const getStage = (score) => {
+  let stage = STAGES[0];
+  for (const s of STAGES) { if (score >= s.minScore) stage = s; }
+  return stage;
+};
 
 const today = () => new Date().toISOString().split("T")[0];
 
@@ -64,18 +81,6 @@ const last7Days = () => {
   });
 };
 
-const computeBadges = (child,moodLog,journals) => {
-  const moodsUsed=new Set(moodLog.map(e=>e.mood));
-  return {
-    first_checkin: moodLog.length>=1,
-    mood_explorer: moodsUsed.size>=6,
-    brave_heart:   journals.length>=5,
-    week_streak:   getStreak(moodLog)>=7,
-    affirm_pro:    (child.affirm_count||0)>=20,
-    calm_champ:    (child.breath_sessions||0)>=5,
-  };
-};
-
 /* ── Icons ── */
 const Icon = ({ name, size=24, color=C.purple, style:st }) => {
   const s={width:size,height:size,display:"block",flexShrink:0,...st};
@@ -93,7 +98,9 @@ const Icon = ({ name, size=24, color=C.purple, style:st }) => {
     book:    <svg viewBox="0 0 24 24" style={s}><path d="M4 19.5A2.5 2.5 0 016.5 17H20" {...p}/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" {...p}/><path d="M9 7h6M9 11h4" {...p}/></svg>,
     alert:   <svg viewBox="0 0 24 24" style={s}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" {...p}/><line x1="12" y1="9" x2="12" y2="13" {...p}/><circle cx="12" cy="17" r="1" fill={color}/></svg>,
     settings:<svg viewBox="0 0 24 24" style={s}><circle cx="12" cy="12" r="3" {...p}/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" {...p}/></svg>,
-    next:    <svg viewBox="0 0 24 24" style={s}><path d="M5 12h14M12 5l7 7-7 7" {...p}/></svg>,
+    seed:    <svg viewBox="0 0 24 24" style={s}><path d="M12 22V12M12 12C12 7 7 3 2 3c0 5 4 9 10 9zM12 12c0-5 5-9 10-9-1 5-5 9-10 9" {...p}/></svg>,
+    target:  <svg viewBox="0 0 24 24" style={s}><circle cx="12" cy="12" r="10" {...p}/><circle cx="12" cy="12" r="6" {...p}/><circle cx="12" cy="12" r="2" {...p}/></svg>,
+    gratitude:<svg viewBox="0 0 24 24" style={s}><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z" stroke={color} strokeWidth="2" fill={color} fillOpacity="0.15"/></svg>,
   };
   return map[name]||null;
 };
@@ -294,6 +301,7 @@ export default function ParentInsights({ session, children, onClose }) {
   const [selectedChild,setSelectedChild] = useState(null);
   const [moodLog,setMoodLog]             = useState([]);
   const [journals,setJournals]           = useState([]);
+  const [gratitudes,setGratitudes]       = useState([]);
   const [dataLoading,setDataLoading]     = useState(false);
   const [changingPin,setChangingPin]     = useState(false);
 
@@ -313,12 +321,14 @@ export default function ParentInsights({ session, children, onClose }) {
   const loadChildData = async (child) => {
     setDataLoading(true);
     setSelectedChild(child);
-    const [moodRes,journalRes] = await Promise.all([
+    const [moodRes,journalRes,gratitudeRes] = await Promise.all([
       supabase.from("mood_logs").select("*").eq("child_id",child.id).order("created_at",{ascending:true}),
       supabase.from("journal_entries").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
+      supabase.from("gratitudes").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
     ]);
     if (!moodRes.error) setMoodLog(moodRes.data||[]);
     if (!journalRes.error) setJournals(journalRes.data||[]);
+    if (!gratitudeRes.error) setGratitudes(gratitudeRes.data||[]);
     setDataLoading(false);
   };
 
@@ -389,6 +399,8 @@ export default function ParentInsights({ session, children, onClose }) {
 
         {children.map(child=>{
           const m=MASCOTS.find(x=>x.id===child.mascot_id)||MASCOTS[0];
+          const seedScore = (child.affirm_count||0)*0.5 + (child.breath_sessions||0)*2 + (child.missions_completed||0)*3;
+          const stage = seedScore >= 120 ? STAGES[6] : seedScore >= 88 ? STAGES[5] : seedScore >= 60 ? STAGES[4] : seedScore >= 38 ? STAGES[3] : seedScore >= 20 ? STAGES[2] : seedScore >= 8 ? STAGES[1] : STAGES[0];
           return (
             <button key={child.id} onClick={()=>loadChildData(child)} style={{
               width:"100%",background:"#fff",borderRadius:20,padding:"18px 20px",
@@ -404,11 +416,20 @@ export default function ParentInsights({ session, children, onClose }) {
                 <p style={{fontFamily:F.h,fontWeight:800,fontSize:20,color:C.text,margin:0}}>
                   {child.name}
                 </p>
-                <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,margin:0}}>
-                  {child.mascot_name} · Tap to view activity
+                <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,margin:"2px 0 0"}}>
+                  {m.name} · {stage.name}
                 </p>
               </div>
-              <Icon name="next" size={20} color={C.muted}/>
+              <div style={{textAlign:"right"}}>
+                <div style={{display:"flex",alignItems:"center",gap:4,
+                  background:stage.bg,borderRadius:50,padding:"4px 10px"}}>
+                  <span style={{fontSize:12}}>🌱</span>
+                  <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
+                    color:stage.color,margin:0}}>
+                    {Math.round(seedScore)} seeds
+                  </p>
+                </div>
+              </div>
             </button>
           );
         })}
@@ -420,7 +441,8 @@ export default function ParentInsights({ session, children, onClose }) {
   if (pinState==="unlocked"&&selectedChild) {
     const m=MASCOTS.find(x=>x.id===selectedChild.mascot_id)||MASCOTS[0];
     const streak=getStreak(moodLog);
-    const badges=computeBadges(selectedChild,moodLog,journals);
+    const score=calcGrowthScore(selectedChild,moodLog,journals,gratitudes);
+    const stage=getStage(score);
     const todayMood=moodLog.slice().reverse().find(e=>e.date===today());
     const moodCounts=moodLog.reduce((acc,e)=>({...acc,[e.mood]:(acc[e.mood]||0)+1}),{});
     const topMood=Object.entries(moodCounts).sort((a,b)=>b[1]-a[1])[0];
@@ -437,7 +459,7 @@ export default function ParentInsights({ session, children, onClose }) {
           {/* Header */}
           <div style={{display:"flex",justifyContent:"space-between",
             alignItems:"center",marginBottom:20}}>
-            <button onClick={()=>{setSelectedChild(null);setMoodLog([]);setJournals([]);}}
+            <button onClick={()=>{setSelectedChild(null);setMoodLog([]);setJournals([]);setGratitudes([]);}}
               style={{background:"none",border:"none",cursor:"pointer",
                 display:"flex",alignItems:"center",gap:5,
                 color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:14}}>
@@ -464,14 +486,24 @@ export default function ParentInsights({ session, children, onClose }) {
                   <div style={{background:"rgba(255,255,255,0.2)",borderRadius:16,padding:10}}>
                     <MascotFace id={m.id} size={52}/>
                   </div>
-                  <div>
+                  <div style={{flex:1}}>
                     <p style={{fontFamily:F.h,fontWeight:900,fontSize:22,color:"#fff",margin:0}}>
                       {selectedChild.name}
                     </p>
-                    <p style={{fontFamily:F.b,color:"rgba(255,255,255,0.8)",
+                    <p style={{fontFamily:F.b,color:"rgba(255,255,255,0.85)",
                       fontSize:14,fontWeight:500,margin:0}}>
                       {m.name} · {streak>0?`${streak}-day streak`:"No streak yet"}
                     </p>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{background:"rgba(255,255,255,0.25)",borderRadius:12,
+                      padding:"6px 12px",marginBottom:4}}>
+                      <p style={{fontFamily:F.h,fontWeight:900,fontSize:18,color:"#fff",margin:0}}>
+                        🌱 {score}
+                      </p>
+                    </div>
+                    <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
+                      color:"rgba(255,255,255,0.8)",margin:0}}>{stage.name}</p>
                   </div>
                 </div>
               </Card>
@@ -497,18 +529,19 @@ export default function ParentInsights({ session, children, onClose }) {
               )}
 
               {/* Quick stats */}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
                 {[
-                  {label:"Streak",    value:`${streak}d`,    color:C.coral,  bg:"#FFF3E0"},
-                  {label:"Mood logs", value:moodLog.length,  color:C.purple, bg:"#EDE7F6"},
-                  {label:"Journals",  value:journals.length, color:C.pink,   bg:"#FCE4EC"},
+                  {label:"Day streak",   value:`${streak}d`,                          color:C.coral,  bg:"#FFF3E0"},
+                  {label:"Seeds",        value:`🌱 ${score}`,                         color:"#43A047",bg:"#E8F5E9"},
+                  {label:"Mood logs",    value:moodLog.length,                        color:C.purple, bg:"#EDE7F6"},
+                  {label:"Missions done",value:selectedChild.missions_completed||0,   color:"#F9A825",bg:"#FFF9C4"},
                 ].map(s=>(
                   <div key={s.label} style={{background:s.bg,borderRadius:16,
-                    padding:"14px 10px",textAlign:"center"}}>
-                    <p style={{fontFamily:F.h,fontWeight:900,fontSize:24,
+                    padding:"14px 12px",textAlign:"center"}}>
+                    <p style={{fontFamily:F.h,fontWeight:900,fontSize:22,
                       color:s.color,margin:0}}>{s.value}</p>
                     <p style={{fontFamily:F.b,color:s.color,fontSize:11,
-                      fontWeight:700,margin:0}}>{s.label}</p>
+                      fontWeight:700,margin:0,marginTop:2}}>{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -606,34 +639,99 @@ export default function ParentInsights({ session, children, onClose }) {
                 </Card>
               )}
 
-              {/* Badges */}
+              {/* Garden stage progress */}
               <Card>
-                <Label>Badges</Label>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-                  {BADGE_DEFS.map(b=>(
-                    <div key={b.id} style={{background:badges[b.id]?"#F7F4FF":"#fafafa",
-                      borderRadius:14,padding:"14px 8px",textAlign:"center",
-                      opacity:badges[b.id]?1:0.3}}>
-                      <Icon name={b.icon} size={24} color={badges[b.id]?C.purple:C.muted}
-                        style={{margin:"0 auto 6px"}}/>
-                      <p style={{fontFamily:F.b,fontSize:11,fontWeight:700,lineHeight:1.3,
-                        color:badges[b.id]?C.purple:C.muted,margin:0}}>{b.label}</p>
+                <Label>Garden Progress</Label>
+                <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+                  <div style={{background:stage.bg,borderRadius:14,padding:10,flexShrink:0}}>
+                    <span style={{fontSize:28}}>
+                      {["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]}
+                    </span>
+                  </div>
+                  <div style={{flex:1}}>
+                    <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,
+                      color:stage.color,margin:0}}>{stage.name}</p>
+                    <p style={{fontFamily:F.b,color:C.muted,fontSize:13,
+                      fontWeight:500,margin:0}}>{score} seeds earned total</p>
+                  </div>
+                </div>
+                {/* Progress bar to next stage */}
+                {stage.id < 6 && (()=>{
+                  const next = STAGES[stage.id+1];
+                  const pct = Math.min(100,Math.round(((score-stage.minScore)/(next.minScore-stage.minScore))*100));
+                  return (
+                    <div>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                        <span style={{fontFamily:F.b,fontSize:12,fontWeight:600,color:C.muted}}>
+                          Progress to {next.name}
+                        </span>
+                        <span style={{fontFamily:F.b,fontSize:12,fontWeight:700,color:stage.color}}>
+                          {pct}%
+                        </span>
+                      </div>
+                      <div style={{height:8,borderRadius:50,background:"#F0EAFF",overflow:"hidden"}}>
+                        <div style={{height:"100%",borderRadius:50,
+                          background:`linear-gradient(90deg,${stage.color},${C.pink})`,
+                          width:`${pct}%`,transition:"width 0.6s ease"}}/>
+                      </div>
+                      <p style={{fontFamily:F.b,color:C.muted,fontSize:12,
+                        fontWeight:500,margin:"6px 0 0"}}>
+                        {next.minScore-score} more seeds to reach {next.name}
+                      </p>
+                    </div>
+                  );
+                })()}
+                {stage.id===6 && (
+                  <p style={{fontFamily:F.b,fontWeight:600,fontSize:14,
+                    color:stage.color,margin:0,textAlign:"center"}}>
+                    🎉 {selectedChild.name} has reached Full Bloom — the highest stage!
+                  </p>
+                )}
+              </Card>
+
+              {/* Gratitudes */}
+              {gratitudes.length>0 && (
+                <Card>
+                  <Label>Gratitudes ({gratitudes.length})</Label>
+                  {gratitudes.slice(0,5).map((g,i)=>(
+                    <div key={g.id} style={{padding:"10px 0",
+                      borderBottom:i<Math.min(4,gratitudes.length-1)?"1px solid #F0EAFF":"none"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",
+                        alignItems:"center",marginBottom:4}}>
+                        <span style={{fontSize:16}}>🙏</span>
+                        <span style={{fontFamily:F.b,fontSize:11,color:C.muted}}>
+                          {g.date===today()?"Today":g.date}
+                        </span>
+                      </div>
+                      <p style={{fontFamily:F.b,color:C.text,fontSize:14,lineHeight:1.6,
+                        fontWeight:500,margin:0,padding:"8px 12px",
+                        background:C.bg,borderRadius:10}}>
+                        {g.text}
+                      </p>
                     </div>
                   ))}
-                </div>
-              </Card>
+                  {gratitudes.length>5 && (
+                    <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,
+                      textAlign:"center",margin:"10px 0 0"}}>
+                      + {gratitudes.length-5} more gratitudes
+                    </p>
+                  )}
+                </Card>
+              )}
 
               {/* Activity stats */}
               <Card>
                 <Label>Activity</Label>
                 {[
-                  {label:"Affirmations read",  value:selectedChild.affirm_count||0,    icon:"star", color:C.purple},
-                  {label:"Breathing sessions", value:selectedChild.breath_sessions||0, icon:"wind", color:C.sky},
-                  {label:"Journal entries",    value:journals.length,                   icon:"book", color:C.pink},
-                ].map((a,i)=>(
+                  {label:"Affirmations read",    value:selectedChild.affirm_count||0,        icon:"star",     color:C.purple},
+                  {label:"Breathing sessions",   value:selectedChild.breath_sessions||0,     icon:"wind",     color:C.sky},
+                  {label:"Journal entries",      value:journals.length,                      icon:"book",     color:C.pink},
+                  {label:"Gratitudes written",   value:gratitudes.length,                    icon:"gratitude",color:"#43A047"},
+                  {label:"Daily missions done",  value:selectedChild.missions_completed||0,  icon:"target",   color:"#F9A825"},
+                ].map((a,i,arr)=>(
                   <div key={a.label} style={{display:"flex",alignItems:"center",gap:12,
                     padding:"10px 0",
-                    borderBottom:i<2?"1px solid #F0EAFF":"none"}}>
+                    borderBottom:i<arr.length-1?"1px solid #F0EAFF":"none"}}>
                     <div style={{background:C.bg,borderRadius:12,padding:8,flexShrink:0}}>
                       <Icon name={a.icon} size={20} color={a.color}/>
                     </div>
