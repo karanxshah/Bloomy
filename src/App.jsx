@@ -860,17 +860,26 @@ export default function BloomyApp() {
     // Load berries and calculate energy depletion
     const lastActivity = child.last_activity_date || "";
     const today2 = new Date().toISOString().split("T")[0];
-    let currentEnergy = child.energy ?? 100;
-    if (lastActivity && lastActivity !== today2) {
+    let currentEnergy;
+
+    if (!lastActivity) {
+      // Never done a berry task — start at 60 so there's room to grow through care
+      currentEnergy = child.energy > 0 ? child.energy : 60;
+      if (!child.energy) {
+        await supabase.from("children").update({energy: 60}).eq("id", child.id);
+      }
+    } else if (lastActivity === today2) {
+      // Active today — use stored energy as-is
+      currentEnergy = child.energy ?? 100;
+    } else {
+      // Missed days — deplete 25 per day
       const daysMissed = Math.floor(
         (new Date(today2) - new Date(lastActivity)) / (1000*60*60*24)
       );
-      currentEnergy = Math.max(0, currentEnergy - (daysMissed * 25));
-      // Save depleted energy back
-      await supabase.from("children")
-        .update({energy: currentEnergy})
-        .eq("id", child.id);
+      currentEnergy = Math.max(0, (child.energy ?? 100) - (daysMissed * 25));
+      await supabase.from("children").update({energy: currentEnergy}).eq("id", child.id);
     }
+
     setBerries(child.berries || 0);
     setEnergy(currentEnergy);
     setSeenTooltips(child.seen_tooltips || {});
