@@ -521,48 +521,58 @@ export default function BloomyApp() {
   const [seenTooltips,setSeenTooltips]       = useState({});
   const [showSettings,setShowSettings]       = useState(false);
   const [dailyMissions,setDailyMissions]     = useState([]);
-  const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0});
+  const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0,gold:false});
+  const [pendingBonusPopup,setPendingBonusPopup] = useState(false);
   const [streakShield,setStreakShield]       = useState(false);
   const [showAllAffirm,setShowAllAffirm]    = useState(false);
   const touchStartX                          = useRef(null);
   const touchStartY                          = useRef(null);
 
   /* ── Seed popup helper ── */
-  const showSeedPopup = (amount) => {
-    setSeedPopup({visible:true, amount});
-    setTimeout(()=>setSeedPopup({visible:false, amount:0}), 1800);
+  const showSeedPopup = (amount, gold=false) => {
+    setSeedPopup({visible:true, amount, gold});
+    setTimeout(()=>setSeedPopup({visible:false, amount:0, gold:false}), 2200);
   };
 
-  /* ── Mark a daily mission as done, persist bonus seeds, show popup ── */
+  /* ── Mark a daily mission as done, persist bonus seeds, queue gold popup ── */
   const completeMission = (id) => {
     setDailyMissions(prev => {
       const alreadyDone = prev.find(m => m.id === id)?.done;
       if (alreadyDone) return prev; // don't double-award
 
       const updated = prev.map(m => m.id === id ? {...m, done:true} : m);
-      const mission  = updated.find(m => m.id === id);
 
-      if (mission) {
-        // 1. Show popup after the action's own popup clears
-        setTimeout(() => showSeedPopup(mission.seeds), 2000);
+      // Persist to Supabase and update local state so score recalculates
+      setActiveChild(child => {
+        if (!child) return child;
+        const newCount = (child.missions_completed || 0) + 1;
+        const updatedChild = {...child, missions_completed: newCount};
+        supabase.from("children")
+          .update({missions_completed: newCount})
+          .eq("id", child.id)
+          .then(({error}) => { if (error) console.error("mission bonus save error:", error); });
+        setChildren(cs => cs.map(c => c.id === child.id ? updatedChild : c));
+        return updatedChild;
+      });
 
-        // 2. Persist to Supabase and update local state so score recalculates
-        setActiveChild(prev => {
-          if (!prev) return prev;
-          const newCount = (prev.missions_completed || 0) + 1;
-          const updated  = {...prev, missions_completed: newCount};
-          supabase.from("children")
-            .update({missions_completed: newCount})
-            .eq("id", prev.id)
-            .then(({error}) => { if (error) console.error("mission bonus save error:", error); });
-          setChildren(cs => cs.map(c => c.id === prev.id ? updated : c));
-          return updated;
-        });
-      }
+      // If this completing action finishes ALL missions, queue the gold bonus popup
+      const allDone = updated.every(m => m.done);
+      if (allDone) setPendingBonusPopup(true);
 
       return updated;
     });
   };
+
+  /* ── Fire gold bonus popup when child returns to home after completing all missions ── */
+  useEffect(()=>{
+    if (tab==="home" && pendingBonusPopup) {
+      const timer = setTimeout(()=>{
+        showSeedPopup(3, true);
+        setPendingBonusPopup(false);
+      }, 400); // small delay so the screen transition settles first
+      return ()=>clearTimeout(timer);
+    }
+  },[tab, pendingBonusPopup]);
 
   /* ── Derive colour palette from dark mode ── */
   const theme = darkMode ? DARK : LIGHT;
@@ -1347,7 +1357,7 @@ export default function BloomyApp() {
           onClose={()=>setShowSettings(false)} C={theme}
         />
       )}
-      <SeedPopup visible={seedPopup.visible} amount={seedPopup.amount}/>
+      <SeedPopup visible={seedPopup.visible} amount={seedPopup.amount} gold={seedPopup.gold}/>
       <NavBar/>
       {celebration !== null && (
         <GrowthCelebration

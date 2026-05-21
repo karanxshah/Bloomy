@@ -582,25 +582,36 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
 /* ══════════════════════════════════════════════
    GROWTH MASCOT (face only — used in small contexts)
 ══════════════════════════════════════════════ */
-export const SeedPopup = ({ amount, visible }) => {
+export const SeedPopup = ({ amount, visible, gold=false }) => {
   if (!visible) return null;
   return (
     <div style={{
       position:"fixed", top:"20%", left:"50%",
       transform:"translateX(-50%)",
-      background:"linear-gradient(135deg,#66BB6A,#4DB6AC)",
+      background: gold
+        ? "linear-gradient(135deg,#F9A825,#FFD54F)"
+        : "linear-gradient(135deg,#66BB6A,#4DB6AC)",
       borderRadius:50, padding:"12px 28px",
       display:"flex", alignItems:"center", gap:10,
-      boxShadow:"0 8px 32px rgba(76,175,80,0.45), 0 2px 8px rgba(0,0,0,0.1)",
+      boxShadow: gold
+        ? "0 8px 32px rgba(249,168,37,0.55), 0 2px 8px rgba(0,0,0,0.12)"
+        : "0 8px 32px rgba(76,175,80,0.45), 0 2px 8px rgba(0,0,0,0.1)",
       zIndex:9999, pointerEvents:"none",
-      animation:"seedPop 1s ease forwards",
+      animation:"seedPop 2s ease forwards",
       backdropFilter:"blur(2px)",
     }}>
       <style>{`@keyframes seedPop{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(0.6)}20%{opacity:1;transform:translateX(-50%) translateY(-24px) scale(1.12)}70%{opacity:1;transform:translateX(-50%) translateY(-32px) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-56px) scale(0.85)}}`}</style>
-      <span style={{fontSize:22}}>🌱</span>
-      <p style={{fontFamily:F.b,fontWeight:800,fontSize:18,color:"#fff",margin:0,letterSpacing:0.5}}>
-        +{amount} {amount===1?"seed":"seeds"}
-      </p>
+      <span style={{fontSize:22}}>{gold ? "⭐" : "🌱"}</span>
+      <div style={{display:"flex",flexDirection:"column",gap:1}}>
+        <p style={{fontFamily:F.b,fontWeight:800,fontSize:18,color:"#fff",margin:0,letterSpacing:0.5}}>
+          +{amount} {amount===1?"seed":"seeds"}
+        </p>
+        {gold && (
+          <p style={{fontFamily:F.b,fontWeight:600,fontSize:11,color:"rgba(255,255,255,0.85)",margin:0,letterSpacing:0.3}}>
+            Mission bonus! 🎯
+          </p>
+        )}
+      </div>
     </div>
   );
 };
