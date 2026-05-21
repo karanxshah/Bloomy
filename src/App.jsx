@@ -496,6 +496,7 @@ export default function BloomyApp() {
   const [tab,setTab]                         = useState("home");
   const [selectedMood,setSelectedMood]       = useState(null);
   const [moodLogged,setMoodLogged]           = useState(false);
+  const [todayMood,setTodayMood]             = useState(null); // tracks today's mood instantly
   const [moodNote,setMoodNote]               = useState("");
   const [moodNoteStep,setMoodNoteStep]       = useState("log"); // log | note | done
   const [savingNote,setSavingNote]           = useState(false);
@@ -721,6 +722,7 @@ export default function BloomyApp() {
       const newLog = [...moodLog, data];
       setMoodLog(newLog);
       setMoodLogged(true);
+      setTodayMood(mood);
       setMoodNoteStep("note");
       setMoodNote("");
       playSound("chime", soundOn);
@@ -802,6 +804,7 @@ export default function BloomyApp() {
     setActiveChild(child);setTab("home");
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
     setBreathActive(false);setBreathPhase(0);setBreathCount(0);
+    setTodayMood(null);
     setSeenTooltips(child.seen_tooltips || {});
     // Show intro if this child has never seen it
     if (!child.seen_tooltips?.intro) setShowChildIntro(true);
@@ -819,6 +822,8 @@ export default function BloomyApp() {
     if (!moodRes.error)     setMoodLog(moodRes.data||[]);
     if (!journalRes.error)  setJournals(journalRes.data||[]);
     if (!gratitudeRes.error) setGratitudes(gratitudeRes.data||[]);
+    // Pre-set todayMood so home card shows correctly on re-open
+    if (todayMoodLogs.length > 0) setTodayMood(todayMoodLogs[todayMoodLogs.length-1].mood);
 
     // Generate daily missions — same pair all day, changes only when date changes
     // Deterministic seed = childId + today's date so it's consistent per child per day
@@ -849,7 +854,9 @@ export default function BloomyApp() {
   const currentStage = getStage(growthScore);
   const streak = getStreak(moodLog);
   const week   = last7Days();
-  const todayEntry = moodLog.slice().reverse().find(e=>e.date===today());
+  const todayEntry = todayMood
+    ? {mood: todayMood, date: today()}
+    : moodLog.slice().reverse().find(e=>e.date===today());
   const lastMood = moodLog.length>0 ? moodLog[moodLog.length-1].mood : null;
   const badges = activeChild
     ? Object.fromEntries(BADGE_DEFS.map(b=>[b.id,b.check(moodLog,journals,
@@ -1703,9 +1710,13 @@ export default function BloomyApp() {
               <p style={{color:theme.muted,marginBottom:16,fontSize:14,fontWeight:500}}>
                 Great job checking in today.
               </p>
-              <Btn onClick={()=>{setMoodLogged(false);setSelectedMood(null);setMoodNoteStep('log');setMoodNote('');}}
-                color="#F7F4FF" textColor={theme.purple} small icon="refresh">
-                Check in again
+              <Btn onClick={()=>{
+                setMoodLogged(false);setSelectedMood(null);
+                setMoodNoteStep('log');setMoodNote('');
+                setTab("home");
+              }}
+                color={theme.purple} textColor="#fff" small icon="check">
+                Back to Home
               </Btn>
             </Card>
           )}
