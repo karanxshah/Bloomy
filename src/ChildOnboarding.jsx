@@ -237,10 +237,10 @@ export default function ChildOnboarding({ child, mascot, onFinish }) {
                   ? "linear-gradient(135deg,#43A047,#66BB6A)"
                   : `linear-gradient(135deg,${slide.accent},${slide.accent}cc)`,
                 border:"none", borderRadius:50,
-                padding: isLast ? "15px 32px" : "13px 26px",
+                padding: isLast ? "13px 26px" : "13px 26px",
                 cursor:"pointer",
                 fontFamily:F.h, fontWeight:900,
-                fontSize: isLast ? 17 : 15,
+                fontSize: 15,
                 color:"#fff",
                 boxShadow: isLast
                   ? "0 8px 24px rgba(67,160,71,0.45)"
@@ -252,7 +252,7 @@ export default function ChildOnboarding({ child, mascot, onFinish }) {
               onMouseDown={e=>e.currentTarget.style.transform="scale(0.96)"}
               onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
               {isLast ? (
-                <><span>🌱</span>Start Blooming!<span>🌱</span></>
+                <>Start Blooming</>
               ) : (
                 <>Next
                   <svg viewBox="0 0 24 24" width={14} height={14} fill="none"
