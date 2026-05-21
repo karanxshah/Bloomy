@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import ParentInsights from "./ParentInsights";
+import ChildOnboarding from "./ChildOnboarding";
 import { GrowthMascot, GardenScene, GrowthProgressBar, GrowthCelebration, SeedPopup, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
 import MascotRoom from "./MascotRoom";
 
@@ -513,6 +514,7 @@ export default function BloomyApp() {
   const [showInsights,setShowInsights]       = useState(false);
   const [celebration,setCelebration]         = useState(null);
   const [showMascotRoom,setShowMascotRoom]   = useState(false);
+  const [showChildIntro,setShowChildIntro]   = useState(false);
   const [onboardStep,setOnboardStep]         = useState(0);
   const [darkMode,setDarkMode]               = useState(false);
   const [soundOn,setSoundOn]                 = useState(true);
@@ -647,6 +649,16 @@ export default function BloomyApp() {
     setBreathActive(false);setActiveChild(null);setMoodLog([]);setJournals([]);
   };
 
+  /* ── Mark child intro as seen ── */
+  const handleFinishIntro = async () => {
+    setShowChildIntro(false);
+    if (!activeChild) return;
+    const updated = {...(activeChild.seen_tooltips||{}), intro:true};
+    await supabase.from("children").update({seen_tooltips:updated}).eq("id",activeChild.id);
+    setActiveChild(prev=>({...prev,seen_tooltips:updated}));
+    setChildren(prev=>prev.map(c=>c.id===activeChild.id?{...c,seen_tooltips:updated}:c));
+  };
+
   /* ── Add / delete child ── */
   const handleAddChild = async ()=>{
     if (!newChildName.trim()||!newChildMascot||!session) return;
@@ -660,6 +672,7 @@ export default function BloomyApp() {
     if (!error&&data){
       setChildren(prev=>[...prev,data]);
       setActiveChild(data);setMoodLog([]);setJournals([]);setTab("home");
+      setShowChildIntro(true); // always show intro for brand new profiles
     }
     setAddingChild(false);setNewChildName("");setNewChildMascot(null);setAddStep(1);
     setAddLoading(false);
@@ -762,6 +775,8 @@ export default function BloomyApp() {
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
     setBreathActive(false);setBreathPhase(0);setBreathCount(0);
     setSeenTooltips(child.seen_tooltips || {});
+    // Show intro if this child has never seen it
+    if (!child.seen_tooltips?.intro) setShowChildIntro(true);
 
     // Load data first so we can check completion state
     const today = new Date().toISOString().split("T")[0];
@@ -1288,9 +1303,21 @@ export default function BloomyApp() {
     />
   );
 
+  /* ── Child intro overlay — shown once on new profiles ── */
+  const childMascot = MASCOTS.find(m=>m.id===activeChild.mascot_id) || MASCOTS[0];
+
   const stageBg = STAGE_BGSANIM[currentStage.id] || STAGE_BGSANIM[0];
   return (
     <Shell stageBg={darkMode ? undefined : stageBg} dark={darkMode}>
+
+      {/* Intro slides rendered on top of everything */}
+      {showChildIntro && (
+        <ChildOnboarding
+          child={activeChild}
+          mascot={childMascot}
+          onFinish={handleFinishIntro}
+        />
+      )}
 
       {showSettings && (
         <SettingsPanel
