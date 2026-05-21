@@ -777,7 +777,10 @@ export default function BloomyApp() {
     if (!journalRes.error)  setJournals(journalRes.data||[]);
     if (!gratitudeRes.error) setGratitudes(gratitudeRes.data||[]);
 
-    // Generate daily missions — pre-mark done if already completed today
+    // Generate daily missions — same pair all day, changes only when date changes
+    // Deterministic seed = childId + today's date so it's consistent per child per day
+    const seedStr = `${child.id}-${today}`;
+    const seedNum = seedStr.split("").reduce((a,c)=>a+c.charCodeAt(0),0);
     const all = [
       {id:"mood",      label:"Log your mood today",          seeds:1, icon:"mood",  done: todayMoodLogs.length > 0},
       {id:"journal",   label:"Write a journal entry",        seeds:2, icon:"book",  done: todayJournals.length > 0},
@@ -785,8 +788,12 @@ export default function BloomyApp() {
       {id:"affirm",    label:"Read 3 affirmations",          seeds:1, icon:"star",  done: (child.affirm_count||0) % 3 === 0 && (child.affirm_count||0) > 0},
       {id:"gratitude", label:"Add a gratitude",              seeds:1, icon:"heart", done: todayGratitudes.length > 0},
     ];
-    const shuffled = [...all].sort(()=>Math.random()-0.5).slice(0,2);
-    setDailyMissions(shuffled);
+    // Pick 2 missions deterministically using the seed
+    const idx1 = seedNum % all.length;
+    const idx2 = (seedNum * 7 + 3) % all.length === idx1
+      ? (seedNum * 7 + 4) % all.length
+      : (seedNum * 7 + 3) % all.length;
+    setDailyMissions([all[idx1], all[idx2]]);
 
     // Check streak shield (resets weekly)
     const lastShieldDate = child.last_shield_date || "";
@@ -1844,25 +1851,25 @@ export default function BloomyApp() {
             ))}
           </div>
 
-          {/* Breathing circle — expands on inhale, holds, shrinks on exhale */}
+          {/* Breathing circle — bubble scales, mascot+text stay still */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:24}}>
             <div style={{position:"relative",width:240,height:240,
               display:"flex",alignItems:"center",justifyContent:"center"}}>
 
               <style>{`
-                @keyframes breatheIn  { from{transform:scale(0.72)} to{transform:scale(1.08)} }
-                @keyframes breatheHold{ from{transform:scale(1.08)} to{transform:scale(1.08)} }
-                @keyframes breatheOut { from{transform:scale(1.08)} to{transform:scale(0.72)} }
-                @keyframes breatheIdle{ from{transform:scale(0.88)} to{transform:scale(0.96)} }
+                @keyframes breatheIn  { from{transform:scale(0.65)} to{transform:scale(1.12)} }
+                @keyframes breatheHold{ from{transform:scale(1.12)} to{transform:scale(1.12)} }
+                @keyframes breatheOut { from{transform:scale(1.12)} to{transform:scale(0.65)} }
+                @keyframes breatheIdle{ 0%{transform:scale(0.85)} 100%{transform:scale(0.95)} }
               `}</style>
 
-              {/* Outer glow ring — also scales */}
+              {/* Outer glow ring — scales with breath */}
               <div style={{
                 position:"absolute",
                 width:220, height:220,
                 borderRadius:"50%",
-                background:`radial-gradient(circle,${BREATHING[breathPhase].color}18,transparent 70%)`,
-                border:`3px solid ${BREATHING[breathPhase].color}35`,
+                background:`radial-gradient(circle,${BREATHING[breathPhase].color}15,transparent 70%)`,
+                border:`3px solid ${BREATHING[breathPhase].color}30`,
                 animation: breathActive
                   ? breathPhase===0 ? "breatheIn 4s ease-in-out forwards"
                   : breathPhase===1 ? "breatheHold 2s linear forwards"
@@ -1871,27 +1878,33 @@ export default function BloomyApp() {
                 transition:"border-color 0.6s, background 0.6s",
               }}/>
 
-              {/* Inner bubble — the main one that breathes */}
+              {/* Inner bubble — scales with breath, content inside does NOT scale */}
               <div style={{
+                position:"absolute",
                 width:160, height:160,
                 borderRadius:"50%",
-                background:`radial-gradient(circle at 38% 35%, ${BREATHING[breathPhase].color}30, ${BREATHING[breathPhase].color}10)`,
-                border:`2.5px solid ${BREATHING[breathPhase].color}90`,
-                display:"flex",flexDirection:"column",
-                alignItems:"center",justifyContent:"center",
+                background:`radial-gradient(circle at 38% 35%, ${BREATHING[breathPhase].color}28, ${BREATHING[breathPhase].color}08)`,
+                border:`2.5px solid ${BREATHING[breathPhase].color}88`,
+                boxShadow: breathActive ? `0 0 ${breathPhase===1?44:22}px ${BREATHING[breathPhase].color}40` : "none",
                 animation: breathActive
                   ? breathPhase===0 ? "breatheIn 4s ease-in-out forwards"
                   : breathPhase===1 ? "breatheHold 2s linear forwards"
                   : "breatheOut 4s ease-in-out forwards"
                   : "breatheIdle 3s ease-in-out infinite alternate",
-                transition:"border-color 0.6s, background 0.6s",
-                boxShadow: breathActive
-                  ? `0 0 ${breathPhase===1?40:20}px ${BREATHING[breathPhase].color}44`
-                  : "none",
+                transition:"border-color 0.6s, background 0.6s, box-shadow 0.6s",
+              }}/>
+
+              {/* Mascot + text — absolutely centred, never scales */}
+              <div style={{
+                position:"absolute",
+                display:"flex",flexDirection:"column",
+                alignItems:"center",justifyContent:"center",
+                zIndex:2,
               }}>
                 <GrowthMascot id={cm.id} size={58} stage={currentStage.id}/>
                 <p style={{fontFamily:F.h,fontWeight:800,fontSize:15,
-                  color:BREATHING[breathPhase].color,marginTop:5,marginBottom:0}}>
+                  color:BREATHING[breathPhase].color,marginTop:5,marginBottom:0,
+                  transition:"color 0.6s"}}>
                   {breathActive ? BREATHING[breathPhase].phase : "Ready"}
                 </p>
                 {breathActive&&(
@@ -1900,6 +1913,7 @@ export default function BloomyApp() {
                   </p>
                 )}
               </div>
+
             </div>
           </div>
 
