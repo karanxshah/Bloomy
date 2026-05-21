@@ -579,13 +579,17 @@ const FeedCard = ({ energy, berries, mascotName, mascotId, stageId, onFeed }) =>
           : `${mascotName} could use some berries! 🫐`}
       </p>
 
-      {fullMsg && (
-        <div style={{background:"#E8F5E9",borderRadius:12,padding:"7px 14px",
-          marginBottom:10,textAlign:"center",animation:"fadeIn 0.25s ease"}}>
-          <p style={{fontFamily:F.b,fontWeight:700,fontSize:13,
-            color:"#43A047",margin:0}}>{mascotName} is already full! 🌟</p>
-        </div>
-      )}
+      {/* Full message — simple text, no card */}
+      <p style={{
+        fontFamily:F.b, fontWeight:600, fontSize:12,
+        color:"#43A047", textAlign:"center",
+        margin:"0 0 10px",
+        opacity: fullMsg ? 1 : 0,
+        transition:"opacity 0.3s ease",
+        minHeight:16,
+      }}>
+        {mascotName} is already full! 🌟
+      </p>
 
       {/* Feed button with floating berry */}
       <div style={{position:"relative",width:"100%"}}>

@@ -582,36 +582,63 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
 /* ══════════════════════════════════════════════
    GROWTH MASCOT (face only — used in small contexts)
 ══════════════════════════════════════════════ */
+/* ── SVG seed icon ── */
+const SeedIcon = ({ size=22, color="#43A047" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M12 21C12 21 5 15 5 9a7 7 0 0114 0c0 6-7 12-7 12z"
+      fill={color} opacity="0.9"/>
+    <path d="M12 21C12 21 5 15 5 9a7 7 0 0114 0c0 6-7 12-7 12z"
+      fill="none" stroke={color} strokeWidth="1.2" strokeLinejoin="round"/>
+    <ellipse cx="9.5" cy="8.5" rx="1.5" ry="2"
+      fill="rgba(255,255,255,0.35)" transform="rotate(-20 9.5 8.5)"/>
+  </svg>
+);
+
 export const SeedPopup = ({ amount, visible, gold=false }) => {
   if (!visible) return null;
   return (
     <div style={{
-      position:"fixed", top:"20%", left:"50%",
-      transform:"translateX(-50%)",
-      background: gold
-        ? "linear-gradient(135deg,#F9A825,#FFD54F)"
-        : "linear-gradient(135deg,#66BB6A,#4DB6AC)",
-      borderRadius:50, padding:"12px 28px",
-      display:"flex", alignItems:"center", gap:10,
-      boxShadow: gold
-        ? "0 8px 32px rgba(249,168,37,0.55), 0 2px 8px rgba(0,0,0,0.12)"
-        : "0 8px 32px rgba(76,175,80,0.45), 0 2px 8px rgba(0,0,0,0.1)",
+      position:"fixed", top:"22%", left:"50%",
       zIndex:9999, pointerEvents:"none",
       animation:"seedPop 2s ease forwards",
-      backdropFilter:"blur(2px)",
+      display:"flex", alignItems:"center", gap:6,
     }}>
-      <style>{`@keyframes seedPop{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(0.6)}20%{opacity:1;transform:translateX(-50%) translateY(-24px) scale(1.12)}70%{opacity:1;transform:translateX(-50%) translateY(-32px) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-56px) scale(0.85)}}`}</style>
-      <span style={{fontSize:22}}>{gold ? "⭐" : "🌱"}</span>
-      <div style={{display:"flex",flexDirection:"column",gap:1}}>
-        <p style={{fontFamily:F.b,fontWeight:800,fontSize:18,color:"#fff",margin:0,letterSpacing:0.5}}>
-          +{amount} {amount===1?"seed":"seeds"}
-        </p>
-        {gold && (
-          <p style={{fontFamily:F.b,fontWeight:600,fontSize:11,color:"rgba(255,255,255,0.85)",margin:0,letterSpacing:0.3}}>
-            Mission bonus! 🎯
+      <style>{`@keyframes seedPop{
+        0%  {opacity:0;transform:translateX(-50%) translateY(0) scale(0.5)}
+        20% {opacity:1;transform:translateX(-50%) translateY(-22px) scale(1.1)}
+        70% {opacity:1;transform:translateX(-50%) translateY(-30px) scale(1)}
+        100%{opacity:0;transform:translateX(-50%) translateY(-54px) scale(0.8)}
+      }`}</style>
+
+      {gold ? (
+        /* Bonus — 3 seed icons stacked with Bonus +3 */
+        <div style={{display:"flex",alignItems:"center",gap:5,
+          background:"rgba(255,255,255,0.92)",borderRadius:50,
+          padding:"6px 14px",
+          boxShadow:"0 4px 18px rgba(249,168,37,0.45)"}}>
+          <div style={{display:"flex",gap:1}}>
+            <SeedIcon size={16} color="#F9A825"/>
+            <SeedIcon size={16} color="#F9A825"/>
+            <SeedIcon size={16} color="#F9A825"/>
+          </div>
+          <p style={{fontFamily:F.b,fontWeight:800,fontSize:14,
+            color:"#F9A825",margin:0,letterSpacing:0.3}}>
+            Bonus +3
           </p>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* Regular — single seed icon + amount */
+        <div style={{display:"flex",alignItems:"center",gap:5,
+          background:"rgba(255,255,255,0.92)",borderRadius:50,
+          padding:"6px 12px",
+          boxShadow:"0 4px 14px rgba(67,160,71,0.3)"}}>
+          <SeedIcon size={18} color="#43A047"/>
+          <p style={{fontFamily:F.b,fontWeight:800,fontSize:14,
+            color:"#43A047",margin:0}}>
+            +{amount}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
