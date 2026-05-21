@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import ParentInsights from "./ParentInsights";
 import ChildOnboarding from "./ChildOnboarding";
+import BerryBasket, { BerrySVG, FloatingBerry } from "./BerryBasket";
 import { GrowthMascot, GardenScene, GrowthProgressBar, GrowthCelebration, SeedPopup, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
 import MascotRoom from "./MascotRoom";
 
@@ -524,6 +525,11 @@ export default function BloomyApp() {
   const [dailyMissions,setDailyMissions]     = useState([]);
   const [seedPopup,setSeedPopup]             = useState({visible:false,amount:0,gold:false});
   const [pendingBonusPopup,setPendingBonusPopup] = useState(false);
+  const [berries,setBerries]                     = useState(0);
+  const [energy,setEnergy]                       = useState(100);
+  const [floatingBerry,setFloatingBerry]         = useState(false);
+  const [floatingBerryOrigin,setFloatingBerryOrigin] = useState(null);
+  const basketRef                                = useRef(null);
   const [streakShield,setStreakShield]       = useState(false);
   const [showAllAffirm,setShowAllAffirm]    = useState(false);
   const touchStartX                          = useRef(null);
@@ -533,6 +539,35 @@ export default function BloomyApp() {
   const showSeedPopup = (amount, gold=false) => {
     setSeedPopup({visible:true, amount, gold});
     setTimeout(()=>setSeedPopup({visible:false, amount:0, gold:false}), 2200);
+  };
+
+  /* ── Berry helpers ── */
+  const earnBerry = async (originY) => {
+    setFloatingBerryOrigin(originY || null);
+    setFloatingBerry(true);
+    const newCount = (activeChild?.berries||0) + 1;
+    setBerries(newCount);
+    if (activeChild) {
+      await supabase.from("children").update({berries:newCount}).eq("id",activeChild.id);
+      setActiveChild(prev=>({...prev, berries:newCount}));
+      setChildren(cs=>cs.map(c=>c.id===activeChild?.id?{...c,berries:newCount}:c));
+    }
+  };
+
+  const feedMascot = async () => {
+    if (!activeChild || berries <= 0) return;
+    const newBerries = berries - 1;
+    const newEnergy  = Math.min(100, energy + 30);
+    setBerries(newBerries);
+    setEnergy(newEnergy);
+    await supabase.from("children").update({
+      berries: newBerries,
+      energy:  newEnergy,
+      last_activity_date: new Date().toISOString().split("T")[0],
+    }).eq("id", activeChild.id);
+    setActiveChild(prev=>({...prev, berries:newBerries, energy:newEnergy}));
+    setChildren(cs=>cs.map(c=>c.id===activeChild?.id
+      ? {...c, berries:newBerries, energy:newEnergy} : c));
   };
 
   /* ── Mark a daily mission as done, persist bonus seeds, queue gold popup ── */
@@ -622,6 +657,7 @@ export default function BloomyApp() {
       if (next===0){
         setBreathCount(c=>c+1);
         showSeedPopup(2);
+        earnBerry();
         completeMission("breathe");
         if (activeChild){
           const newCount=(activeChild.breath_sessions||0)+1;
@@ -771,6 +807,7 @@ export default function BloomyApp() {
       setJournalSaved(true);
       playSound("chime", soundOn);
       showSeedPopup(2);
+      earnBerry();
       completeMission("journal");
       checkGrowthStageUp(moodLog, newJournals);
     }
@@ -791,6 +828,7 @@ export default function BloomyApp() {
       setGratitudeSaved(true);
       playSound("chime",soundOn);
       showSeedPopup(1);
+      earnBerry();
       completeMission("gratitude");
       setTimeout(()=>setGratitudeSaved(false),2000);
     }
@@ -808,6 +846,23 @@ export default function BloomyApp() {
     setBreathActive(false);setBreathPhase(0);setBreathCount(0);
     setTodayMood(null);
     setPendingBonusPopup(false);
+
+    // Load berries and calculate energy depletion
+    const lastActivity = child.last_activity_date || "";
+    const today2 = new Date().toISOString().split("T")[0];
+    let currentEnergy = child.energy ?? 100;
+    if (lastActivity && lastActivity !== today2) {
+      const daysMissed = Math.floor(
+        (new Date(today2) - new Date(lastActivity)) / (1000*60*60*24)
+      );
+      currentEnergy = Math.max(0, currentEnergy - (daysMissed * 25));
+      // Save depleted energy back
+      await supabase.from("children")
+        .update({energy: currentEnergy})
+        .eq("id", child.id);
+    }
+    setBerries(child.berries || 0);
+    setEnergy(currentEnergy);
     setSeenTooltips(child.seen_tooltips || {});
     // Show intro if this child has never seen it
     if (!child.seen_tooltips?.intro) setShowChildIntro(true);
@@ -1352,6 +1407,9 @@ export default function BloomyApp() {
       activeChild={activeChild}
       moodLog={moodLog}
       journals={journals}
+      energy={energy}
+      berries={berries}
+      onFeed={feedMascot}
       onClose={()=>setShowMascotRoom(false)}
     />
   );
@@ -1368,6 +1426,12 @@ export default function BloomyApp() {
         />
       )}
       <SeedPopup visible={seedPopup.visible} amount={seedPopup.amount} gold={seedPopup.gold}/>
+      <FloatingBerry
+        visible={floatingBerry}
+        targetRef={basketRef}
+        originY={floatingBerryOrigin}
+        onDone={()=>setFloatingBerry(false)}
+      />
       <NavBar/>
       {celebration !== null && (
         <GrowthCelebration
@@ -1399,7 +1463,13 @@ export default function BloomyApp() {
         <span style={{fontSize:13,fontWeight:700,color:theme.muted,fontFamily:F.b}}>
           {activeChild.name}
         </span>
-        <div style={{width:64}}/>
+        <BerryBasket
+          berries={berries}
+          energy={energy}
+          mascotName={cm.name}
+          onFeed={feedMascot}
+          basketRef={basketRef}
+        />
       </div>
 
       {/* ── HOME ── */}

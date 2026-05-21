@@ -521,7 +521,7 @@ const StageEvolution = ({ currentScore, mascotId, stageId }) => {
    MAIN EXPORT — renders as a full page screen
    (not an overlay — parent controls navigation)
 ══════════════════════════════════════════════ */
-export default function MascotRoom({ activeChild, moodLog, journals, onClose }) {
+export default function MascotRoom({ activeChild, moodLog, journals, energy: energyProp, berries: berriesProp, onFeed, onClose }) {
   const cm = {
     id:    activeChild.mascot_id,
     name:  activeChild.mascot_name,
@@ -531,7 +531,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
   const personality   = PERSONALITIES[cm.id]||PERSONALITIES.fox;
   const score         = calcGrowthScore(activeChild, moodLog, journals);
   const stage         = getStage(score);
-  const energy        = getEnergyLevel(activeChild, moodLog, journals);
+  const energy        = energyProp ?? getEnergyLevel(activeChild, moodLog, journals);
   const lastEntry     = moodLog?.length>0 ? moodLog[moodLog.length-1] : null;
   const lastMood      = lastEntry?.mood||null;
   const lastMoodDate  = lastEntry?.date||null;
@@ -793,18 +793,52 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
           </div>
         )}
 
-        {/* Energy bar */}
+        {/* Energy + Feed */}
         <div style={{background:"#fff",borderRadius:20,padding:"18px 20px",
           boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14}}>
           <EnergyBar level={energy}/>
           <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,
-            color:C.muted,margin:"12px 0 0",textAlign:"center",lineHeight:1.6}}>
+            color:C.muted,margin:"10px 0 12px",textAlign:"center",lineHeight:1.6}}>
             {energy<30
-              ?`Log a mood or journal entry to boost ${cm.name}'s energy!`
+              ?`Feed ${cm.name} some berries to restore their energy!`
               :energy<60
               ?`Keep checking in to keep ${cm.name} thriving!`
               :`${cm.name} is full of energy — keep it up!`}
           </p>
+          {/* Feed button */}
+          {onFeed && (
+            <button
+              onClick={()=>{ if((berriesProp||0)>0 && energy<100) onFeed(); }}
+              style={{
+                width:"100%", borderRadius:50, padding:"11px",
+                background:(berriesProp||0)>0 && energy<100
+                  ? "linear-gradient(135deg,#7C4DFF,#9C6FFF)"
+                  : C.border,
+                border:"none",
+                cursor:(berriesProp||0)>0 && energy<100 ? "pointer" : "default",
+                fontFamily:F.b, fontWeight:700, fontSize:14,
+                color:(berriesProp||0)>0 && energy<100 ? "#fff" : C.muted,
+                display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                boxShadow:(berriesProp||0)>0 && energy<100
+                  ? "0 4px 14px rgba(124,77,255,0.3)" : "none",
+                transition:"transform 0.15s",
+              }}
+              onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
+              onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+              <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="20" r="10" fill={(berriesProp||0)>0&&energy<100?"#9575CD":"#ccc"}/>
+                <path d="M16 10 Q16.5 8 17 6" stroke={(berriesProp||0)>0&&energy<100?"#43A047":"#bbb"}
+                  strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+                <ellipse cx="16" cy="7" rx="5" ry="3.5"
+                  fill={(berriesProp||0)>0&&energy<100?"#66BB6A":"#bbb"}
+                  transform="rotate(-15 16 7)"/>
+              </svg>
+              {(berriesProp||0)>0 && energy<100
+                ? `Feed ${cm.name} (${berriesProp} berries)`
+                : energy>=100 ? `${cm.name} is already full!`
+                : "No berries — earn some first!"}
+            </button>
+          )}
         </div>
 
         {/* Personality */}
