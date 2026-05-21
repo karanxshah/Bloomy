@@ -16,32 +16,64 @@ const buildSlides = (mascot, childName) => {
   const intro = MASCOT_INTROS[mascot.id] || MASCOT_INTROS.fox;
   const name  = mascot.name;
   return [
+    /* 0 — Mascot intro */
     { bg1:mascot.color+"55", bg2:mascot.bg, accent:mascot.color,
       title:intro.greeting, body:intro.line, tag:`Hi ${childName}! 👋` },
+
+    /* 1 — Welcome */
     { bg1:"#C5CAE9", bg2:"#EDE7F6", accent:"#7C4DFF",
       title:"Welcome to Bloomy!", tag:`${name} will be right here with you.`,
-      body:`This is YOUR special place, ${childName}. Every day you can check in with your feelings, write in your journal, practise breathing, and grow our garden together!` },
+      body:`This is YOUR special place, ${childName}. Every day you can check in with how you feel, write in your journal, practise breathing, grow your garden, and take care of ${name}!` },
+
+    /* 2 — Mood */
     { bg1:"#FFE082", bg2:"#FFF9C4", accent:"#F9A825",
       title:"How are you feeling?", tag:`${name} always understands. 💛`,
       body:"Every day you tap a mood that matches how you feel inside. Happy, sad, worried, or anything in between — all feelings are welcome here!" },
+
+    /* 3 — Breathing */
     { bg1:"#B2EBF2", bg2:"#E0F7FA", accent:"#00ACC1",
       title:"Breathe with me", tag:`${name} will breathe with you. 🫧`,
-      body:"When feelings get really big, our breathing exercise helps. Watch the bubble grow as you breathe in, pause when it holds, and shrink as you breathe out." },
+      body:"When feelings get really big, our breathing exercise helps. Watch the bubble grow as you breathe in, pause when it holds, and shrink as you breathe out. You'll earn berries too!" },
+
+    /* 4 — Journal */
     { bg1:"#B39DDB", bg2:"#EDE7F6", accent:"#7C4DFF",
       title:"Your secret journal", tag:`${name} loves your stories. 📓`,
-      body:"Your journal is a safe place just for you. Happy thoughts, tricky days, funny stories — write anything! Your words are private." },
+      body:"Your journal is a safe place just for you. Happy thoughts, tricky days, funny stories — write anything! Your words are private. Writing earns you berries for your basket." },
+
+    /* 5 — Gratitude */
+    { bg1:"#A5D6A7", bg2:"#E8F5E9", accent:"#43A047",
+      title:"Grateful moments", tag:`${name} is grateful for YOU. 🙏`,
+      body:"Each day you can write one thing you're grateful for — your pet, a friend, a sunny day, anything! Noticing the good stuff makes your heart feel warm and earns berries." },
+
+    /* 6 — Affirmations */
     { bg1:"#F48FB1", bg2:"#FCE4EC", accent:"#EC407A",
       title:"Kind words for you", tag:`${name} believes every single one. ⭐`,
       body:"Every day you get special affirmations — powerful, kind words about YOU. Swipe through them and feel how amazing you really are!" },
-    { bg1:"#A5D6A7", bg2:"#E8F5E9", accent:"#43A047",
-      title:"Earn seeds, grow your garden!", tag:`${name}'s garden grows when YOU grow! 🌿`,
-      body:"Every time you log your mood, journal, breathe, or read affirmations you earn 🌱 Seeds! Seeds grow your garden from a tiny sprout to a magical Full Bloom!" },
+
+    /* 7 — Seeds */
+    { bg1:"#D4A574", bg2:"#F5E6D3", accent:"#8B5E3C",
+      title:"Earn seeds, grow your garden!", tag:`${name}'s garden grows when YOU grow!`,
+      body:"Every activity earns seeds — mood, journal, breathing, affirmations, and gratitude all count. Seeds grow your garden from a tiny sprout all the way to a magical Full Bloom!" },
+
+    /* 8 — Berry basket */
+    { bg1:"#CE93D8", bg2:"#F3E5F5", accent:"#8E24AA",
+      title:"Your berry basket 🧺", tag:`${name} gets so happy when you share berries!`,
+      body:`Journaling, breathing, and writing gratitude earn you berries. Tap the basket icon in the top corner to see how many you have — then visit ${name}'s room to feed them and keep their energy up!` },
+
+    /* 9 — Mascot energy */
+    { bg1:mascot.color+"44", bg2:mascot.bg, accent:mascot.color,
+      title:`Keep ${name} happy!`, tag:`${name} needs you every day! 💜`,
+      body:`${name} has an energy bar in their room. It goes down a little each day, but you can restore it by feeding them berries. The more you care for ${name}, the happier they'll be!` },
+
+    /* 10 — Daily missions */
     { bg1:"#FFD54F", bg2:"#FFF9C4", accent:"#F9A825",
       title:"Daily missions", tag:`${name} cheers you on every day! 🏆`,
       body:"Each day you get two special missions on your home screen. Finish them to earn bonus seeds! Look for the gold glow — that means you crushed it!" },
-    { bg1:mascot.color+"44", bg2:mascot.bg, accent:mascot.color,
+
+    /* 11 — Let's go */
+    { bg1:mascot.color+"55", bg2:mascot.bg, accent:mascot.color,
       title:`Let's go, ${childName}! 🎉`, tag:"Your adventure starts now!", isLast:true,
-      body:`You and ${name} are officially a team. Check in every day, grow your garden, and remember — every feeling you have matters. ${name} is so excited to be your buddy!` },
+      body:`You and ${name} are officially a team. Check in every day, grow your garden, feed ${name} berries, and remember — every feeling you have matters. ${name} is SO excited to be your buddy!` },
   ];
 };
 
