@@ -34,13 +34,13 @@ const MASCOTS = [
 ];
 
 const STAGES = [
-  {id:0,name:"Seedling",    color:"#66BB6A", bg:"#E8F5E9", minScore:0},
-  {id:1,name:"Sprouting",   color:"#43A047", bg:"#E8F5E9", minScore:8},
-  {id:2,name:"Blooming",    color:"#7C4DFF", bg:"#EDE7F6", minScore:20},
-  {id:3,name:"Flourishing", color:"#FF7043", bg:"#FFF3E0", minScore:38},
-  {id:4,name:"Thriving",    color:"#F9A825", bg:"#FFF9C4", minScore:60},
-  {id:5,name:"Blossoming",  color:"#EC407A", bg:"#FCE4EC", minScore:88},
-  {id:6,name:"Full Bloom",  color:"#FFD54F", bg:"#FFFDE7", minScore:120},
+  {id:0, name:"Seedling",    color:"#A5D6A7", bg:"#E8F5E9",  minScore:0},
+  {id:1, name:"Sprouting",   color:"#4DB6AC", bg:"#E0F2F1",  minScore:15},
+  {id:2, name:"Blooming",    color:"#7C4DFF", bg:"#EDE7F6",  minScore:35},
+  {id:3, name:"Flourishing", color:"#FF7043", bg:"#FFF3E0",  minScore:70},
+  {id:4, name:"Thriving",    color:"#F9A825", bg:"#FFF9C4",  minScore:120},
+  {id:5, name:"Blossoming",  color:"#EC407A", bg:"#FCE4EC",  minScore:180},
+  {id:6, name:"Full Bloom",  color:"#FFD54F", bg:"#FFFDE7",  minScore:260},
 ];
 
 const calcGrowthScore = (child, moodLog, journals, gratitudes) => {
@@ -49,8 +49,9 @@ const calcGrowthScore = (child, moodLog, journals, gratitudes) => {
   const breathSeeds    = (child?.breath_sessions || 0) * 2;
   const affirmSeeds    = Math.floor((child?.affirm_count || 0) * 0.5);
   const gratitudeSeeds = (gratitudes?.length || 0) * 1;
+  const streakBonus    = getStreak(moodLog) >= 7 ? 5 : 0;
   const missionBonus   = (child?.missions_completed || 0) * 3;
-  return moodSeeds + journalSeeds + breathSeeds + affirmSeeds + gratitudeSeeds + missionBonus;
+  return moodSeeds + journalSeeds + breathSeeds + affirmSeeds + gratitudeSeeds + streakBonus + missionBonus;
 };
 
 const getStage = (score) => {
@@ -399,8 +400,12 @@ export default function ParentInsights({ session, children, onClose }) {
 
         {children.map(child=>{
           const m=MASCOTS.find(x=>x.id===child.mascot_id)||MASCOTS[0];
-          const seedScore = (child.affirm_count||0)*0.5 + (child.breath_sessions||0)*2 + (child.missions_completed||0)*3;
-          const stage = seedScore >= 120 ? STAGES[6] : seedScore >= 88 ? STAGES[5] : seedScore >= 60 ? STAGES[4] : seedScore >= 38 ? STAGES[3] : seedScore >= 20 ? STAGES[2] : seedScore >= 8 ? STAGES[1] : STAGES[0];
+          const seedScore = Math.floor(
+            (child.affirm_count||0) * 0.5 +
+            (child.breath_sessions||0) * 2 +
+            (child.missions_completed||0) * 3
+          );
+          const stage = getStage(seedScore);
           return (
             <button key={child.id} onClick={()=>loadChildData(child)} style={{
               width:"100%",background:"#fff",borderRadius:20,padding:"18px 20px",
