@@ -656,83 +656,109 @@ export default function MascotRoom({ activeChild, moodLog, journals, onClose }) 
 
       <div style={{padding:"0 24px",maxWidth:430,margin:"0 auto"}}>
 
-        {/* Stage badge */}
-        <div style={{textAlign:"center",marginBottom:12}}>
-          <div style={{background:stage.bg,borderRadius:50,
-            padding:"5px 18px",display:"inline-block",
-            boxShadow:`0 2px 12px ${stage.color}33`}}>
-            <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
-              color:stage.color,margin:0,letterSpacing:1,textTransform:"uppercase"}}>
-              {stage.name} · {score} pts
-            </p>
-          </div>
-        </div>
-
-        {/* ── GARDEN + MASCOT HERO — garden is the backdrop ── */}
+        {/* ══ HERO CARD — garden with mascot composited inside ══ */}
         <div style={{
-          position:"relative",borderRadius:28,overflow:"hidden",
-          marginBottom:14,boxShadow:`0 8px 32px ${stage.color}33`,
+          borderRadius:28, overflow:"hidden", marginBottom:16,
+          boxShadow:`0 14px 48px ${stage.color}44, 0 4px 16px rgba(0,0,0,0.1)`,
         }}>
-          {/* Garden scene fills the full card */}
-          <GardenScene stage={stage.id} mascotId={cm.id} size={382} dark={false}/>
 
-          {/* Mascot floats centered over the garden */}
+          {/* Top pill badges — float above garden */}
           <div style={{
-            position:"absolute",bottom:0,left:0,right:0,
-            display:"flex",flexDirection:"column",alignItems:"center",
-            paddingBottom:12,
+            display:"flex", justifyContent:"space-between", alignItems:"center",
+            padding:"14px 16px 0", position:"relative", zIndex:2,
+            background:stage.bg,
           }}>
-            {/* Speech bubble above mascot */}
-            {speech && (
-              <div style={{marginBottom:6,width:"100%",display:"flex",justifyContent:"center"}}>
-                <SpeechBubble text={speech} onDone={dismissSpeech}/>
-              </div>
-            )}
-
-            <div
-              onClick={handleTap}
-              style={{
-                display:"inline-block",cursor:"pointer",
-                userSelect:"none",animation:mascotAnim,
-                filter:`drop-shadow(0 8px 20px ${cm.color}88)`,
-                position:"relative",
-              }}>
-              <FullBodyMascot id={cm.id} size={170} stage={stage.id}/>
-              {sparkles.map(sp=>(
-                <Sparkle key={sp.id} x={sp.x} y={sp.y} color={sp.color} delay={sp.delay}/>
-              ))}
+            <div style={{display:"flex",alignItems:"center",gap:6,
+              background:"rgba(255,255,255,0.75)",borderRadius:50,padding:"5px 14px",
+              backdropFilter:"blur(6px)",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+              <span style={{fontSize:15}}>{["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]}</span>
+              <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:stage.color,margin:0}}>
+                {stage.name}
+              </p>
             </div>
-
-            {/* Droopy badge */}
-            {mascotState==="droopy"&&(
-              <div style={{background:"rgba(238,233,255,0.95)",borderRadius:50,
-                padding:"4px 12px",marginTop:4}}>
-                <p style={{fontFamily:F.b,fontSize:11,fontWeight:700,
-                  color:C.purple,margin:0,animation:"pulse 2s infinite"}}>
-                  {cm.name} misses you!
-                </p>
-              </div>
-            )}
-
-            <p style={{fontFamily:F.b,fontWeight:600,fontSize:12,
-              color:"rgba(255,255,255,0.9)",marginTop:4,textAlign:"center",
-              textShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>
-              Tap {cm.name} to say hi!
-            </p>
+            <div style={{display:"flex",alignItems:"center",gap:5,
+              background:"rgba(255,255,255,0.75)",borderRadius:50,padding:"5px 14px",
+              backdropFilter:"blur(6px)",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
+              <span style={{fontSize:13}}>🌱</span>
+              <p style={{fontFamily:F.b,fontWeight:800,fontSize:13,color:stage.color,margin:0}}>
+                {score} seeds
+              </p>
+            </div>
           </div>
 
-          {/* Stage flavor text — bottom overlay strip */}
+          {/* Speech bubble — sits between badge strip and garden */}
+          {speech && (
+            <div style={{padding:"8px 20px 0",display:"flex",justifyContent:"center",
+              background:stage.bg, zIndex:2, position:"relative"}}>
+              <SpeechBubble text={speech} onDone={dismissSpeech}/>
+            </div>
+          )}
+
+          {/* Garden with mascot composited inside */}
+          <div style={{position:"relative", cursor:"pointer"}} onClick={handleTap}>
+            <GardenScene
+              stage={stage.id}
+              mascotId={cm.id}
+              size={382}
+              dark={false}
+              showMascot={true}
+              mascotStageId={stage.id}
+            />
+            {/* Sparkles layer on top */}
+            {sparkles.length > 0 && (
+              <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,
+                pointerEvents:"none",overflow:"hidden"}}>
+                <svg width="100%" height="100%" style={{position:"absolute",top:0,left:0}}>
+                  {sparkles.map(sp=>(
+                    <circle key={sp.id}
+                      cx={`${sp.x}%`} cy={`${sp.y}%`} r="6"
+                      fill={sp.color} opacity="0.9">
+                      <animate attributeName="opacity" values="0.9;0" dur="0.6s" fill="freeze"/>
+                      <animate attributeName="r" values="6;14" dur="0.6s" fill="freeze"/>
+                    </circle>
+                  ))}
+                </svg>
+              </div>
+            )}
+            {/* Tap hint overlay — bottom of garden */}
+            <div style={{
+              position:"absolute", bottom:10, left:"50%",
+              transform:"translateX(-50%)",
+              background:"rgba(255,255,255,0.72)",
+              borderRadius:50, padding:"4px 14px",
+              backdropFilter:"blur(4px)",
+              display:"flex",alignItems:"center",gap:5,
+              boxShadow:"0 2px 8px rgba(0,0,0,0.08)",
+            }}>
+              {mascotState==="droopy"
+                ? <p style={{fontFamily:F.b,fontSize:11,fontWeight:700,
+                    color:C.purple,margin:0,animation:"pulse 2s infinite"}}>
+                    {cm.name} misses you — tap to say hi! 💜
+                  </p>
+                : <p style={{fontFamily:F.b,fontSize:11,fontWeight:600,
+                    color:stage.color,margin:0}}>
+                    Tap {cm.name} to say hi! 👋
+                  </p>
+              }
+            </div>
+          </div>
+
+          {/* Stage flavour strip — below garden, no overlap */}
           <div style={{
-            position:"absolute",top:10,right:10,
-            background:"rgba(255,255,255,0.88)",borderRadius:12,
-            padding:"6px 10px",display:"flex",alignItems:"center",gap:6,
-            backdropFilter:"blur(4px)",
+            background:stage.bg,
+            padding:"10px 18px 14px",
+            display:"flex",alignItems:"center",gap:10,
           }}>
-            <span style={{fontSize:16}}>
-              {["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]||"🌱"}
-            </span>
-            <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:stage.color,margin:0}}>
-              {STAGES[stage.id]?.name}
+            <p style={{fontFamily:F.b,fontWeight:600,fontSize:13,
+              color:stage.color,margin:0,flex:1,lineHeight:1.5}}>
+              {["🌱 Plant your first seed by logging your mood!",
+                "🌿 Tiny shoots are sprouting — keep checking in!",
+                "🌸 Your first flowers are blooming!",
+                "🦋 Butterflies visit your flourishing garden!",
+                "✨ Glowing flowers fill your lush garden!",
+                "🌠 Magic fireflies dance in your enchanted garden!",
+                "👑 Stars rain down on your legendary Full Bloom garden!",
+              ][stage.id]}
             </p>
           </div>
         </div>

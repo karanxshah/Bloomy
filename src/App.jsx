@@ -531,9 +531,17 @@ export default function BloomyApp() {
     setTimeout(()=>setSeedPopup({visible:false, amount:0}), 1800);
   };
 
-  /* ── Mark a daily mission as done (turns it gold) ── */
+  /* ── Mark a daily mission as done (turns it gold + shows seed bonus popup) ── */
   const completeMission = (id) => {
-    setDailyMissions(prev=>prev.map(m=>m.id===id?{...m,done:true}:m));
+    setDailyMissions(prev => {
+      const updated = prev.map(m => m.id === id ? {...m, done:true} : m);
+      const mission = updated.find(m => m.id === id);
+      if (mission && !prev.find(m => m.id === id)?.done) {
+        // Small delay so it fires after the action's own seed popup clears
+        setTimeout(() => showSeedPopup(mission.seeds), 2000);
+      }
+      return updated;
+    });
   };
 
   /* ── Derive colour palette from dark mode ── */

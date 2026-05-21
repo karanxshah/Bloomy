@@ -211,227 +211,663 @@ export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
 };
 
 /* ══════════════════════════════════════════════
-   SEED EARNING POPUP
+   ANIMATED GARDEN SCENE — mascot composited inside
 ══════════════════════════════════════════════ */
-export const GardenScene = ({ stage, mascotId, size = 280, dark }) => {
+export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = false, mascotStageId = 0 }) => {
   const w = size;
-  const h = size * 0.75;
+  const h = Math.round(size * 1.05); // taller — square-ish, feels immersive
   const stageId = typeof stage === "object" ? stage.id : stage;
 
-  /* Sky gradient per stage */
   const skies = [
-    ["#E8F5E9","#F1F8E9"],   // Seedling — pale green
-    ["#E0F7FA","#E8F5E9"],   // Sprouting — light teal
-    ["#EDE7F6","#E3F2FD"],   // Blooming — soft purple
-    ["#FFF3E0","#FFFDE7"],   // Flourishing — warm orange
-    ["#FFF9C4","#FFFDE7"],   // Thriving — golden
-    ["#FCE4EC","#F3E5F5"],   // Blossoming — pink magic
-    ["#FFFDE7","#FFF8E1"],   // Full Bloom — golden enchanted
+    ["#B9F0C2","#DCF5E0"],
+    ["#A0E8F0","#D0F5F9"],
+    ["#C4B0F5","#E8E0FF"],
+    ["#FFD4A8","#FFE8CC"],
+    ["#FFED9A","#FFFACC"],
+    ["#FFB0D0","#FFD6E8"],
+    ["#FFE066","#FFF5B0"],
   ];
   const [skyTop, skyBot] = skies[stageId] || skies[0];
 
-  /* Flower colors per stage */
-  const flowerPalettes = [
-    [],
-    ["#A5D6A7"],
-    ["#CE93D8","#81D4FA"],
-    ["#FF8A65","#FFD54F","#CE93D8"],
-    ["#FF8A65","#FFD54F","#CE93D8","#81C784"],
-    ["#F48FB1","#CE93D8","#FFD54F","#81D4FA","#FF8A65"],
-    ["#FFD54F","#F48FB1","#CE93D8","#81D4FA","#FF8A65","#A5D6A7"],
-  ];
-  const flowers = flowerPalettes[stageId] || [];
+  const grassColors = [
+    ["#43A047","#66BB6A","#81C784","#A5D6A7"],
+    ["#2E7D32","#388E3C","#43A047","#66BB6A"],
+    ["#6A1B9A","#7B1FA2","#8E24AA","#AB47BC"],
+    ["#BF360C","#D84315","#E64A19","#FF7043"],
+    ["#F57F17","#F9A825","#FBC02D","#FFD54F"],
+    ["#880E4F","#AD1457","#C2185B","#EC407A"],
+    ["#E65100","#EF6C00","#F57C00","#FF9800"],
+  ][stageId] || ["#43A047","#66BB6A","#81C784","#A5D6A7"];
 
-  /* Flower positions */
-  const flowerPos = [
-    {x:0.12,y:0.72},{x:0.25,y:0.78},{x:0.42,y:0.74},
-    {x:0.58,y:0.76},{x:0.72,y:0.73},{x:0.88,y:0.75},
-    {x:0.18,y:0.68},{x:0.65,y:0.7},{x:0.35,y:0.8},
-    {x:0.8,y:0.68},{x:0.5,y:0.82},{x:0.92,y:0.8},
-  ].slice(0, Math.min(flowers.length * 2, 12));
+  const flowerData = [
+    { colors:[], count:0 },
+    { colors:["#A5D6A7","#C8E6C9"], count:4 },
+    { colors:["#CE93D8","#81D4FA","#B39DDB","#E1BEE7"], count:7 },
+    { colors:["#FF8A65","#FFD54F","#CE93D8","#81C784","#FFAB91"], count:10 },
+    { colors:["#FF7043","#FFD54F","#CE93D8","#81C784","#F48FB1","#FF8A65"], count:13 },
+    { colors:["#F48FB1","#CE93D8","#FFD54F","#81D4FA","#FF7043","#A5D6A7","#F8BBD0"], count:16 },
+    { colors:["#FFD54F","#F48FB1","#CE93D8","#FF7043","#81D4FA","#A5D6A7","#FFE082","#CE93D8"], count:20 },
+  ][stageId] || { colors:[], count:0 };
+
+  // Ground horizon Y — lower in scene to leave sky room
+  const groundY = h * 0.62;
+
+  // Flowers: avoid centre zone (where mascot stands) for showMascot mode
+  const allPositions = Array.from({length: flowerData.count}, (_,i) => {
+    const raw = 0.03 + (i / Math.max(flowerData.count-1,1)) * 0.94;
+    // skip centre for mascot
+    if (showMascot && raw > 0.35 && raw < 0.65) {
+      return raw < 0.5 ? raw - 0.14 : raw + 0.14;
+    }
+    return raw;
+  }).map((x,i) => ({
+    x,
+    groundOffset: (Math.sin(x * Math.PI * 2.3 + i) * 0.04),
+    size: 7 + (i % 5) * 2.2,
+    sway: i % 2 === 0 ? "gSwayL" : "gSwayR",
+    delay: `${(i * 0.22 % 2).toFixed(2)}s`,
+    color: flowerData.colors[i % flowerData.colors.length],
+  }));
+
+  // Grass blades — dense, full width
+  const blades = Array.from({length:28}, (_,i) => ({
+    x: (i/27) * w,
+    stemH: h*(0.12 + (i%5)*0.04),
+    width: 3 + (i%3)*1.5,
+    sway: i%2===0 ? "gSwayL" : "gSwayR",
+    delay: `${(i*0.14%2.5).toFixed(2)}s`,
+    color: grassColors[i%grassColors.length],
+    opacity: 0.55 + (i%4)*0.1,
+  }));
+
+  // Mascot body SVG for the specific animal (simplified upright figure at ground)
+  const mascotColors = {
+    fox:   {body:"#FF8A65",belly:"#FFCCBC",ear:"#FF7043",eye:"#1a1a2e"},
+    bunny: {body:"#FCE4EC",belly:"#F8BBD0",ear:"#F8BBD0",eye:"#1a1a2e"},
+    bear:  {body:"#8D6E63",belly:"#A1887F",ear:"#795548",eye:"#1a1a2e"},
+    owl:   {body:"#7E57C2",belly:"#B39DDB",ear:"#5E35B1",eye:"#311B92"},
+    cat:   {body:"#4DB6AC",belly:"#80CBC4",ear:"#00897B",eye:"#1a1a2e"},
+    dog:   {body:"#FFB74D",belly:"#FFCC80",ear:"#FFA726",eye:"#1a1a2e"},
+  };
+  const mc = mascotColors[mascotId] || mascotColors.fox;
+  const mw = w * 0.22; // mascot width
+  const mh = mw * 1.5; // mascot height
+  const mx = w/2 - mw/2; // centre x
+  const mGroundY = groundY - h*0.01;
+  const myBase = mGroundY - mh; // mascot top y
+
+  const animId = `gs${stageId}${showMascot?'m':''}`;
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
-      style={{borderRadius:24,overflow:"hidden",display:"block"}}>
-      <defs>
-        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={dark?"#1a1030":skyTop}/>
-          <stop offset="100%" stopColor={dark?"#261840":skyBot}/>
-        </linearGradient>
-        {stageId >= 5 && (
-          <radialGradient id="magicGlow" cx="50%" cy="60%" r="40%">
-            <stop offset="0%" stopColor="#FFD54F" stopOpacity="0.3"/>
+    <div style={{position:"relative",width:"100%",height:h,display:"block",overflow:"hidden"}}>
+      <style>{`
+        @keyframes gSwayL{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-7deg)}}
+        @keyframes gSwayR{0%,100%{transform:rotate(0deg)}50%{transform:rotate(7deg)}}
+        @keyframes gFloat{0%,100%{transform:translateY(0px)}50%{transform:translateY(-7px)}}
+        @keyframes gPulse{0%,100%{opacity:0.25}50%{opacity:1}}
+        @keyframes gCloud{0%{transform:translateX(0)}100%{transform:translateX(40px)}}
+        @keyframes gBounce{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-12px) rotate(1deg)}}
+      `}</style>
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h}
+        style={{display:"block"}}>
+        <defs>
+          <linearGradient id={`sky_${animId}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={dark?"#0d1a2e":skyTop}/>
+            <stop offset="100%" stopColor={dark?"#1a2e40":skyBot}/>
+          </linearGradient>
+          <linearGradient id={`gnd_${animId}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={grassColors[1]}/>
+            <stop offset="100%" stopColor={grassColors[0]}/>
+          </linearGradient>
+          <radialGradient id={`sun_${animId}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#FFFDE7" stopOpacity="0.9"/>
             <stop offset="100%" stopColor="#FFD54F" stopOpacity="0"/>
           </radialGradient>
-        )}
-      </defs>
+          {stageId >= 4 && (
+            <radialGradient id={`mglow_${animId}`} cx="50%" cy="65%" r="55%">
+              <stop offset="0%" stopColor={stageId>=5?"#F48FB1":"#FFD54F"} stopOpacity="0.28"/>
+              <stop offset="100%" stopColor="transparent" stopOpacity="0"/>
+            </radialGradient>
+          )}
+          <clipPath id={`clip_${animId}`}>
+            <rect width={w} height={h}/>
+          </clipPath>
+        </defs>
 
-      {/* Sky */}
-      <rect width={w} height={h} fill="url(#skyGrad)"/>
+        <g clipPath={`url(#clip_${animId})`}>
 
-      {/* Magic glow for high stages */}
-      {stageId >= 5 && <rect width={w} height={h} fill="url(#magicGlow)"/>}
+        {/* Sky */}
+        <rect width={w} height={h} fill={`url(#sky_${animId})`}/>
+        {stageId>=4 && <rect width={w} height={h} fill={`url(#mglow_${animId})`}/>}
 
-      {/* Stars falling for Full Bloom */}
-      {stageId === 6 && [
-        {x:0.15,y:0.1},{x:0.35,y:0.05},{x:0.6,y:0.12},{x:0.82,y:0.08},{x:0.5,y:0.2},
-      ].map((p,i)=>(
-        <g key={i}>
-          <circle cx={w*p.x} cy={h*p.y} r={3} fill="#FFD54F" opacity="0.9"/>
-          <line x1={w*p.x} y1={h*p.y-5} x2={w*p.x} y2={h*p.y+5}
-            stroke="#FFD54F" strokeWidth="1" opacity="0.6"/>
-          <line x1={w*p.x-5} y1={h*p.y} x2={w*p.x+5} y2={h*p.y}
-            stroke="#FFD54F" strokeWidth="1" opacity="0.6"/>
-        </g>
-      ))}
+        {/* Sun */}
+        {stageId<=4 && <>
+          <circle cx={w*0.84} cy={h*0.13} r={w*0.072} fill="#FFD54F" opacity="0.95">
+            <animate attributeName="r" values={`${w*0.068};${w*0.082};${w*0.068}`} dur="4s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx={w*0.84} cy={h*0.13} r={w*0.115} fill={`url(#sun_${animId})`}/>
+          {[0,45,90,135,180,225,270,315].map((a,i)=>{
+            const r=a*Math.PI/180;
+            return <line key={i}
+              x1={w*0.84+Math.cos(r)*w*0.092} y1={h*0.13+Math.sin(r)*w*0.092}
+              x2={w*0.84+Math.cos(r)*w*0.13}  y2={h*0.13+Math.sin(r)*w*0.13}
+              stroke="#FFD54F" strokeWidth="2.5" opacity="0.55" strokeLinecap="round"/>;
+          })}
+        </>}
 
-      {/* Fireflies for Blossoming+ */}
-      {stageId >= 5 && [
-        {x:0.1,y:0.4},{x:0.85,y:0.35},{x:0.2,y:0.6},{x:0.75,y:0.55},
-      ].map((p,i)=>(
-        <circle key={i} cx={w*p.x} cy={h*p.y} r={3}
-          fill="#FFD54F" opacity="0.7"/>
-      ))}
+        {/* Moon for dark stages */}
+        {stageId>=5 && <>
+          <circle cx={w*0.82} cy={h*0.12} r={w*0.07} fill="#FFFDE7" opacity="0.9"/>
+          <circle cx={w*0.87} cy={h*0.1}  r={w*0.055} fill={skyTop} />
+          {[{x:0.65,y:0.07},{x:0.72,y:0.19},{x:0.9,y:0.17}].map((s,i)=>(
+            <circle key={i} cx={w*s.x} cy={h*s.y} r="2.5" fill="#FFF9C4">
+              <animate attributeName="opacity" values="0.2;1;0.2" dur={`${1.5+i*0.6}s`} repeatCount="indefinite"/>
+            </circle>
+          ))}
+        </>}
 
-      {/* Clouds for Thriving+ */}
-      {stageId >= 4 && [
-        {x:0.15,y:0.18,s:0.7},{x:0.7,y:0.12,s:0.9},
-      ].map((cl,i)=>(
-        <g key={i} transform={`translate(${w*cl.x},${h*cl.y}) scale(${cl.s})`}>
-          <ellipse cx="0" cy="0" rx="28" ry="14" fill="white" opacity="0.6"/>
-          <ellipse cx="-15" cy="4" rx="18" ry="12" fill="white" opacity="0.5"/>
-          <ellipse cx="15" cy="5" rx="20" ry="12" fill="white" opacity="0.5"/>
-        </g>
-      ))}
+        {/* Stars */}
+        {stageId>=5 && [
+          {x:0.08,y:0.06,d:"0s"},{x:0.25,y:0.03,d:"0.5s"},{x:0.45,y:0.09,d:"1s"},
+          {x:0.6,y:0.04,d:"0.3s"},{x:0.35,y:0.16,d:"0.8s"},{x:0.15,y:0.2,d:"1.3s"},
+        ].map((s,i)=>(
+          <circle key={i} cx={w*s.x} cy={h*s.y} r="2.8" fill="#FFE082">
+            <animate attributeName="opacity" values="0.1;0.9;0.1" dur="2.2s" begin={s.d} repeatCount="indefinite"/>
+          </circle>
+        ))}
 
-      {/* Ground */}
-      <ellipse cx={w/2} cy={h*0.88} rx={w*0.52} ry={h*0.16}
-        fill={dark?"#1a2e1a":stageId>=2?"#81C784":"#A5D6A7"} opacity="0.5"/>
-      <ellipse cx={w/2} cy={h*0.9} rx={w*0.48} ry={h*0.12}
-        fill={dark?"#1f381f":stageId>=2?"#66BB6A":"#A5D6A7"}/>
+        {/* Rainbow — stage 6 */}
+        {stageId===6 && ["#FF7043","#FFD54F","#66BB6A","#4FC3F7","#CE93D8"].map((c,i)=>(
+          <path key={i}
+            d={`M${w*0.02},${h*0.55} Q${w*0.5},${h*(0.05-i*0.04)} ${w*0.98},${h*0.55}`}
+            fill="none" stroke={c} strokeWidth="6" opacity={0.45-i*0.05} strokeLinecap="round"/>
+        ))}
 
-      {/* Dirt patch for seedling */}
-      {stageId === 0 && (
-        <ellipse cx={w/2} cy={h*0.87} rx={w*0.22} ry={h*0.06} fill="#8D6E63"/>
-      )}
-
-      {/* Tiny sprout for Seedling */}
-      {stageId === 0 && (
-        <g>
-          <line x1={w*0.5} y1={h*0.87} x2={w*0.5} y2={h*0.68}
-            stroke="#66BB6A" strokeWidth="3" strokeLinecap="round"/>
-          <ellipse cx={w*0.44} cy={h*0.73} rx={w*0.04} ry={h*0.03}
-            fill="#81C784" transform={`rotate(-30 ${w*0.44} ${h*0.73})`}/>
-          <ellipse cx={w*0.56} cy={h*0.75} rx={w*0.04} ry={h*0.03}
-            fill="#81C784" transform={`rotate(30 ${w*0.56} ${h*0.75})`}/>
-        </g>
-      )}
-
-      {/* Flowers */}
-      {flowerPos.map((p,i)=>{
-        const color = flowers[i % flowers.length];
-        const fx = w * p.x;
-        const fy = h * p.y;
-        const fs = 6 + (i % 3) * 2;
-        return (
-          <g key={i}>
-            <line x1={fx} y1={fy} x2={fx} y2={fy+fs*2.5}
-              stroke="#66BB6A" strokeWidth="2" strokeLinecap="round"/>
-            {[-1,1].map(dx=>(
-              <ellipse key={dx} cx={fx+dx*fs*0.7} cy={fy+fs*1.2}
-                rx={fs*0.5} ry={fs*0.3} fill="#81C784"
-                transform={`rotate(${dx*25} ${fx+dx*fs*0.7} ${fy+fs*1.2})`}/>
-            ))}
-            {[0,60,120,180,240,300].map((angle,pi)=>{
-              const rad = (angle * Math.PI) / 180;
-              return (
-                <ellipse key={pi}
-                  cx={fx + Math.cos(rad) * fs * 0.9}
-                  cy={fy + Math.sin(rad) * fs * 0.9}
-                  rx={fs*0.55} ry={fs*0.35}
-                  fill={color} opacity="0.9"
-                  transform={`rotate(${angle} ${fx+Math.cos(rad)*fs*0.9} ${fy+Math.sin(rad)*fs*0.9})`}/>
-              );
-            })}
-            <circle cx={fx} cy={fy} r={fs*0.4} fill="#FFD54F"/>
+        {/* Clouds */}
+        {stageId>=1 && [{x:0.04,y:0.14,s:0.9,dur:"20s"},{x:0.52,y:0.08,s:1.1,dur:"28s"}].map((cl,i)=>(
+          <g key={i} style={{animation:`gCloud ${cl.dur} ease-in-out infinite alternate`}}>
+            <g transform={`translate(${w*cl.x},${h*cl.y}) scale(${cl.s})`}>
+              <ellipse cx="32" cy="0" rx="32" ry="15" fill="white" opacity={dark?0.12:0.8}/>
+              <ellipse cx="14" cy="6"  rx="22" ry="13" fill="white" opacity={dark?0.1:0.7}/>
+              <ellipse cx="54" cy="7"  rx="24" ry="12" fill="white" opacity={dark?0.1:0.7}/>
+            </g>
           </g>
-        );
-      })}
+        ))}
 
-      {/* Butterflies for Flourishing+ */}
-      {stageId >= 3 && [{x:0.22,y:0.5},{x:0.78,y:0.45}].map((b,i)=>(
-        <g key={i} transform={`translate(${w*b.x},${h*b.y})`}>
-          <ellipse cx="-8" cy="-4" rx="10" ry="6"
-            fill={["#F48FB1","#CE93D8"][i]} opacity="0.85" transform="rotate(-20 -8 -4)"/>
-          <ellipse cx="8" cy="-4" rx="10" ry="6"
-            fill={["#F48FB1","#CE93D8"][i]} opacity="0.85" transform="rotate(20 8 -4)"/>
-          <ellipse cx="-5" cy="4" rx="6" ry="4"
-            fill={["#F48FB1","#CE93D8"][i]} opacity="0.7" transform="rotate(20 -5 4)"/>
-          <ellipse cx="5" cy="4" rx="6" ry="4"
-            fill={["#F48FB1","#CE93D8"][i]} opacity="0.7" transform="rotate(-20 5 4)"/>
-          <line x1="0" y1="-8" x2="0" y2="8" stroke="#555" strokeWidth="1"/>
+        {/* Ground — gently rolling hill fills bottom 38% */}
+        <path d={`M0,${groundY+h*0.02}
+          C${w*0.15},${groundY-h*0.05} ${w*0.3},${groundY+h*0.02} ${w*0.5},${groundY-h*0.02}
+          C${w*0.7},${groundY-h*0.06} ${w*0.85},${groundY+h*0.03} ${w},${groundY}
+          L${w},${h} L0,${h} Z`}
+          fill={`url(#gnd_${animId})`}/>
+        {/* Highlight edge */}
+        <path d={`M0,${groundY+h*0.02}
+          C${w*0.15},${groundY-h*0.05} ${w*0.3},${groundY+h*0.02} ${w*0.5},${groundY-h*0.02}
+          C${w*0.7},${groundY-h*0.06} ${w*0.85},${groundY+h*0.03} ${w},${groundY}`}
+          fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/>
+
+        {/* Back grass blades — behind flowers */}
+        {blades.map((b,i)=>(
+          <g key={i} style={{animation:`${b.sway} ${2.2+i*0.12}s ease-in-out infinite`,
+            animationDelay:b.delay, transformOrigin:`${b.x}px ${groundY}px`}}>
+            <path d={`M${b.x},${groundY}
+              C${b.x-b.width*1.5},${groundY-b.stemH*0.45}
+               ${b.x+b.width},${groundY-b.stemH*0.75}
+               ${b.x+b.width*0.4},${groundY-b.stemH}`}
+              stroke={b.color} strokeWidth={b.width} fill="none"
+              strokeLinecap="round" opacity={b.opacity}/>
+          </g>
+        ))}
+
+        {/* Dirt patch — seedling only */}
+        {stageId===0 && <>
+          <ellipse cx={w*0.5} cy={groundY+h*0.02} rx={w*0.2} ry={h*0.05}
+            fill="#8D6E63" opacity="0.85"/>
+          <ellipse cx={w*0.5} cy={groundY} rx={w*0.13} ry={h*0.03}
+            fill="#A1887F" opacity="0.5"/>
+        </>}
+
+        {/* Single sprout — seedling */}
+        {stageId===0 && (
+          <g style={{animation:"gSwayL 3.5s ease-in-out infinite",
+            transformOrigin:`${w*0.5}px ${groundY}px`}}>
+            <line x1={w*0.5} y1={groundY} x2={w*0.5} y2={groundY-h*0.22}
+              stroke="#43A047" strokeWidth="5" strokeLinecap="round"/>
+            <ellipse cx={w*0.43} cy={groundY-h*0.13} rx={w*0.065} ry={h*0.04}
+              fill="#66BB6A" transform={`rotate(-38 ${w*0.43} ${groundY-h*0.13})`}/>
+            <ellipse cx={w*0.57} cy={groundY-h*0.16} rx={w*0.065} ry={h*0.04}
+              fill="#81C784" transform={`rotate(38 ${w*0.57} ${groundY-h*0.16})`}/>
+            <ellipse cx={w*0.5} cy={groundY-h*0.22} rx={w*0.04} ry={h*0.03} fill="#A5D6A7"/>
+          </g>
+        )}
+
+        {/* Flowers — both sides of mascot */}
+        {allPositions.map((p,i)=>{
+          const fx = w * p.x;
+          const gy = groundY + p.groundOffset*h;
+          const stemH = p.size * 5;
+          const fy = gy - stemH;
+          return (
+            <g key={i} style={{animation:`${p.sway} ${2+i*0.18}s ease-in-out infinite`,
+              animationDelay:p.delay, transformOrigin:`${fx}px ${gy}px`}}>
+              <path d={`M${fx},${gy} C${fx-2},${gy-stemH*0.4} ${fx+3},${gy-stemH*0.7} ${fx},${fy}`}
+                stroke="#43A047" strokeWidth="2.8" fill="none" strokeLinecap="round"/>
+              <ellipse cx={fx-p.size*0.9} cy={gy-stemH*0.42}
+                rx={p.size} ry={p.size*0.38} fill="#66BB6A" opacity="0.88"
+                transform={`rotate(-32 ${fx-p.size*0.9} ${gy-stemH*0.42})`}/>
+              {i%2===0 && <ellipse cx={fx+p.size*0.9} cy={gy-stemH*0.6}
+                rx={p.size*0.85} ry={p.size*0.33} fill="#81C784" opacity="0.82"
+                transform={`rotate(32 ${fx+p.size*0.9} ${gy-stemH*0.6})`}/>}
+              {[0,51.4,102.8,154.2,205.6,257,308.4].map((ang,pi)=>{
+                const rad=ang*Math.PI/180;
+                return <ellipse key={pi}
+                  cx={fx+Math.cos(rad)*p.size*1.08} cy={fy+Math.sin(rad)*p.size*1.08}
+                  rx={p.size*0.68} ry={p.size*0.44}
+                  fill={p.color} opacity="0.95"
+                  transform={`rotate(${ang} ${fx+Math.cos(rad)*p.size*1.08} ${fy+Math.sin(rad)*p.size*1.08})`}/>;
+              })}
+              <circle cx={fx} cy={fy} r={p.size*0.45} fill="#FFD54F"/>
+              <circle cx={fx} cy={fy} r={p.size*0.22} fill="#F9A825"/>
+            </g>
+          );
+        })}
+
+        {/* Mascot composited at ground level */}
+        {showMascot && mascotId && (
+          <g style={{animation:"gBounce 3.2s ease-in-out infinite"}}>
+            {/* Shadow */}
+            <ellipse cx={w/2} cy={mGroundY+h*0.008} rx={mw*0.42} ry={h*0.018}
+              fill="rgba(0,0,0,0.12)"/>
+            {/* Body */}
+            <ellipse cx={w/2} cy={myBase+mh*0.65} rx={mw*0.38} ry={mh*0.32} fill={mc.body}/>
+            {/* Belly */}
+            <ellipse cx={w/2} cy={myBase+mh*0.68} rx={mw*0.22} ry={mh*0.22} fill={mc.belly}/>
+            {/* Ears / head features */}
+            {mascotId==="fox"&&<>
+              <polygon points={`${w/2-mw*0.22},${myBase+mh*0.18} ${w/2-mw*0.32},${myBase} ${w/2-mw*0.1},${myBase+0.15*mh}`} fill={mc.ear}/>
+              <polygon points={`${w/2+mw*0.22},${myBase+mh*0.18} ${w/2+mw*0.32},${myBase} ${w/2+mw*0.1},${myBase+0.15*mh}`} fill={mc.ear}/>
+            </>}
+            {mascotId==="bunny"&&<>
+              <ellipse cx={w/2-mw*0.15} cy={myBase+mh*0.08} rx={mw*0.07} ry={mh*0.15} fill={mc.ear}/>
+              <ellipse cx={w/2+mw*0.15} cy={myBase+mh*0.08} rx={mw*0.07} ry={mh*0.15} fill={mc.ear}/>
+            </>}
+            {mascotId==="bear"&&<>
+              <circle cx={w/2-mw*0.22} cy={myBase+mh*0.12} r={mw*0.1} fill={mc.ear}/>
+              <circle cx={w/2+mw*0.22} cy={myBase+mh*0.12} r={mw*0.1} fill={mc.ear}/>
+            </>}
+            {mascotId==="cat"&&<>
+              <polygon points={`${w/2-mw*0.18},${myBase+mh*0.2} ${w/2-mw*0.28},${myBase+mh*0.04} ${w/2-mw*0.06},${myBase+mh*0.18}`} fill={mc.ear}/>
+              <polygon points={`${w/2+mw*0.18},${myBase+mh*0.2} ${w/2+mw*0.28},${myBase+mh*0.04} ${w/2+mw*0.06},${myBase+mh*0.18}`} fill={mc.ear}/>
+            </>}
+            {(mascotId==="owl"||mascotId==="dog")&&<>
+              <ellipse cx={w/2-mw*0.2} cy={myBase+mh*0.1} rx={mw*0.1} ry={mw*0.14} fill={mc.ear}/>
+              <ellipse cx={w/2+mw*0.2} cy={myBase+mh*0.1} rx={mw*0.1} ry={mw*0.14} fill={mc.ear}/>
+            </>}
+            {/* Head */}
+            <ellipse cx={w/2} cy={myBase+mh*0.26} rx={mw*0.3} ry={mh*0.24} fill={mc.body}/>
+            {/* Eyes */}
+            <circle cx={w/2-mw*0.1} cy={myBase+mh*0.24} r={mw*0.065} fill="white"/>
+            <circle cx={w/2+mw*0.1} cy={myBase+mh*0.24} r={mw*0.065} fill="white"/>
+            <circle cx={w/2-mw*0.09} cy={myBase+mh*0.25} r={mw*0.034} fill={mc.eye}/>
+            <circle cx={w/2+mw*0.11} cy={myBase+mh*0.25} r={mw*0.034} fill={mc.eye}/>
+            {/* Shine dots */}
+            <circle cx={w/2-mw*0.075} cy={myBase+mh*0.23} r={mw*0.014} fill="white"/>
+            <circle cx={w/2+mw*0.125} cy={myBase+mh*0.23} r={mw*0.014} fill="white"/>
+            {/* Smile */}
+            <path d={`M${w/2-mw*0.1},${myBase+mh*0.32} Q${w/2},${myBase+mh*0.38} ${w/2+mw*0.1},${myBase+mh*0.32}`}
+              fill="none" stroke={mc.eye} strokeWidth="2.5" strokeLinecap="round"/>
+            {/* Arms */}
+            <ellipse cx={w/2-mw*0.42} cy={myBase+mh*0.58} rx={mw*0.1} ry={mh*0.16}
+              fill={mc.body} transform={`rotate(-22 ${w/2-mw*0.42} ${myBase+mh*0.58})`}/>
+            <ellipse cx={w/2+mw*0.42} cy={myBase+mh*0.58} rx={mw*0.1} ry={mh*0.16}
+              fill={mc.body} transform={`rotate(22 ${w/2+mw*0.42} ${myBase+mh*0.58})`}/>
+            {/* Legs */}
+            <ellipse cx={w/2-mw*0.15} cy={mGroundY-h*0.02} rx={mw*0.12} ry={mh*0.1} fill={mc.body}/>
+            <ellipse cx={w/2+mw*0.15} cy={mGroundY-h*0.02} rx={mw*0.12} ry={mh*0.1} fill={mc.body}/>
+          </g>
+        )}
+
+        {/* Butterflies — stage 3+ */}
+        {stageId>=3 && [
+          {x:0.15,y:0.42,c:"#F48FB1",d:"0s",dur:"4.5s"},
+          {x:0.82,y:0.38,c:"#CE93D8",d:"1.4s",dur:"5.5s"},
+          ...(stageId>=5?[{x:0.5,y:0.3,c:"#81D4FA",d:"0.7s",dur:"3.8s"}]:[]),
+        ].map((b,i)=>(
+          <g key={i} style={{animation:`gFloat ${b.dur} ease-in-out infinite`,animationDelay:b.d}}>
+            <g transform={`translate(${w*b.x},${h*b.y})`}>
+              <ellipse cx="-10" cy="-5" rx="12" ry="8" fill={b.c} opacity="0.92" transform="rotate(-22 -10 -5)"/>
+              <ellipse cx="10"  cy="-5" rx="12" ry="8" fill={b.c} opacity="0.92" transform="rotate(22 10 -5)"/>
+              <ellipse cx="-7"  cy="6"  rx="8"  ry="5" fill={b.c} opacity="0.72" transform="rotate(28 -7 6)"/>
+              <ellipse cx="7"   cy="6"  rx="8"  ry="5" fill={b.c} opacity="0.72" transform="rotate(-28 7 6)"/>
+              <ellipse cx="0" cy="0" rx="2.2" ry="9" fill="#5D4037" opacity="0.75"/>
+              <line x1="0" y1="-9" x2="-7" y2="-16" stroke="#5D4037" strokeWidth="1.2" opacity="0.7"/>
+              <line x1="0" y1="-9" x2="7"  y2="-16" stroke="#5D4037" strokeWidth="1.2" opacity="0.7"/>
+              <circle cx="-7" cy="-16" r="2" fill={b.c}/>
+              <circle cx="7"  cy="-16" r="2" fill={b.c}/>
+            </g>
+          </g>
+        ))}
+
+        {/* Fireflies — stage 5+ */}
+        {stageId>=5 && [
+          {x:0.1,y:0.5,d:"0s"},{x:0.9,y:0.45,d:"0.8s"},
+          {x:0.3,y:0.38,d:"1.5s"},{x:0.72,y:0.55,d:"0.4s"},
+          ...(stageId===6?[{x:0.5,y:0.32,d:"1.1s"},{x:0.2,y:0.58,d:"1.9s"}]:[]),
+        ].map((f,i)=>(
+          <circle key={i} cx={w*f.x} cy={h*f.y} r="4" fill="#FFE082">
+            <animate attributeName="opacity" values="0.1;1;0.1"
+              dur="2s" begin={f.d} repeatCount="indefinite"/>
+            <animate attributeName="r" values="2;5;2"
+              dur="2s" begin={f.d} repeatCount="indefinite"/>
+          </circle>
+        ))}
+
+        {/* Front grass fringe — over everything */}
+        {Array.from({length:16},(_,i)=>({x:(i/15)*w, bh:h*0.08+Math.sin(i*1.3)*h*0.05})).map((b,i)=>(
+          <g key={i} style={{animation:`${i%2===0?"gSwayL":"gSwayR"} ${1.8+i*0.1}s ease-in-out infinite`,
+            animationDelay:`${(i*0.13%2).toFixed(2)}s`, transformOrigin:`${b.x}px ${groundY+h*0.12}px`}}>
+            <path d={`M${b.x},${groundY+h*0.14}
+              C${b.x-4},${groundY+h*0.14-b.bh*0.55}
+               ${b.x+3},${groundY+h*0.14-b.bh*0.82}
+               ${b.x+3},${groundY+h*0.14-b.bh}`}
+              stroke={grassColors[0]} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85"/>
+          </g>
+        ))}
+
         </g>
-      ))}
+      </svg>
+    </div>
+  );
+};
+  const w = size;
+  const h = Math.round(size * 0.78);
+  const stageId = typeof stage === "object" ? stage.id : stage;
 
-      {/* Mascot face centered — inline to avoid forward reference */}
-      <g transform={`translate(${w/2-40},${h*0.3})`}>
-        {mascotId==="fox"&&<>
-          <ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/>
-          <polygon points="13,18 26,44 38,24" fill="#FF7043"/>
-          <polygon points="67,18 54,44 42,24" fill="#FF7043"/>
-          <ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/>
-          <circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/>
-          <circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/>
-        </>}
-        {mascotId==="bunny"&&<>
-          <ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
-          <ellipse cx="53" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
-          <ellipse cx="40" cy="50" rx="26" ry="22" fill="#FCE4EC"/>
-          <circle cx="30" cy="46" r="5" fill="#fff"/><circle cx="50" cy="46" r="5" fill="#fff"/>
-          <circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/>
-        </>}
-        {mascotId==="bear"&&<>
-          <circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/>
-          <ellipse cx="40" cy="50" rx="27" ry="23" fill="#8D6E63"/>
-          <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-          <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-        </>}
-        {mascotId==="owl"&&<>
-          <ellipse cx="40" cy="48" rx="26" ry="26" fill="#7E57C2"/>
-          <ellipse cx="40" cy="52" rx="18" ry="18" fill="#B39DDB"/>
-          <circle cx="29" cy="43" r="9" fill="#fff"/><circle cx="51" cy="43" r="9" fill="#fff"/>
-          <circle cx="29" cy="44" r="5" fill="#4527A0"/><circle cx="51" cy="44" r="5" fill="#4527A0"/>
-        </>}
-        {mascotId==="cat"&&<>
-          <polygon points="17,30 12,10 30,26" fill="#26A69A"/>
-          <polygon points="63,30 68,10 50,26" fill="#26A69A"/>
-          <ellipse cx="40" cy="50" rx="26" ry="23" fill="#4DB6AC"/>
-          <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-          <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-        </>}
-        {mascotId==="dog"&&<>
-          <ellipse cx="16" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(-20 16 36)"/>
-          <ellipse cx="64" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(20 64 36)"/>
-          <ellipse cx="40" cy="50" rx="27" ry="23" fill="#FFB74D"/>
-          <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-          <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-        </>}
-        {(!mascotId||mascotId==="fox")&&<>
-          <ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/>
-          <circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/>
-          <circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/>
-        </>}
-      </g>
+  const skies = [
+    ["#C8E6C9","#E8F5E9"],
+    ["#B2EBF2","#E0F7FA"],
+    ["#D1C4E9","#EDE7F6"],
+    ["#FFE0B2","#FFF3E0"],
+    ["#FFF9C4","#FFFDE7"],
+    ["#F8BBD0","#FCE4EC"],
+    ["#FFD54F","#FFF8E1"],
+  ];
+  const [skyTop, skyBot] = skies[stageId] || skies[0];
 
-      {/* Stage label */}
-      <rect x={w*0.3} y={h*0.04} width={w*0.4} height={h*0.1} rx={8}
-        fill="rgba(255,255,255,0.5)"/>
-      <text x={w/2} y={h*0.1} textAnchor="middle"
-        fontFamily={F.b} fontSize="11" fontWeight="700"
-        fill={dark?"#2D2040":"#2D2040"}>
-        {STAGES[stageId]?.name || "Seedling"}
-      </text>
-    </svg>
+  const grassColors = [
+    ["#66BB6A","#81C784","#A5D6A7"],
+    ["#43A047","#66BB6A","#81C784"],
+    ["#7E57C2","#9575CD","#B39DDB"],
+    ["#FF7043","#FF8A65","#FFAB91"],
+    ["#F9A825","#FBC02D","#FFD54F"],
+    ["#EC407A","#F06292","#F48FB1"],
+    ["#FFD700","#FFB300","#FFD54F"],
+  ][stageId] || ["#66BB6A","#81C784","#A5D6A7"];
+
+  const flowerData = [
+    { colors:[], count:0 },
+    { colors:["#A5D6A7","#81C784"], count:3 },
+    { colors:["#CE93D8","#81D4FA","#B39DDB"], count:5 },
+    { colors:["#FF8A65","#FFD54F","#CE93D8","#81C784"], count:7 },
+    { colors:["#FF8A65","#FFD54F","#CE93D8","#81C784","#F48FB1"], count:9 },
+    { colors:["#F48FB1","#CE93D8","#FFD54F","#81D4FA","#FF8A65","#A5D6A7"], count:11 },
+    { colors:["#FFD54F","#F48FB1","#CE93D8","#FF7043","#81D4FA","#A5D6A7","#CE93D8"], count:14 },
+  ][stageId] || { colors:[], count:0 };
+
+  // deterministic flower positions spread across full width
+  const flowerPositions = Array.from({length: flowerData.count}, (_,i) => ({
+    x: 0.04 + (i / Math.max(flowerData.count - 1, 1)) * 0.92,
+    y: 0.68 + (i % 3) * 0.06,
+    size: 7 + (i % 4) * 2.5,
+    sway: i % 2 === 0 ? "swayL" : "swayR",
+    delay: `${(i * 0.3).toFixed(1)}s`,
+  }));
+
+  // tall background grasses
+  const grassBlades = Array.from({length: 18}, (_,i) => ({
+    x: (i / 17) * w,
+    height: h * (0.18 + (i % 5) * 0.04),
+    width: 4 + (i % 3) * 2,
+    sway: i % 2 === 0 ? "swayL" : "swayR",
+    delay: `${(i * 0.18).toFixed(1)}s`,
+    color: grassColors[i % grassColors.length],
+  }));
+
+  const animId = `g${stageId}`;
+
+  return (
+    <div style={{position:"relative",width:w,height:h,display:"block",overflow:"hidden",borderRadius:0}}>
+      <style>{`
+        @keyframes swayL{0%,100%{transform:rotate(0deg) scaleY(1)}50%{transform:rotate(-6deg) scaleY(1.03)}}
+        @keyframes swayR{0%,100%{transform:rotate(0deg) scaleY(1)}50%{transform:rotate(6deg) scaleY(1.03)}}
+        @keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        @keyframes fireflyPulse{0%,100%{opacity:0.2;r:2}50%{opacity:1;r:4}}
+        @keyframes cloudDrift{0%{transform:translateX(0)}100%{transform:translateX(${w*0.08}px)}}
+        @keyframes starTwinkle{0%,100%{opacity:0.4;transform:scale(0.8)}50%{opacity:1;transform:scale(1.3)}}
+        @keyframes petalSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        @keyframes sunPulse{0%,100%{r:${Math.round(w*0.07)}}50%{r:${Math.round(w*0.085)}}}
+        .garden-blade{transform-origin:bottom center}
+        .garden-flower-stem{transform-origin:bottom center}
+      `}</style>
+
+      <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h}
+        style={{display:"block",position:"absolute",top:0,left:0}}>
+        <defs>
+          <linearGradient id={`sky_${animId}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={dark?"#0d1f3c":skyTop}/>
+            <stop offset="100%" stopColor={dark?"#1a2e4a":skyBot}/>
+          </linearGradient>
+          <linearGradient id={`ground_${animId}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={grassColors[1]}/>
+            <stop offset="100%" stopColor={grassColors[0]}/>
+          </linearGradient>
+          <radialGradient id={`sun_${animId}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#FFF9C4"/>
+            <stop offset="100%" stopColor="#FFD54F" stopOpacity="0"/>
+          </radialGradient>
+          {stageId >= 4 && (
+            <radialGradient id={`glow_${animId}`} cx="50%" cy="70%" r="50%">
+              <stop offset="0%" stopColor={stageId>=5?"#F48FB1":"#FFD54F"} stopOpacity="0.35"/>
+              <stop offset="100%" stopColor="#fff" stopOpacity="0"/>
+            </radialGradient>
+          )}
+        </defs>
+
+        {/* Sky */}
+        <rect width={w} height={h} fill={`url(#sky_${animId})`}/>
+
+        {/* Magic glow overlay */}
+        {stageId >= 4 && <rect width={w} height={h} fill={`url(#glow_${animId})`}/>}
+
+        {/* Sun / Moon */}
+        {stageId <= 3 && (
+          <g>
+            <circle cx={w*0.82} cy={h*0.17} r={w*0.075}
+              fill="#FFD54F" opacity="0.9">
+              <animate attributeName="r" values={`${w*0.07};${w*0.085};${w*0.07}`}
+                dur="4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx={w*0.82} cy={h*0.17} r={w*0.11}
+              fill={`url(#sun_${animId})`} opacity="0.6"/>
+            {[0,45,90,135,180,225,270,315].map((a,i)=>{
+              const rad = a*Math.PI/180;
+              return <line key={i}
+                x1={w*0.82+Math.cos(rad)*w*0.09} y1={h*0.17+Math.sin(rad)*w*0.09}
+                x2={w*0.82+Math.cos(rad)*w*0.13} y2={h*0.17+Math.sin(rad)*w*0.13}
+                stroke="#FFD54F" strokeWidth="2" opacity="0.6" strokeLinecap="round"/>;
+            })}
+          </g>
+        )}
+
+        {/* Stars for high stages */}
+        {stageId >= 5 && [
+          {x:0.1,y:0.08,d:"0s"},{x:0.28,y:0.04,d:"0.4s"},{x:0.55,y:0.1,d:"0.8s"},
+          {x:0.75,y:0.05,d:"0.2s"},{x:0.9,y:0.12,d:"0.6s"},{x:0.42,y:0.14,d:"1s"},
+        ].map((s,i)=>(
+          <g key={i}>
+            <polygon
+              points={`${w*s.x},${h*s.y-5} ${w*s.x+1.5},${h*s.y-1.5} ${w*s.x+5},${h*s.y-1.5} ${w*s.x+2},${h*s.y+1} ${w*s.x+3},${h*s.y+5} ${w*s.x},${h*s.y+2.5} ${w*s.x-3},${h*s.y+5} ${w*s.x-2},${h*s.y+1} ${w*s.x-5},${h*s.y-1.5} ${w*s.x-1.5},${h*s.y-1.5}`}
+              fill="#FFD54F" opacity="0.85">
+              <animate attributeName="opacity" values="0.3;1;0.3" dur="2s"
+                begin={s.d} repeatCount="indefinite"/>
+            </polygon>
+          </g>
+        ))}
+
+        {/* Clouds */}
+        {stageId >= 2 && [
+          {x:w*0.05,y:h*0.12,s:0.8,dur:"18s"},{x:w*0.55,y:h*0.07,s:1,dur:"24s"},
+        ].map((cl,i)=>(
+          <g key={i} style={{animation:`cloudDrift ${cl.dur} ease-in-out infinite alternate`}}>
+            <g transform={`translate(${cl.x},${cl.y}) scale(${cl.s})`}>
+              <ellipse cx="30" cy="0" rx="30" ry="14" fill="white" opacity={dark?0.15:0.75}/>
+              <ellipse cx="12" cy="4" rx="20" ry="12" fill="white" opacity={dark?0.12:0.65}/>
+              <ellipse cx="50" cy="5" rx="22" ry="11" fill="white" opacity={dark?0.12:0.65}/>
+            </g>
+          </g>
+        ))}
+
+        {/* Ground — full-width rolling hill */}
+        <path d={`M0,${h*0.72} Q${w*0.25},${h*0.62} ${w*0.5},${h*0.68} Q${w*0.75},${h*0.74} ${w},${h*0.64} L${w},${h} L0,${h} Z`}
+          fill={`url(#ground_${animId})`}/>
+        {/* Ground highlight stripe */}
+        <path d={`M0,${h*0.72} Q${w*0.25},${h*0.62} ${w*0.5},${h*0.68} Q${w*0.75},${h*0.74} ${w},${h*0.64}`}
+          fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3"/>
+
+        {/* Back grass blades */}
+        {grassBlades.map((b,i)=>(
+          <g key={i} className="garden-blade"
+            style={{animation:`${b.sway} ${2.5+i*0.15}s ease-in-out infinite`,animationDelay:b.delay,transformOrigin:`${b.x}px ${h*0.72}px`}}>
+            <path
+              d={`M${b.x},${h*0.72} C${b.x-b.width},${h*0.72-b.height*0.5} ${b.x+b.width*0.5},${h*0.72-b.height*0.8} ${b.x+b.width*0.3},${h*0.72-b.height}`}
+              stroke={b.color} strokeWidth={b.width} fill="none" strokeLinecap="round" opacity="0.7"/>
+          </g>
+        ))}
+
+        {/* Dirt patch for seedling */}
+        {stageId === 0 && (
+          <>
+            <ellipse cx={w*0.5} cy={h*0.75} rx={w*0.18} ry={h*0.05} fill="#8D6E63" opacity="0.8"/>
+            <ellipse cx={w*0.5} cy={h*0.73} rx={w*0.12} ry={h*0.03} fill="#A1887F" opacity="0.5"/>
+          </>
+        )}
+
+        {/* Sprout for seedling */}
+        {stageId === 0 && (
+          <g style={{animation:"swayL 3s ease-in-out infinite",transformOrigin:`${w*0.5}px ${h*0.73}px`}}>
+            <line x1={w*0.5} y1={h*0.73} x2={w*0.5} y2={h*0.52}
+              stroke="#66BB6A" strokeWidth="4" strokeLinecap="round"/>
+            <ellipse cx={w*0.43} cy={h*0.6} rx={w*0.06} ry={h*0.035}
+              fill="#81C784" transform={`rotate(-35 ${w*0.43} ${h*0.6})`}/>
+            <ellipse cx={w*0.57} cy={h*0.63} rx={w*0.06} ry={h*0.035}
+              fill="#81C784" transform={`rotate(35 ${w*0.57} ${h*0.63})`}/>
+            <ellipse cx={w*0.5} cy={h*0.52} rx={w*0.035} ry={h*0.025}
+              fill="#A5D6A7"/>
+          </g>
+        )}
+
+        {/* Flowers — animated sway */}
+        {flowerPositions.map((p,i)=>{
+          const color = flowerData.colors[i % flowerData.colors.length];
+          const cx = w * p.x;
+          const groundY = h * 0.72 - (Math.sin(p.x * Math.PI) * h * 0.06);
+          const stemH = p.size * 4.5;
+          const fc = cx;
+          const fy = groundY - stemH;
+          return (
+            <g key={i} className="garden-flower-stem"
+              style={{animation:`${p.sway} ${2.2+i*0.2}s ease-in-out infinite`,
+                animationDelay:p.delay, transformOrigin:`${fc}px ${groundY}px`}}>
+              {/* Stem */}
+              <path d={`M${fc},${groundY} C${fc-3},${groundY-stemH*0.4} ${fc+3},${groundY-stemH*0.7} ${fc},${fy}`}
+                stroke="#66BB6A" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+              {/* Leaf left */}
+              <ellipse cx={fc-p.size*0.8} cy={groundY-stemH*0.45}
+                rx={p.size*0.9} ry={p.size*0.35}
+                fill="#81C784" opacity="0.9"
+                transform={`rotate(-30 ${fc-p.size*0.8} ${groundY-stemH*0.45})`}/>
+              {/* Leaf right */}
+              {i%2===0 && <ellipse cx={fc+p.size*0.8} cy={groundY-stemH*0.6}
+                rx={p.size*0.8} ry={p.size*0.3}
+                fill="#66BB6A" opacity="0.85"
+                transform={`rotate(30 ${fc+p.size*0.8} ${groundY-stemH*0.6})`}/>}
+              {/* Petals */}
+              {[0,51.4,102.8,154.2,205.6,257,308.4].map((angle,pi)=>{
+                const rad = angle*Math.PI/180;
+                return <ellipse key={pi}
+                  cx={fc+Math.cos(rad)*p.size*1.05}
+                  cy={fy+Math.sin(rad)*p.size*1.05}
+                  rx={p.size*0.65} ry={p.size*0.42}
+                  fill={color} opacity="0.93"
+                  transform={`rotate(${angle} ${fc+Math.cos(rad)*p.size*1.05} ${fy+Math.sin(rad)*p.size*1.05})`}/>;
+              })}
+              {/* Center */}
+              <circle cx={fc} cy={fy} r={p.size*0.42} fill="#FFD54F"/>
+              <circle cx={fc} cy={fy} r={p.size*0.2} fill="#FBC02D"/>
+            </g>
+          );
+        })}
+
+        {/* Butterflies — stage 3+ */}
+        {stageId >= 3 && [
+          {x:0.18,y:0.48,c:"#F48FB1",d:"0s",dur:"4s"},
+          {x:0.80,y:0.44,c:"#CE93D8",d:"1.2s",dur:"5s"},
+          ...(stageId>=5?[{x:0.5,y:0.38,c:"#81D4FA",d:"0.6s",dur:"3.5s"}]:[]),
+        ].map((b,i)=>(
+          <g key={i} style={{animation:`floatUp ${b.dur} ease-in-out infinite`,animationDelay:b.d}}>
+            <g transform={`translate(${w*b.x},${h*b.y})`}>
+              <ellipse cx="-9" cy="-5" rx="11" ry="7" fill={b.c} opacity="0.9" transform="rotate(-20 -9 -5)"/>
+              <ellipse cx="9" cy="-5" rx="11" ry="7" fill={b.c} opacity="0.9" transform="rotate(20 9 -5)"/>
+              <ellipse cx="-6" cy="5" rx="7" ry="4.5" fill={b.c} opacity="0.7" transform="rotate(25 -6 5)"/>
+              <ellipse cx="6" cy="5" rx="7" ry="4.5" fill={b.c} opacity="0.7" transform="rotate(-25 6 5)"/>
+              <ellipse cx="0" cy="0" rx="2" ry="8" fill="#5D4037" opacity="0.7"/>
+              {/* Antennae */}
+              <line x1="0" y1="-8" x2="-6" y2="-14" stroke="#5D4037" strokeWidth="1" opacity="0.7"/>
+              <line x1="0" y1="-8" x2="6" y2="-14" stroke="#5D4037" strokeWidth="1" opacity="0.7"/>
+              <circle cx="-6" cy="-14" r="1.5" fill={b.c}/>
+              <circle cx="6" cy="-14" r="1.5" fill={b.c}/>
+            </g>
+          </g>
+        ))}
+
+        {/* Fireflies — stage 5+ */}
+        {stageId >= 5 && [
+          {x:0.12,y:0.55,d:"0s"},{x:0.88,y:0.5,d:"0.7s"},
+          {x:0.35,y:0.42,d:"1.4s"},{x:0.68,y:0.58,d:"0.3s"},
+          ...(stageId>=6?[{x:0.52,y:0.35,d:"1s"},{x:0.22,y:0.62,d:"1.8s"}]:[]),
+        ].map((f,i)=>(
+          <circle key={i} cx={w*f.x} cy={h*f.y} r="3.5" fill="#FFD54F">
+            <animate attributeName="opacity" values="0.15;0.95;0.15"
+              dur="1.8s" begin={f.d} repeatCount="indefinite"/>
+            <animate attributeName="r" values="2;4.5;2"
+              dur="1.8s" begin={f.d} repeatCount="indefinite"/>
+          </circle>
+        ))}
+
+        {/* Rainbow arc — stage 6 */}
+        {stageId === 6 && (
+          <g opacity="0.5">
+            {["#FF7043","#FFD54F","#66BB6A","#4FC3F7","#7C4DFF","#F48FB1"].map((c,i)=>(
+              <path key={i}
+                d={`M${w*0.05},${h*0.6} Q${w*0.5},${h*(0.1-i*0.04)} ${w*0.95},${h*0.6}`}
+                fill="none" stroke={c} strokeWidth="5" opacity={0.6-i*0.05}
+                strokeLinecap="round"/>
+            ))}
+          </g>
+        )}
+
+        {/* Front grass tufts */}
+        {Array.from({length:12},(_,i)=>({
+          x: (i/11)*w, h: h*0.09+Math.sin(i)*h*0.04
+        })).map((b,i)=>(
+          <g key={i} style={{animation:`${i%2===0?"swayL":"swayR"} ${2+i*0.1}s ease-in-out infinite`,
+            animationDelay:`${i*0.15}s`, transformOrigin:`${b.x}px ${h*0.82}px`}}>
+            <path d={`M${b.x},${h*0.85} C${b.x-4},${h*0.85-b.h*0.6} ${b.x+3},${h*0.85-b.h*0.8} ${b.x+2},${h*0.85-b.h}`}
+              stroke={grassColors[0]} strokeWidth="3" fill="none" strokeLinecap="round"/>
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 };
 
