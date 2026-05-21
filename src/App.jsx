@@ -542,20 +542,29 @@ export default function BloomyApp() {
   };
 
   /* ── Berry helpers ── */
-  const earnBerry = async (originY) => {
-    setFloatingBerryOrigin(originY || null);
-    setFloatingBerry(true);
-    const newCount = (activeChild?.berries||0) + 1;
-    setBerries(newCount);
-    if (activeChild) {
-      await supabase.from("children").update({berries:newCount}).eq("id",activeChild.id);
-      setActiveChild(prev=>({...prev, berries:newCount}));
-      setChildren(cs=>cs.map(c=>c.id===activeChild?.id?{...c,berries:newCount}:c));
-    }
+  const earnBerry = async () => {
+    // Reset first so consecutive calls always re-trigger the animation
+    setFloatingBerry(false);
+    setTimeout(() => setFloatingBerry(true), 30);
+
+    // Use functional update to always get fresh berry count
+    setBerries(prev => {
+      const newCount = prev + 1;
+      // Persist to Supabase using the fresh count
+      if (activeChild) {
+        supabase.from("children")
+          .update({berries: newCount})
+          .eq("id", activeChild.id)
+          .then(({error}) => { if (error) console.error("berry save error:", error); });
+        setActiveChild(ac => ac ? {...ac, berries: newCount} : ac);
+        setChildren(cs => cs.map(c => c.id === activeChild?.id ? {...c, berries: newCount} : c));
+      }
+      return newCount;
+    });
   };
 
   const feedMascot = async () => {
-    if (!activeChild || berries <= 0) return;
+    if (!activeChild || berries <= 0 || energy >= 100) return;
     const newBerries = berries - 1;
     const newEnergy  = Math.min(100, energy + 30);
     setBerries(newBerries);
@@ -565,8 +574,8 @@ export default function BloomyApp() {
       energy:  newEnergy,
       last_activity_date: new Date().toISOString().split("T")[0],
     }).eq("id", activeChild.id);
-    setActiveChild(prev=>({...prev, berries:newBerries, energy:newEnergy}));
-    setChildren(cs=>cs.map(c=>c.id===activeChild?.id
+    setActiveChild(prev => prev ? {...prev, berries:newBerries, energy:newEnergy} : prev);
+    setChildren(cs => cs.map(c => c.id === activeChild?.id
       ? {...c, berries:newBerries, energy:newEnergy} : c));
   };
 
@@ -1429,7 +1438,6 @@ export default function BloomyApp() {
       <FloatingBerry
         visible={floatingBerry}
         targetRef={basketRef}
-        originY={floatingBerryOrigin}
         onDone={()=>setFloatingBerry(false)}
       />
       <NavBar/>

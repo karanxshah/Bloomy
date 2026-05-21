@@ -66,45 +66,52 @@ const BasketSVG = ({ size = 34, bounce = false }) => (
 );
 
 /* ── Floating berry animation ── */
-export const FloatingBerry = ({ visible, targetRef, originY, onDone }) => {
-  const [pos, setPos] = useState({ x: "50%", y: originY || "60%" });
-  const [opacity, setOpacity] = useState(1);
-  const [scale, setScale] = useState(1);
+export const FloatingBerry = ({ visible, targetRef, onDone }) => {
+  const [animating, setAnimating] = useState(false);
+  const [pos, setPos]   = useState({x:"50%", y:"60%"});
+  const [arrived, setArrived] = useState(false);
 
   useEffect(() => {
-    if (!visible) return;
-    // Get basket position
-    let targetX = "calc(100% - 52px)";
-    let targetY = "52px";
-    if (targetRef?.current) {
-      const rect = targetRef.current.getBoundingClientRect();
-      targetX = rect.left + rect.width / 2 + "px";
-      targetY = rect.top + rect.height / 2 + "px";
-    }
-    // Animate toward basket
+    if (!visible) { setAnimating(false); setArrived(false); return; }
+
+    // Start at centre of screen
+    setPos({x:"50%", y:"55%"});
+    setArrived(false);
+    setAnimating(true);
+
+    // Get basket position and animate toward it
     const t1 = setTimeout(() => {
-      setPos({ x: targetX, y: targetY });
-      setScale(0.5);
-      setOpacity(0.8);
-    }, 50);
+      if (targetRef?.current) {
+        const rect = targetRef.current.getBoundingClientRect();
+        setPos({
+          x: rect.left + rect.width / 2 + "px",
+          y: rect.top  + rect.height / 2 + "px",
+        });
+      } else {
+        setPos({x:"calc(100% - 52px)", y:"52px"});
+      }
+      setArrived(true);
+    }, 60);
+
     const t2 = setTimeout(() => {
-      setOpacity(0);
+      setAnimating(false);
       if (onDone) onDone();
-    }, 700);
+    }, 750);
+
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [visible]);
 
-  if (!visible) return null;
+  if (!animating) return null;
   return (
     <div style={{
       position:"fixed",
       left: pos.x, top: pos.y,
-      transform:`translate(-50%,-50%) scale(${scale})`,
-      opacity,
-      transition:"left 0.6s cubic-bezier(0.4,0,0.2,1), top 0.6s cubic-bezier(0.4,0,0.2,1), opacity 0.2s 0.5s, transform 0.6s",
+      transform:`translate(-50%,-50%) scale(${arrived ? 0.4 : 1})`,
+      opacity: arrived ? 0 : 1,
+      transition:"left 0.6s cubic-bezier(0.4,0,0.2,1), top 0.6s cubic-bezier(0.4,0,0.2,1), transform 0.6s, opacity 0.2s 0.5s",
       zIndex:9998, pointerEvents:"none",
     }}>
-      <BerrySVG size={32}/>
+      <BerrySVG size={34}/>
     </div>
   );
 };

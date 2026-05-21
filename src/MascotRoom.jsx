@@ -531,7 +531,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, energy: ene
   const personality   = PERSONALITIES[cm.id]||PERSONALITIES.fox;
   const score         = calcGrowthScore(activeChild, moodLog, journals);
   const stage         = getStage(score);
-  const energy        = energyProp ?? getEnergyLevel(activeChild, moodLog, journals);
+  const energy        = typeof energyProp === "number" ? energyProp : 100;
   const lastEntry     = moodLog?.length>0 ? moodLog[moodLog.length-1] : null;
   const lastMood      = lastEntry?.mood||null;
   const lastMoodDate  = lastEntry?.date||null;
