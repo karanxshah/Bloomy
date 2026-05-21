@@ -74,7 +74,7 @@ const SPEECH = {
 /* ══════════════════════════════════════════════
    FULL BODY MASCOT ILLUSTRATIONS
 ══════════════════════════════════════════════ */
-const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
+export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
   const w = size;
   const h = size * 1.4;
 

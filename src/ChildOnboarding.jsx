@@ -1,229 +1,233 @@
-import { useState } from "react";
-import { GrowthMascot } from "./MascotGrowth";
+import { useState, useRef } from "react";
+import { FullBodyMascot } from "./MascotRoom";
 
 const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
-const C = {
-  purple:"#7C4DFF", pink:"#F06292", mint:"#4DB6AC",
-  sky:"#4FC3F7", coral:"#FF7043", yellow:"#FFD54F",
-  text:"#2D2040", muted:"#9B8DB5",
-};
 
-/* ── Per-mascot intro lines ── */
 const MASCOT_INTROS = {
-  fox:   { greeting:"Hey there! I'm Finn! 🦊", line:"I'm a curious, adventurous fox — and I'm SO excited you picked me as your buddy!" },
-  bunny: { greeting:"Hi hi hi! I'm Blossom! 🐰", line:"I'm the bounciest, happiest bunny around — and I can't wait to go on this journey with you!" },
-  bear:  { greeting:"Hey, I'm Bruno! 🐻", line:"I'm a big, cosy bear who loves big feelings and even bigger adventures. Let's do this!" },
-  owl:   { greeting:"Hoo hoo! I'm Ollie! 🦉", line:"I'm a wise little owl who loves learning new things — especially learning all about YOU!" },
-  cat:   { greeting:"Heyyyy, I'm Luna! 🐱", line:"I'm a cool, calm cat with lots of curiosity. I'm really glad we found each other!" },
-  dog:   { greeting:"Woof! I'm Sunny! 🐶", line:"I'm the most loyal, tail-wagging dog you'll ever meet — and I'm your new best friend!" },
+  fox:   { greeting:"Hey there! I'm Finn! 🦊", line:"I'm a curious, adventurous fox and I'm SO excited you picked me as your buddy!" },
+  bunny: { greeting:"Hi hi hi! I'm Blossom! 🐰", line:"I'm the bounciest happiest bunny around and I can't wait to go on this journey with you!" },
+  bear:  { greeting:"Hey, I'm Bruno! 🐻", line:"I'm a big cosy bear who loves big feelings and even bigger adventures. Let's do this!" },
+  owl:   { greeting:"Hoo hoo! I'm Ollie! 🦉", line:"I'm a wise little owl who loves learning new things, especially learning all about YOU!" },
+  cat:   { greeting:"Heyyyy, I'm Luna! 🐱", line:"I'm a cool calm cat with lots of curiosity. I'm really glad we found each other!" },
+  dog:   { greeting:"Woof! I'm Sunny! 🐶", line:"I'm the most loyal tail-wagging dog you'll ever meet and I'm your new best friend!" },
 };
 
-/* ── Slide definitions ── */
 const buildSlides = (mascot, childName) => {
   const intro = MASCOT_INTROS[mascot.id] || MASCOT_INTROS.fox;
   const name  = mascot.name;
-
   return [
-    /* 0 — Mascot intro */
     {
-      bg:       `linear-gradient(160deg, ${mascot.color}33, ${mascot.bg} 80%)`,
-      accent:   mascot.color,
-      icon:     null,
-      bigMascot:true,
-      title:    intro.greeting,
-      body:     intro.line,
-      sub:      `Ready to start your adventure, ${childName}?`,
+      bg1: mascot.color + "55", bg2: mascot.bg,
+      accent: mascot.color,
+      title: intro.greeting,
+      body: intro.line,
+      tag: `Hi ${childName}! 👋`,
     },
-    /* 1 — What is Bloomy */
     {
-      bg:       "linear-gradient(160deg,#EDE7F6,#F7F4FF 80%)",
-      accent:   C.purple,
-      emoji:    "🌸",
-      title:    "Welcome to Bloomy!",
-      body:     `This is YOUR special place, ${childName}. Every day you can check in with how you're feeling, write in your journal, practise breathing, and grow our garden together!`,
-      sub:      `${name} will be right here with you every step of the way.`,
+      bg1: "#C5CAE9", bg2: "#EDE7F6",
+      accent: "#7C4DFF",
+      emoji: "🌸",
+      title: "Welcome to Bloomy!",
+      body: `This is YOUR special place, ${childName}. Every day you can check in with your feelings, write in your journal, practise breathing, and grow our garden together!`,
+      tag: `${name} will be right here with you.`,
     },
-    /* 2 — Mood check-in */
     {
-      bg:       "linear-gradient(160deg,#FFF9C4,#FFF3E0 80%)",
-      accent:   "#F9A825",
-      emoji:    "😊",
-      title:    "How are you feeling?",
-      body:     "Every day you'll tap a mood that matches how you're feeling inside. It's totally okay to feel any emotion — happy, sad, worried, or anything in between. No feelings are wrong here!",
-      sub:      `${name} will always understand how you feel.`,
+      bg1: "#FFE082", bg2: "#FFF9C4",
+      accent: "#F9A825",
+      emoji: "😊",
+      title: "How are you feeling?",
+      body: "Every day you tap a mood that matches how you feel inside. Happy, sad, worried, or anything in between — all feelings are welcome here!",
+      tag: `${name} always understands. 💛`,
     },
-    /* 3 — Breathing */
     {
-      bg:       "linear-gradient(160deg,#E0F7FA,#E8F5E9 80%)",
-      accent:   C.mint,
-      emoji:    "🫧",
-      title:    "Breathe with me",
-      body:     "When you feel big emotions, our breathing exercise helps you calm down. Breathe IN as the bubble gets bigger, HOLD when it pauses, and breathe OUT as it shrinks. Three steps to feeling better!",
-      sub:      `${name} will breathe right along with you.`,
+      bg1: "#B2EBF2", bg2: "#E0F7FA",
+      accent: "#00ACC1",
+      emoji: "🫧",
+      title: "Breathe with me",
+      body: "When feelings get really big, our breathing exercise helps. Watch the bubble grow as you breathe in, pause when it holds, and shrink as you breathe out.",
+      tag: `${name} will breathe with you. 🫧`,
     },
-    /* 4 — Journal */
     {
-      bg:       "linear-gradient(160deg,#E8EAF6,#EDE7F6 80%)",
-      accent:   C.purple,
-      emoji:    "📓",
-      title:    "Your secret journal",
-      body:     "Your journal is a safe place to write whatever is on your mind. Happy thoughts, tricky days, funny stories — anything goes! Your words are private and just for you.",
-      sub:      `${name} loves hearing your stories.`,
+      bg1: "#B39DDB", bg2: "#EDE7F6",
+      accent: "#7C4DFF",
+      emoji: "📓",
+      title: "Your secret journal",
+      body: "Your journal is a safe place just for you. Happy thoughts, tricky days, funny stories — write anything! Your words are private.",
+      tag: `${name} loves your stories. 📓`,
     },
-    /* 5 — Affirmations */
     {
-      bg:       "linear-gradient(160deg,#FCE4EC,#FFF3E0 80%)",
-      accent:   C.pink,
-      emoji:    "⭐",
-      title:    "Kind words for you",
-      body:     "Every day you'll get special affirmations — these are kind, powerful words about YOU. Swipe through them and let them remind you how amazing and special you really are!",
-      sub:      `${name} believes every single one of them.`,
+      bg1: "#F48FB1", bg2: "#FCE4EC",
+      accent: "#EC407A",
+      emoji: "⭐",
+      title: "Kind words for you",
+      body: "Every day you get special affirmations — powerful, kind words about YOU. Swipe through them and feel how amazing you really are!",
+      tag: `${name} believes every single one. ⭐`,
     },
-    /* 6 — Gratitude */
     {
-      bg:       "linear-gradient(160deg,#E8F5E9,#F1F8E9 80%)",
-      accent:   "#43A047",
-      emoji:    "🙏",
-      title:    "Grateful moments",
-      body:     "Each day you can write one thing you're grateful for. It could be your pet, your favourite food, a friend, or even a sunny day. Noticing the good stuff makes your heart feel warm!",
-      sub:      `${name} is grateful for YOU.`,
+      bg1: "#A5D6A7", bg2: "#E8F5E9",
+      accent: "#43A047",
+      emoji: "🌱",
+      title: "Earn seeds, grow your garden!",
+      body: "Every time you log your mood, journal, breathe, or read affirmations you earn 🌱 Seeds! Seeds grow your garden from a tiny sprout to a magical Full Bloom with butterflies and fireflies!",
+      tag: `${name}'s garden grows when YOU grow! 🌿`,
     },
-    /* 7 — Seeds & garden */
     {
-      bg:       "linear-gradient(160deg,#E8F5E9,#FFFDE7 80%)",
-      accent:   "#43A047",
-      emoji:    "🌱",
-      title:    "Earn seeds, grow your garden!",
-      body:     "Every time you check in, journal, breathe, or read affirmations, you earn 🌱 Seeds! Seeds help your garden grow from a tiny sprout all the way to a magical Full Bloom garden with butterflies and fireflies!",
-      sub:      `${name}'s garden grows when YOU grow!`,
+      bg1: "#FFD54F", bg2: "#FFF9C4",
+      accent: "#F9A825",
+      emoji: "🎯",
+      title: "Daily missions",
+      body: "Each day you get two special missions on your home screen. Finish them to earn bonus seeds! Look for the gold glow — that means you crushed it!",
+      tag: `${name} cheers you on every day! 🏆`,
     },
-    /* 8 — Mascot room */
     {
-      bg:       `linear-gradient(160deg, ${mascot.color}22, ${mascot.bg} 80%)`,
-      accent:   mascot.color,
-      emoji:    "🏡",
-      title:    `${name}'s Garden Room`,
-      body:     `Tap the garden button anytime to visit ${name} in their garden room. You can tap ${name} to say hi, watch your garden grow, and see all the stages your garden can reach. The more you use the app, the more beautiful it gets!`,
-      sub:      `${name} is always happy to see you there.`,
-    },
-    /* 9 — Daily missions */
-    {
-      bg:       "linear-gradient(160deg,#FFF9C4,#FFF3E0 80%)",
-      accent:   "#F9A825",
-      emoji:    "🎯",
-      title:    "Daily missions",
-      body:     "Every day you'll get two special missions on your home screen. Complete them to earn bonus seeds! Missions change every day so there's always something fun to do. Check for the gold glow — that means you've crushed it!",
-      sub:      `${name} will cheer you on every single day!`,
-    },
-    /* 10 — Let's go */
-    {
-      bg:       `linear-gradient(160deg, ${mascot.color}33, ${mascot.bg} 80%)`,
-      accent:   mascot.color,
-      bigMascot:true,
-      emoji:    null,
-      title:    `Let's go, ${childName}! 🎉`,
-      body:     `You and ${name} are officially a team. Check in every day, grow your garden, and remember — every feeling you have matters. ${name} is so excited to be your buddy!`,
-      sub:      "Tap the button below to start your first day!",
-      isLast:   true,
+      bg1: mascot.color + "44", bg2: mascot.bg,
+      accent: mascot.color,
+      emoji: null,
+      title: `Let's go, ${childName}! 🎉`,
+      body: `You and ${name} are officially a team. Check in every day, grow your garden, and remember — every feeling you have matters. ${name} is so excited to be your buddy!`,
+      tag: "Your adventure starts now!",
+      isLast: true,
     },
   ];
 };
 
-/* ── Main component ── */
 export default function ChildOnboarding({ child, mascot, onFinish }) {
-  const [step, setStep]             = useState(0);
-  const [animKey, setAnimKey]       = useState(0);
-  const [direction, setDirection]   = useState("forward");
+  const [step, setStep]       = useState(0);
+  const [anim, setAnim]       = useState("in-right");
+  const [animKey, setAnimKey] = useState(0);
+  const touchX = useRef(null);
+  const touchY = useRef(null);
 
   const slides = buildSlides(mascot, child.name);
   const slide  = slides[step];
   const isLast = !!slide.isLast;
+  const total  = slides.length;
 
-  const go = (dir) => {
-    setDirection(dir);
-    setAnimKey(k => k + 1);
-    if (dir === "forward") {
+  const navigate = (dir) => {
+    if (dir === "next") {
       if (isLast) { onFinish(); return; }
+      setAnim("in-right");
+      setAnimKey(k => k + 1);
       setStep(s => s + 1);
     } else {
-      setStep(s => Math.max(0, s - 1));
+      if (step === 0) return;
+      setAnim("in-left");
+      setAnimKey(k => k + 1);
+      setStep(s => s - 1);
     }
   };
 
-  const progress = (step / (slides.length - 1)) * 100;
+  const goTo = (i) => {
+    setAnim(i > step ? "in-right" : "in-left");
+    setAnimKey(k => k + 1);
+    setStep(i);
+  };
+
+  const onTouchStart = (e) => {
+    touchX.current = e.touches[0].clientX;
+    touchY.current = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e) => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchY.current);
+    if (Math.abs(dx) > 50 && dy < 80) {
+      dx < 0 ? navigate("next") : navigate("prev");
+    }
+    touchX.current = null;
+  };
 
   return (
-    <div style={{
-      position:"fixed", inset:0, zIndex:9999,
-      background:slide.bg,
-      display:"flex", flexDirection:"column",
-      fontFamily:F.b,
-      transition:"background 0.5s ease",
-      overflowY:"auto",
-    }}>
+    <div
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      style={{
+        position:"fixed", inset:0, zIndex:9999,
+        fontFamily:F.b, overflow:"hidden",
+        background:`linear-gradient(160deg, ${slide.bg1} 0%, ${slide.bg2} 100%)`,
+        transition:"background 0.55s ease",
+        display:"flex", flexDirection:"column",
+      }}>
+
       <style>{`
-        @keyframes coSlideIn  { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes coSlideOut { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(-20px)} }
-        @keyframes coFloatMascot { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-12px)} }
-        @keyframes coPopIn { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }
-        @keyframes coPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Poppins:wght@400;500;600;700&display=swap');
+        @keyframes coInRight { from{opacity:0;transform:translateX(60px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes coInLeft  { from{opacity:0;transform:translateX(-60px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes coFloat   { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-14px)} }
+        @keyframes coPulse   { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+        @keyframes coFadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes coPopIn   { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
+        @keyframes coShimmer { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
       `}</style>
 
-      {/* Progress bar */}
+      {/* Progress dots — top */}
       <div style={{
-        position:"absolute", top:0, left:0, right:0, height:4,
-        background:"rgba(0,0,0,0.08)", zIndex:10,
+        display:"flex", justifyContent:"center", gap:6,
+        paddingTop:52, paddingBottom:0, flexShrink:0,
       }}>
-        <div style={{
-          height:"100%", borderRadius:2,
-          background:slide.accent,
-          width:`${progress}%`,
-          transition:"width 0.4s ease",
-        }}/>
+        {slides.map((_,i) => (
+          <div
+            key={i}
+            onClick={() => goTo(i)}
+            style={{
+              width: i===step ? 28 : 8,
+              height: 8, borderRadius: 50,
+              background: i===step ? slide.accent : `${slide.accent}40`,
+              cursor:"pointer",
+              transition:"all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+              boxShadow: i===step ? `0 2px 8px ${slide.accent}55` : "none",
+            }}
+          />
+        ))}
       </div>
 
-      {/* Step counter */}
-      <div style={{
-        position:"absolute", top:16, right:20, zIndex:10,
-        fontFamily:F.b, fontWeight:600, fontSize:12, color:"rgba(0,0,0,0.35)",
-      }}>
-        {step + 1} / {slides.length}
-      </div>
-
-      {/* Main content */}
+      {/* Slide content */}
       <div
         key={animKey}
         style={{
-          flex:1, display:"flex", flexDirection:"column",
-          alignItems:"center", justifyContent:"center",
-          padding:"60px 28px 120px",
-          animation:"coSlideIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards",
+          flex:1,
+          display:"flex", flexDirection:"column",
+          alignItems:"center",
+          padding:"0 28px",
+          overflowY:"auto",
+          animation:`${anim==="in-right"?"coInRight":"coInLeft"} 0.42s cubic-bezier(0.22,1,0.36,1) forwards`,
         }}>
 
-        {/* Mascot — big floating version on intro/outro slides */}
-        {slide.bigMascot && (
-          <div style={{
-            marginBottom:24,
-            animation:"coFloatMascot 3s ease-in-out infinite",
-            filter:`drop-shadow(0 16px 32px ${mascot.color}55)`,
-          }}>
-            <div style={{
-              width:160, height:160, borderRadius:"50%",
-              background:`radial-gradient(circle at 40% 35%, ${mascot.color}30, ${mascot.bg})`,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow:`0 8px 32px ${mascot.color}44`,
-            }}>
-              <GrowthMascot id={mascot.id} size={110} stage={0}/>
-            </div>
-          </div>
-        )}
+        {/* Full body mascot — always present, floats */}
+        <div style={{
+          marginTop:16, marginBottom:8, flexShrink:0,
+          animation:"coFloat 3.2s ease-in-out infinite",
+          filter:`drop-shadow(0 20px 40px ${mascot.color}66)`,
+        }}>
+          <FullBodyMascot id={mascot.id} size={220} stage={0}/>
+        </div>
 
-        {/* Emoji icon for non-mascot slides */}
+        {/* Speech bubble from mascot */}
+        <div style={{
+          background:"rgba(255,255,255,0.82)",
+          borderRadius:20,
+          borderBottomLeftRadius:4,
+          padding:"10px 18px",
+          marginBottom:18,
+          backdropFilter:"blur(10px)",
+          boxShadow:"0 4px 20px rgba(0,0,0,0.08)",
+          maxWidth:300,
+          animation:"coFadeUp 0.4s 0.08s both",
+        }}>
+          <p style={{
+            fontFamily:F.b, fontWeight:600, fontSize:13,
+            color:slide.accent, margin:0, textAlign:"center", lineHeight:1.5,
+          }}>
+            {slide.tag}
+          </p>
+        </div>
+
+        {/* Emoji — non-intro slides */}
         {slide.emoji && (
           <div style={{
-            fontSize:72, marginBottom:20, lineHeight:1,
-            animation:"coPopIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards",
-            filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.1))",
+            fontSize:56, lineHeight:1, marginBottom:12,
+            animation:"coPopIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both",
+            filter:"drop-shadow(0 4px 10px rgba(0,0,0,0.12))",
           }}>
             {slide.emoji}
           </div>
@@ -231,123 +235,113 @@ export default function ChildOnboarding({ child, mascot, onFinish }) {
 
         {/* Title */}
         <h1 style={{
-          fontFamily:F.h, fontWeight:900, fontSize:28,
-          color:C.text, textAlign:"center",
-          marginBottom:16, lineHeight:1.2,
-          animation:"coSlideIn 0.5s 0.05s both",
+          fontFamily:F.h, fontWeight:900,
+          fontSize: slide.title.length > 22 ? 24 : 28,
+          color:"#2D2040", textAlign:"center",
+          lineHeight:1.25, marginBottom:12,
+          animation:"coFadeUp 0.4s 0.12s both",
         }}>
           {slide.title}
         </h1>
 
         {/* Body */}
         <p style={{
-          fontFamily:F.b, fontWeight:500, fontSize:16,
-          color:C.text, textAlign:"center",
-          lineHeight:1.75, marginBottom:20,
-          maxWidth:340,
-          animation:"coSlideIn 0.5s 0.1s both",
-          opacity:0.85,
+          fontFamily:F.b, fontWeight:500, fontSize:15,
+          color:"#2D2040", textAlign:"center",
+          lineHeight:1.8, marginBottom:24,
+          maxWidth:320, opacity:0.82,
+          animation:"coFadeUp 0.4s 0.18s both",
         }}>
           {slide.body}
         </p>
 
-        {/* Sub line — mascot quote */}
-        <div style={{
-          background:"rgba(255,255,255,0.72)",
-          borderRadius:50, padding:"8px 20px",
-          backdropFilter:"blur(8px)",
-          display:"flex", alignItems:"center", gap:8,
-          animation:"coSlideIn 0.5s 0.15s both",
-          boxShadow:"0 2px 12px rgba(0,0,0,0.06)",
-          maxWidth:320,
-        }}>
-          {/* Small mascot face */}
-          <div style={{
-            width:32, height:32, borderRadius:"50%",
-            background:mascot.bg, flexShrink:0,
-            display:"flex", alignItems:"center", justifyContent:"center",
-          }}>
-            <GrowthMascot id={mascot.id} size={24} stage={0}/>
-          </div>
+        {/* Swipe hint — first slide only */}
+        {step === 0 && (
           <p style={{
-            fontFamily:F.b, fontWeight:600, fontSize:13,
-            color:slide.accent, margin:0, lineHeight:1.4,
+            fontFamily:F.b, fontWeight:500, fontSize:12,
+            color:`${slide.accent}99`, marginBottom:16,
+            animation:"coFadeUp 0.4s 0.3s both",
           }}>
-            {slide.sub}
+            Swipe or tap Next to explore 👉
           </p>
-        </div>
+        )}
 
-        {/* Dot indicators */}
-        <div style={{
-          display:"flex", gap:6, marginTop:32,
-          animation:"coSlideIn 0.5s 0.2s both",
-        }}>
-          {slides.map((_,i) => (
-            <div key={i} onClick={()=>{setAnimKey(k=>k+1);setStep(i);}} style={{
-              width: i===step ? 24 : 7,
-              height:7, borderRadius:50,
-              background: i===step ? slide.accent : `${slide.accent}44`,
-              cursor:"pointer",
-              transition:"all 0.3s ease",
-            }}/>
-          ))}
-        </div>
       </div>
 
       {/* Bottom nav */}
       <div style={{
-        position:"fixed", bottom:0, left:0, right:0,
-        padding:"16px 24px 36px",
-        display:"flex", justifyContent:"space-between", alignItems:"center",
-        background:"rgba(255,255,255,0.65)",
-        backdropFilter:"blur(12px)",
-        borderTop:"1px solid rgba(255,255,255,0.5)",
+        flexShrink:0,
+        padding:"12px 24px 44px",
+        display:"flex",
+        justifyContent: step === 0 ? "flex-end" : "space-between",
+        alignItems:"center",
+        background:"rgba(255,255,255,0.55)",
+        backdropFilter:"blur(16px)",
+        borderTop:"1.5px solid rgba(255,255,255,0.6)",
       }}>
 
-        {/* Back button */}
-        <button
-          onClick={()=>go("back")}
-          style={{
-            background: step===0 ? "transparent" : "rgba(255,255,255,0.8)",
-            border: step===0 ? "none" : "1.5px solid rgba(0,0,0,0.08)",
-            borderRadius:50, padding:"12px 20px",
-            cursor: step===0 ? "default" : "pointer",
-            fontFamily:F.b, fontWeight:600, fontSize:14,
-            color: step===0 ? "transparent" : C.muted,
-            display:"flex", alignItems:"center", gap:6,
-            transition:"all 0.2s",
-            pointerEvents: step===0 ? "none" : "auto",
-          }}>
-          <svg viewBox="0 0 24 24" width={16} height={16} fill="none"
-            stroke={C.muted} strokeWidth="2.2" strokeLinecap="round">
-            <path d="M19 12H5M12 5l-7 7 7 7"/>
-          </svg>
-          Back
-        </button>
-
-        {/* Next / Let's Go button */}
-        <button
-          onClick={()=>go("forward")}
-          style={{
-            background:`linear-gradient(135deg, ${slide.accent}, ${slide.accent}cc)`,
-            border:"none", borderRadius:50,
-            padding:"14px 32px",
-            cursor:"pointer",
-            fontFamily:F.h, fontWeight:800, fontSize:17,
-            color:"#fff",
-            boxShadow:`0 6px 24px ${slide.accent}55`,
-            display:"flex", alignItems:"center", gap:8,
-            animation: isLast ? "coPulse 1.8s ease-in-out infinite" : "none",
-            transition:"transform 0.15s",
-          }}
-          onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
-          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-          {isLast ? `Start with ${mascot.name}! 🌱` : "Next"}
-          {!isLast && (
-            <svg viewBox="0 0 24 24" width={16} height={16} fill="none"
-              stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
+        {/* Back */}
+        {step > 0 && (
+          <button
+            onClick={() => navigate("prev")}
+            style={{
+              background:"rgba(255,255,255,0.85)",
+              border:"1.5px solid rgba(0,0,0,0.07)",
+              borderRadius:50, padding:"12px 22px",
+              cursor:"pointer",
+              fontFamily:F.b, fontWeight:600, fontSize:14,
+              color:"#9B8DB5",
+              display:"flex", alignItems:"center", gap:6,
+              boxShadow:"0 2px 8px rgba(0,0,0,0.06)",
+              transition:"transform 0.15s",
+            }}
+            onMouseDown={e=>e.currentTarget.style.transform="scale(0.96)"}
+            onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+            <svg viewBox="0 0 24 24" width={15} height={15} fill="none"
+              stroke="#9B8DB5" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
+            Back
+          </button>
+        )}
+
+        {/* Next / Start Blooming */}
+        <button
+          onClick={() => navigate("next")}
+          style={{
+            background: isLast
+              ? `linear-gradient(135deg, #43A047, #66BB6A)`
+              : `linear-gradient(135deg, ${slide.accent}, ${slide.accent}bb)`,
+            border:"none", borderRadius:50,
+            padding: isLast ? "16px 36px" : "14px 28px",
+            cursor:"pointer",
+            fontFamily:F.h, fontWeight:900,
+            fontSize: isLast ? 18 : 16,
+            color:"#fff",
+            boxShadow: isLast
+              ? "0 8px 28px rgba(67,160,71,0.5)"
+              : `0 6px 20px ${slide.accent}44`,
+            display:"flex", alignItems:"center", gap:8,
+            animation: isLast ? "coPulse 1.6s ease-in-out infinite" : "none",
+            transition:"transform 0.15s",
+            letterSpacing: isLast ? 0.3 : 0,
+          }}
+          onMouseDown={e=>e.currentTarget.style.transform="scale(0.96)"}
+          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+          {isLast ? (
+            <>
+              <span>🌱</span>
+              Start Blooming!
+              <span>🌱</span>
+            </>
+          ) : (
+            <>
+              Next
+              <svg viewBox="0 0 24 24" width={15} height={15} fill="none"
+                stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </>
           )}
         </button>
       </div>

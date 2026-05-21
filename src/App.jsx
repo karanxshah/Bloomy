@@ -1294,6 +1294,21 @@ export default function BloomyApp() {
     </div>
   );
 
+  /* ── Child intro — fully separate screen, shown once ── */
+  const childMascot = activeChild
+    ? (MASCOTS.find(m=>m.id===activeChild.mascot_id) || MASCOTS[0])
+    : null;
+
+  if (activeChild && showChildIntro && childMascot) {
+    return (
+      <ChildOnboarding
+        child={activeChild}
+        mascot={childMascot}
+        onFinish={handleFinishIntro}
+      />
+    );
+  }
+
   if (showMascotRoom) return (
     <MascotRoom
       activeChild={activeChild}
@@ -1303,21 +1318,9 @@ export default function BloomyApp() {
     />
   );
 
-  /* ── Child intro overlay — shown once on new profiles ── */
-  const childMascot = MASCOTS.find(m=>m.id===activeChild.mascot_id) || MASCOTS[0];
-
   const stageBg = STAGE_BGSANIM[currentStage.id] || STAGE_BGSANIM[0];
   return (
     <Shell stageBg={darkMode ? undefined : stageBg} dark={darkMode}>
-
-      {/* Intro slides rendered on top of everything */}
-      {showChildIntro && (
-        <ChildOnboarding
-          child={activeChild}
-          mascot={childMascot}
-          onFinish={handleFinishIntro}
-        />
-      )}
 
       {showSettings && (
         <SettingsPanel
