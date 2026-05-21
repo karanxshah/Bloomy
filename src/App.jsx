@@ -1332,9 +1332,18 @@ export default function BloomyApp() {
             }}
               onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
               onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-              <GardenScene stage={currentStage.id} mascotId={cm.id} size={320} dark={darkMode}/>
+              <div style={{
+                width:180,height:180,borderRadius:"50%",
+                background:`radial-gradient(circle at 40% 35%, ${currentStage.bg}, ${cm.bg||currentStage.bg})`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                margin:"0 auto",
+                boxShadow:`0 8px 32px ${cm.color}55, 0 2px 12px rgba(0,0,0,0.08)`,
+                animation:"floatMascot 3s ease-in-out infinite",
+              }}>
+                <GrowthMascot id={cm.id} size={120} stage={currentStage.id}/>
+              </div>
               <div style={{display:"inline-flex",alignItems:"center",gap:6,
-                background:currentStage.color,borderRadius:50,padding:"5px 16px",marginTop:8}}>
+                background:currentStage.color,borderRadius:50,padding:"5px 16px",marginTop:14}}>
                 <span style={{fontSize:14}}>🌱</span>
                 <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,
                   color:"#fff",margin:0}}>
