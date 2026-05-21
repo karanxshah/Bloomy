@@ -762,24 +762,36 @@ export default function BloomyApp() {
     setMoodLogged(false);setJournalSaved(false);setJournalText("");
     setBreathActive(false);setBreathPhase(0);setBreathCount(0);
     setSeenTooltips(child.seen_tooltips || {});
-    // Generate daily missions
+
+    // Load data first so we can check completion state
     const today = new Date().toISOString().split("T")[0];
+    const [moodRes,journalRes,gratitudeRes] = await Promise.all([
+      supabase.from("mood_logs").select("*").eq("child_id",child.id).order("created_at",{ascending:true}),
+      supabase.from("journal_entries").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
+      supabase.from("gratitudes").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
+    ]);
+    const todayMoodLogs   = (moodRes.data||[]).filter(e=>e.date===today);
+    const todayJournals   = (journalRes.data||[]).filter(e=>e.date===today);
+    const todayGratitudes = (gratitudeRes.data||[]).filter(e=>e.date===today);
+    if (!moodRes.error)     setMoodLog(moodRes.data||[]);
+    if (!journalRes.error)  setJournals(journalRes.data||[]);
+    if (!gratitudeRes.error) setGratitudes(gratitudeRes.data||[]);
+
+    // Generate daily missions — pre-mark done if already completed today
     const all = [
-      {id:"mood",      label:"Log your mood today",          seeds:1, icon:"mood",  done:false},
-      {id:"journal",   label:"Write a journal entry",        seeds:2, icon:"book",  done:false},
-      {id:"breathe",   label:"Complete a breathing session", seeds:2, icon:"wind",  done:false},
-      {id:"affirm",    label:"Read 3 affirmations",          seeds:1, icon:"star",  done:false},
-      {id:"gratitude", label:"Add a gratitude",              seeds:1, icon:"heart", done:false},
+      {id:"mood",      label:"Log your mood today",          seeds:1, icon:"mood",  done: todayMoodLogs.length > 0},
+      {id:"journal",   label:"Write a journal entry",        seeds:2, icon:"book",  done: todayJournals.length > 0},
+      {id:"breathe",   label:"Complete a breathing session", seeds:2, icon:"wind",  done: (child.breath_sessions||0) > 0 && todayMoodLogs.length > 0},
+      {id:"affirm",    label:"Read 3 affirmations",          seeds:1, icon:"star",  done: (child.affirm_count||0) % 3 === 0 && (child.affirm_count||0) > 0},
+      {id:"gratitude", label:"Add a gratitude",              seeds:1, icon:"heart", done: todayGratitudes.length > 0},
     ];
     const shuffled = [...all].sort(()=>Math.random()-0.5).slice(0,2);
     setDailyMissions(shuffled);
+
     // Check streak shield (resets weekly)
     const lastShieldDate = child.last_shield_date || "";
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
     setStreakShield(new Date(lastShieldDate) < weekAgo);
-    setGratitudes([]);
-    await loadChildData(child);
-    await loadGratitudes(child.id);
   };
 
   /* ── Computed ── */
@@ -1832,27 +1844,58 @@ export default function BloomyApp() {
             ))}
           </div>
 
-          {/* Breathing circle — contained, no overflow */}
+          {/* Breathing circle — expands on inhale, holds, shrinks on exhale */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:24}}>
-            <div style={{position:"relative",width:220,height:220,
+            <div style={{position:"relative",width:240,height:240,
               display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <div style={{width:220,height:220,borderRadius:"50%",position:"absolute",
-                background:`radial-gradient(circle,${BREATHING[breathPhase].color}20,transparent 70%)`,
-                border:`3px solid ${BREATHING[breathPhase].color}40`,
-                animation:breathActive?"pulse 2s ease-in-out infinite":"none",
-                transition:"all 1.2s ease"}}/>
-              <div style={{width:160,height:160,borderRadius:"50%",
-                background:`${BREATHING[breathPhase].color}16`,
-                border:`2.5px solid ${BREATHING[breathPhase].color}80`,
-                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-                transition:"all 1.2s ease"}}>
-                <GrowthMascot id={cm.id} size={62} stage={currentStage.id} />
-                <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
-                  color:BREATHING[breathPhase].color,marginTop:6,marginBottom:0}}>
-                  {breathActive?BREATHING[breathPhase].phase:"Ready"}
+
+              <style>{`
+                @keyframes breatheIn  { from{transform:scale(0.72)} to{transform:scale(1.08)} }
+                @keyframes breatheHold{ from{transform:scale(1.08)} to{transform:scale(1.08)} }
+                @keyframes breatheOut { from{transform:scale(1.08)} to{transform:scale(0.72)} }
+                @keyframes breatheIdle{ from{transform:scale(0.88)} to{transform:scale(0.96)} }
+              `}</style>
+
+              {/* Outer glow ring — also scales */}
+              <div style={{
+                position:"absolute",
+                width:220, height:220,
+                borderRadius:"50%",
+                background:`radial-gradient(circle,${BREATHING[breathPhase].color}18,transparent 70%)`,
+                border:`3px solid ${BREATHING[breathPhase].color}35`,
+                animation: breathActive
+                  ? breathPhase===0 ? "breatheIn 4s ease-in-out forwards"
+                  : breathPhase===1 ? "breatheHold 2s linear forwards"
+                  : "breatheOut 4s ease-in-out forwards"
+                  : "breatheIdle 3s ease-in-out infinite alternate",
+                transition:"border-color 0.6s, background 0.6s",
+              }}/>
+
+              {/* Inner bubble — the main one that breathes */}
+              <div style={{
+                width:160, height:160,
+                borderRadius:"50%",
+                background:`radial-gradient(circle at 38% 35%, ${BREATHING[breathPhase].color}30, ${BREATHING[breathPhase].color}10)`,
+                border:`2.5px solid ${BREATHING[breathPhase].color}90`,
+                display:"flex",flexDirection:"column",
+                alignItems:"center",justifyContent:"center",
+                animation: breathActive
+                  ? breathPhase===0 ? "breatheIn 4s ease-in-out forwards"
+                  : breathPhase===1 ? "breatheHold 2s linear forwards"
+                  : "breatheOut 4s ease-in-out forwards"
+                  : "breatheIdle 3s ease-in-out infinite alternate",
+                transition:"border-color 0.6s, background 0.6s",
+                boxShadow: breathActive
+                  ? `0 0 ${breathPhase===1?40:20}px ${BREATHING[breathPhase].color}44`
+                  : "none",
+              }}>
+                <GrowthMascot id={cm.id} size={58} stage={currentStage.id}/>
+                <p style={{fontFamily:F.h,fontWeight:800,fontSize:15,
+                  color:BREATHING[breathPhase].color,marginTop:5,marginBottom:0}}>
+                  {breathActive ? BREATHING[breathPhase].phase : "Ready"}
                 </p>
                 {breathActive&&(
-                  <p style={{color:theme.muted,fontSize:13,fontWeight:600,marginBottom:0}}>
+                  <p style={{color:theme.muted,fontSize:12,fontWeight:600,marginBottom:0}}>
                     {BREATHING[breathPhase].duration}s
                   </p>
                 )}
