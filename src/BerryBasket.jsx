@@ -117,114 +117,145 @@ export const FloatingBerry = ({ visible, targetRef, onDone }) => {
 };
 
 /* ── Basket panel ── */
-const BasketPanel = ({ berries, energy, mascotName, onClose, onFeed, canFeed }) => (
-  <div style={{
-    position:"fixed", inset:0, zIndex:9990,
-    display:"flex", alignItems:"flex-start", justifyContent:"flex-end",
-  }} onClick={onClose}>
-    <div
-      onClick={e=>e.stopPropagation()}
-      style={{
-        marginTop:72, marginRight:16,
-        background:"#fff", borderRadius:24,
-        padding:"20px", width:280,
-        boxShadow:"0 8px 40px rgba(124,77,255,0.18), 0 2px 12px rgba(0,0,0,0.08)",
-        border:`1.5px solid ${C.border}`,
-        animation:"panelIn 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-      }}>
-      <style>{`@keyframes panelIn{from{opacity:0;transform:translateY(-12px) scale(0.95)}to{opacity:1;transform:none}}`}</style>
+const BasketPanel = ({ berries, energy, mascotName, onClose, onFeed }) => {
+  const [fullMsg, setFullMsg] = useState(false);
 
-      {/* Header */}
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-        <BasketSVG size={36}/>
-        <div>
-          <p style={{fontFamily:F.h,fontWeight:900,fontSize:18,color:C.text,margin:0}}>
-            Berry Basket
-          </p>
-          <div style={{display:"flex",alignItems:"center",gap:5}}>
-            <BerrySVG size={16}/>
-            <p style={{fontFamily:F.b,fontWeight:700,fontSize:13,
-              color:C.purple,margin:0}}>{berries} berries</p>
-          </div>
-        </div>
-      </div>
+  const handleFeed = () => {
+    if (berries <= 0) return;
+    if (energy >= 100) {
+      setFullMsg(true);
+      setTimeout(() => setFullMsg(false), 2000);
+      return;
+    }
+    onFeed();
+  };
 
-      {/* Mascot energy */}
-      <div style={{background:C.bg,borderRadius:16,padding:"12px 14px",marginBottom:14}}>
-        <p style={{fontFamily:F.b,fontWeight:600,fontSize:12,
-          color:C.muted,margin:"0 0 6px",textTransform:"uppercase",letterSpacing:0.8}}>
-          {mascotName}'s Energy
-        </p>
-        <div style={{height:8,borderRadius:50,background:C.border,overflow:"hidden",marginBottom:6}}>
-          <div style={{
-            height:"100%",borderRadius:50,
-            background: energy>60 ? "linear-gradient(90deg,#66BB6A,#43A047)"
-              : energy>30 ? "linear-gradient(90deg,#FFD54F,#F9A825)"
-              : "linear-gradient(90deg,#FF7043,#E64A19)",
-            width:`${energy}%`,transition:"width 0.6s ease",
-          }}/>
-        </div>
-        <p style={{fontFamily:F.b,fontSize:12,fontWeight:500,color:C.muted,margin:0}}>
-          {energy>70 ? `${mascotName} is full of energy! 🌟`
-            : energy>40 ? `${mascotName} could use some berries! 🫐`
-            : `${mascotName} is really hungry! Please feed them! 🥺`}
-        </p>
-      </div>
+  const hasBerries = berries > 0;
 
-      {/* Feed button */}
-      <button
-        onClick={canFeed ? onFeed : undefined}
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:9990,
+      display:"flex", alignItems:"flex-start", justifyContent:"flex-end",
+    }} onClick={onClose}>
+      <div
+        onClick={e=>e.stopPropagation()}
         style={{
-          width:"100%", borderRadius:50, padding:"12px",
-          background: canFeed
-            ? "linear-gradient(135deg,#7C4DFF,#9C6FFF)"
-            : C.border,
-          border:"none", cursor: canFeed ? "pointer" : "default",
-          fontFamily:F.h, fontWeight:800, fontSize:15,
-          color: canFeed ? "#fff" : C.muted,
-          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-          marginBottom:14,
-          boxShadow: canFeed ? "0 4px 16px rgba(124,77,255,0.35)" : "none",
-          transition:"transform 0.15s",
-        }}
-        onMouseDown={e=>{if(canFeed)e.currentTarget.style.transform="scale(0.97)"}}
-        onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-        <BerrySVG size={18}/>
-        {canFeed ? `Feed ${mascotName} (1 berry)` : "No berries yet!"}
-      </button>
+          marginTop:72, marginRight:16,
+          background:"#fff", borderRadius:24,
+          padding:"20px", width:280,
+          boxShadow:"0 8px 40px rgba(124,77,255,0.18), 0 2px 12px rgba(0,0,0,0.08)",
+          border:`1.5px solid ${C.border}`,
+          animation:"panelIn 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+        }}>
+        <style>{`@keyframes panelIn{from{opacity:0;transform:translateY(-12px) scale(0.95)}to{opacity:1;transform:none}}`}</style>
 
-      {/* What earns berries */}
-      <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:C.muted,
-        textTransform:"uppercase",letterSpacing:0.8,margin:"0 0 8px"}}>
-        How to earn berries
-      </p>
-      {[
-        {icon:"📓", label:"Write in your journal",    reward:"+1 berry"},
-        {icon:"🫧", label:"Complete a breathing session", reward:"+1 berry"},
-        {icon:"🙏", label:"Write a gratitude",        reward:"+1 berry"},
-      ].map((item,i)=>(
-        <div key={i} style={{display:"flex",alignItems:"center",gap:10,
-          padding:"7px 0",
-          borderBottom:i<2?`1px solid ${C.border}`:"none"}}>
-          <span style={{fontSize:18}}>{item.icon}</span>
-          <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,
-            color:C.text,margin:0,flex:1}}>{item.label}</p>
-          <div style={{background:"#EDE7F6",borderRadius:50,padding:"2px 8px",
-            display:"flex",alignItems:"center",gap:4}}>
-            <BerrySVG size={12}/>
-            <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
-              color:C.purple,margin:0}}>{item.reward}</p>
+        {/* Header */}
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+          <BasketSVG size={36}/>
+          <div>
+            <p style={{fontFamily:F.h,fontWeight:900,fontSize:18,color:C.text,margin:0}}>
+              Berry Basket
+            </p>
+            <div style={{display:"flex",alignItems:"center",gap:5}}>
+              <BerrySVG size={16}/>
+              <p style={{fontFamily:F.b,fontWeight:700,fontSize:13,
+                color:C.purple,margin:0}}>{berries} berries</p>
+            </div>
           </div>
         </div>
-      ))}
+
+        {/* Mascot energy */}
+        <div style={{background:C.bg,borderRadius:16,padding:"12px 14px",marginBottom:14}}>
+          <p style={{fontFamily:F.b,fontWeight:600,fontSize:12,
+            color:C.muted,margin:"0 0 6px",textTransform:"uppercase",letterSpacing:0.8}}>
+            {mascotName}'s Energy
+          </p>
+          <div style={{height:8,borderRadius:50,background:C.border,overflow:"hidden",marginBottom:6}}>
+            <div style={{
+              height:"100%",borderRadius:50,
+              background: energy>60 ? "linear-gradient(90deg,#66BB6A,#43A047)"
+                : energy>30 ? "linear-gradient(90deg,#FFD54F,#F9A825)"
+                : "linear-gradient(90deg,#FF7043,#E64A19)",
+              width:`${energy}%`,transition:"width 0.6s ease",
+            }}/>
+          </div>
+          <p style={{fontFamily:F.b,fontSize:12,fontWeight:500,color:C.muted,margin:0}}>
+            {energy>=100 ? `${mascotName} is full of energy! 🌟`
+              : energy>40 ? `${mascotName} could use some berries! 🫐`
+              : `${mascotName} is really hungry! Please feed them! 🥺`}
+          </p>
+        </div>
+
+        {/* Full message */}
+        {fullMsg && (
+          <div style={{
+            background:"#E8F5E9",borderRadius:12,padding:"8px 14px",
+            marginBottom:10,textAlign:"center",
+            animation:"panelIn 0.25s ease",
+          }}>
+            <p style={{fontFamily:F.b,fontWeight:700,fontSize:13,
+              color:"#43A047",margin:0}}>
+              {mascotName} is already full! 🌟
+            </p>
+          </div>
+        )}
+
+        {/* Feed button — always purple if has berries, grey if empty */}
+        <button
+          onClick={handleFeed}
+          style={{
+            width:"100%", borderRadius:50, padding:"12px",
+            background: hasBerries
+              ? "linear-gradient(135deg,#7C4DFF,#9C6FFF)"
+              : C.border,
+            border:"none",
+            cursor: hasBerries ? "pointer" : "default",
+            fontFamily:F.h, fontWeight:800, fontSize:15,
+            color: hasBerries ? "#fff" : C.muted,
+            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            marginBottom:14,
+            boxShadow: hasBerries ? "0 4px 16px rgba(124,77,255,0.35)" : "none",
+            transition:"transform 0.15s",
+          }}
+          onMouseDown={e=>{if(hasBerries)e.currentTarget.style.transform="scale(0.97)"}}
+          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+          <BerrySVG size={18}/>
+          {hasBerries ? `Feed ${mascotName}` : "No berries yet!"}
+        </button>
+
+        {/* What earns berries */}
+        <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:C.muted,
+          textTransform:"uppercase",letterSpacing:0.8,margin:"0 0 8px"}}>
+          How to earn berries
+        </p>
+        {[
+          {icon:"📓", label:"Write in your journal",       reward:"+1 berry"},
+          {icon:"🫧", label:"Complete a breathing session", reward:"+1 berry"},
+          {icon:"🙏", label:"Write a gratitude",            reward:"+1 berry"},
+        ].map((item,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:10,
+            padding:"7px 0",
+            borderBottom:i<2?`1px solid ${C.border}`:"none"}}>
+            <span style={{fontSize:18}}>{item.icon}</span>
+            <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,
+              color:C.text,margin:0,flex:1}}>{item.label}</p>
+            <div style={{background:"#EDE7F6",borderRadius:50,padding:"2px 8px",
+              display:"flex",alignItems:"center",gap:4}}>
+              <BerrySVG size={12}/>
+              <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
+                color:C.purple,margin:0}}>{item.reward}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ── Main BerryBasket component ── */
 export default function BerryBasket({ berries, energy, mascotName, onFeed, basketRef }) {
-  const [open, setOpen]         = useState(false);
-  const [bounce, setBounce]     = useState(false);
+  const [open, setOpen]     = useState(false);
+  const [bounce, setBounce] = useState(false);
 
   // Called from parent when a berry is earned to trigger bounce
   useEffect(() => {
@@ -277,7 +308,6 @@ export default function BerryBasket({ berries, energy, mascotName, onFeed, baske
           mascotName={mascotName}
           onClose={() => setOpen(false)}
           onFeed={() => { onFeed(); setOpen(false); }}
-          canFeed={canFeed}
         />
       )}
     </>

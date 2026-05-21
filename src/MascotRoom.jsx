@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { GrowthMascot, GardenScene, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
+import { BerrySVG } from "./BerryBasket";
 
 const C = {
   purple:"#7C4DFF", pink:"#F06292", yellow:"#FFD54F",
@@ -514,6 +515,114 @@ const StageEvolution = ({ currentScore, mascotId, stageId }) => {
    MAIN EXPORT — renders as a full page screen
    (not an overlay — parent controls navigation)
 ══════════════════════════════════════════════ */
+/* ── Feed Card ── */
+const FeedCard = ({ energy, berries, mascotName, mascotId, stageId, onFeed }) => {
+  const [feeding, setFeeding]           = useState(false);
+  const [excited, setExcited]           = useState(false);
+  const [fullMsg, setFullMsg]           = useState(false);
+
+  const hasBerries = berries > 0;
+
+  const handleFeed = () => {
+    if (!hasBerries) return;
+    if (energy >= 100) {
+      setFullMsg(true);
+      setTimeout(() => setFullMsg(false), 2000);
+      return;
+    }
+    setFeeding(true);
+    setExcited(true);
+    setTimeout(() => setFeeding(false), 900);
+    setTimeout(() => setExcited(false), 800);
+    onFeed();
+  };
+
+  return (
+    <div style={{background:"#fff",borderRadius:20,padding:"18px 20px",
+      boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14,
+      position:"relative",overflow:"hidden"}}>
+      <style>{`
+        @keyframes berryFloat{
+          0%  {opacity:1;transform:translate(-50%,-50%) scale(1)}
+          60% {opacity:1;transform:translate(-50%,-200%) scale(1.15)}
+          100%{opacity:0;transform:translate(-50%,-280%) scale(0.4)}
+        }
+        @keyframes mascotExcite{
+          0%,100%{transform:scale(1) rotate(0deg)}
+          20%{transform:scale(1.2) rotate(-8deg)}
+          40%{transform:scale(1.2) rotate(8deg)}
+          60%{transform:scale(1.1) rotate(-5deg)}
+          80%{transform:scale(1.05) rotate(3deg)}
+        }
+      `}</style>
+
+      {/* Excited mascot face in card */}
+      <div style={{
+        display:"flex",alignItems:"center",justifyContent:"center",
+        marginBottom:10,
+      }}>
+        <div style={{
+          animation: excited ? "mascotExcite 0.8s ease" : "none",
+        }}>
+          <GrowthMascot id={mascotId} size={52} stage={stageId}/>
+        </div>
+      </div>
+
+      <EnergyBar level={energy}/>
+
+      <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,
+        color:C.muted,margin:"10px 0 12px",textAlign:"center",lineHeight:1.6}}>
+        {energy >= 100
+          ? `${mascotName} is full of energy! 🌟`
+          : energy < 30
+          ? `${mascotName} is really hungry — feed them! 🥺`
+          : `${mascotName} could use some berries! 🫐`}
+      </p>
+
+      {fullMsg && (
+        <div style={{background:"#E8F5E9",borderRadius:12,padding:"7px 14px",
+          marginBottom:10,textAlign:"center",animation:"fadeIn 0.25s ease"}}>
+          <p style={{fontFamily:F.b,fontWeight:700,fontSize:13,
+            color:"#43A047",margin:0}}>{mascotName} is already full! 🌟</p>
+        </div>
+      )}
+
+      {/* Feed button with floating berry */}
+      <div style={{position:"relative",width:"100%"}}>
+        {feeding && (
+          <div style={{
+            position:"absolute",left:"50%",bottom:"100%",
+            animation:"berryFloat 0.9s ease forwards",
+            pointerEvents:"none",zIndex:10,
+          }}>
+            <BerrySVG size={30}/>
+          </div>
+        )}
+        <button
+          onClick={handleFeed}
+          style={{
+            width:"100%",borderRadius:50,padding:"11px",
+            background: hasBerries
+              ? "linear-gradient(135deg,#7C4DFF,#9C6FFF)"
+              : C.border,
+            border:"none",
+            cursor: hasBerries ? "pointer" : "default",
+            fontFamily:F.b,fontWeight:700,fontSize:14,
+            color: hasBerries ? "#fff" : C.muted,
+            display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+            boxShadow: hasBerries ? "0 4px 14px rgba(124,77,255,0.3)" : "none",
+            transition:"transform 0.15s",
+          }}
+          onMouseDown={e=>{if(hasBerries)e.currentTarget.style.transform="scale(0.97)"}}
+          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+          <BerrySVG size={16}/>
+          {hasBerries ? `Feed ${mascotName}` : "No berries yet!"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function MascotRoom({ activeChild, moodLog, journals, energy: energyProp, berries: berriesProp, onFeed, onClose }) {
   const cm = {
     id:    activeChild.mascot_id,
@@ -787,52 +896,14 @@ export default function MascotRoom({ activeChild, moodLog, journals, energy: ene
         )}
 
         {/* Energy + Feed */}
-        <div style={{background:"#fff",borderRadius:20,padding:"18px 20px",
-          boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14}}>
-          <EnergyBar level={energy}/>
-          <p style={{fontFamily:F.b,fontWeight:500,fontSize:13,
-            color:C.muted,margin:"10px 0 12px",textAlign:"center",lineHeight:1.6}}>
-            {energy<30
-              ?`Feed ${cm.name} some berries to restore their energy!`
-              :energy<60
-              ?`Keep checking in to keep ${cm.name} thriving!`
-              :`${cm.name} is full of energy — keep it up!`}
-          </p>
-          {/* Feed button */}
-          {onFeed && (
-            <button
-              onClick={()=>{ if((berriesProp||0)>0 && energy<100) onFeed(); }}
-              style={{
-                width:"100%", borderRadius:50, padding:"11px",
-                background:(berriesProp||0)>0 && energy<100
-                  ? "linear-gradient(135deg,#7C4DFF,#9C6FFF)"
-                  : C.border,
-                border:"none",
-                cursor:(berriesProp||0)>0 && energy<100 ? "pointer" : "default",
-                fontFamily:F.b, fontWeight:700, fontSize:14,
-                color:(berriesProp||0)>0 && energy<100 ? "#fff" : C.muted,
-                display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                boxShadow:(berriesProp||0)>0 && energy<100
-                  ? "0 4px 14px rgba(124,77,255,0.3)" : "none",
-                transition:"transform 0.15s",
-              }}
-              onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
-              onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-              <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-                <circle cx="16" cy="20" r="10" fill={(berriesProp||0)>0&&energy<100?"#9575CD":"#ccc"}/>
-                <path d="M16 10 Q16.5 8 17 6" stroke={(berriesProp||0)>0&&energy<100?"#43A047":"#bbb"}
-                  strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-                <ellipse cx="16" cy="7" rx="5" ry="3.5"
-                  fill={(berriesProp||0)>0&&energy<100?"#66BB6A":"#bbb"}
-                  transform="rotate(-15 16 7)"/>
-              </svg>
-              {(berriesProp||0)>0 && energy<100
-                ? `Feed ${cm.name} (${berriesProp} berries)`
-                : energy>=100 ? `${cm.name} is already full!`
-                : "No berries — earn some first!"}
-            </button>
-          )}
-        </div>
+        <FeedCard
+          energy={energy}
+          berries={berriesProp||0}
+          mascotName={cm.name}
+          mascotId={cm.id}
+          stageId={stage.id}
+          onFeed={onFeed}
+        />
 
         {/* Personality */}
         <div style={{background:`linear-gradient(135deg,${cm.color},${C.pink})`,
