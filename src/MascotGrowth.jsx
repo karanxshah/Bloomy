@@ -582,15 +582,28 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
 /* ══════════════════════════════════════════════
    GROWTH MASCOT (face only — used in small contexts)
 ══════════════════════════════════════════════ */
-/* ── SVG seed icon ── */
-const SeedIcon = ({ size=22, color="#43A047" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <path d="M12 21C12 21 5 15 5 9a7 7 0 0114 0c0 6-7 12-7 12z"
-      fill={color} opacity="0.9"/>
-    <path d="M12 21C12 21 5 15 5 9a7 7 0 0114 0c0 6-7 12-7 12z"
-      fill="none" stroke={color} strokeWidth="1.2" strokeLinejoin="round"/>
-    <ellipse cx="9.5" cy="8.5" rx="1.5" ry="2"
-      fill="rgba(255,255,255,0.35)" transform="rotate(-20 9.5 8.5)"/>
+/* ── SVG seed icon — matches berry art style ── */
+const SeedIcon = ({ size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+    <defs>
+      <radialGradient id="seedGrad" cx="38%" cy="32%" r="62%">
+        <stop offset="0%" stopColor="#D4A574"/>
+        <stop offset="100%" stopColor="#8B5E3C"/>
+      </radialGradient>
+    </defs>
+    {/* Seed body — upright oval, pointed bottom */}
+    <ellipse cx="16" cy="17" rx="7" ry="9.5" fill="url(#seedGrad)"/>
+    {/* Ridge line down the centre */}
+    <path d="M16 8 Q17 17 16 26"
+      stroke="rgba(255,255,255,0.18)" strokeWidth="1.2"
+      strokeLinecap="round" fill="none"/>
+    {/* Highlight */}
+    <ellipse cx="13" cy="13" rx="2" ry="3.2"
+      fill="rgba(255,255,255,0.3)" transform="rotate(-18 13 13)"/>
+    <circle cx="13.5" cy="12" r="1" fill="rgba(255,255,255,0.45)"/>
+    {/* Subtle texture dots */}
+    <circle cx="19" cy="18" r="0.9" fill="rgba(0,0,0,0.08)"/>
+    <circle cx="14" cy="21" r="0.8" fill="rgba(0,0,0,0.08)"/>
   </svg>
 );
 
@@ -617,9 +630,9 @@ export const SeedPopup = ({ amount, visible, gold=false }) => {
           padding:"6px 14px",
           boxShadow:"0 4px 18px rgba(249,168,37,0.45)"}}>
           <div style={{display:"flex",gap:1}}>
-            <SeedIcon size={16} color="#F9A825"/>
-            <SeedIcon size={16} color="#F9A825"/>
-            <SeedIcon size={16} color="#F9A825"/>
+            <SeedIcon size={16}/>
+            <SeedIcon size={16}/>
+            <SeedIcon size={16}/>
           </div>
           <p style={{fontFamily:F.b,fontWeight:800,fontSize:14,
             color:"#F9A825",margin:0,letterSpacing:0.3}}>
@@ -631,10 +644,10 @@ export const SeedPopup = ({ amount, visible, gold=false }) => {
         <div style={{display:"flex",alignItems:"center",gap:5,
           background:"rgba(255,255,255,0.92)",borderRadius:50,
           padding:"6px 12px",
-          boxShadow:"0 4px 14px rgba(67,160,71,0.3)"}}>
-          <SeedIcon size={18} color="#43A047"/>
+          boxShadow:"0 4px 14px rgba(139,94,60,0.28)"}}>
+          <SeedIcon size={18}/>
           <p style={{fontFamily:F.b,fontWeight:800,fontSize:14,
-            color:"#43A047",margin:0}}>
+            color:"#8B5E3C",margin:0}}>
             +{amount}
           </p>
         </div>
