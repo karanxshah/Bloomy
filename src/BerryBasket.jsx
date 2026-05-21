@@ -117,20 +117,20 @@ export const FloatingBerry = ({ visible, targetRef, onDone }) => {
 };
 
 /* ── Basket panel ── */
-const BasketPanel = ({ berries, energy, mascotName, onClose, onFeed }) => {
+const BasketPanel = ({ berries, energy, mascotName, onClose, onGoToRoom }) => {
   const [fullMsg, setFullMsg] = useState(false);
+  const hasBerries = berries > 0;
 
   const handleFeed = () => {
-    if (berries <= 0) return;
+    if (!hasBerries) return;
     if (energy >= 100) {
       setFullMsg(true);
-      setTimeout(() => setFullMsg(false), 2000);
+      setTimeout(() => setFullMsg(false), 2200);
       return;
     }
-    onFeed();
+    onClose();
+    onGoToRoom();
   };
-
-  const hasBerries = berries > 0;
 
   return (
     <div style={{
@@ -186,21 +186,7 @@ const BasketPanel = ({ berries, energy, mascotName, onClose, onFeed }) => {
           </p>
         </div>
 
-        {/* Full message */}
-        {fullMsg && (
-          <div style={{
-            background:"#E8F5E9",borderRadius:12,padding:"8px 14px",
-            marginBottom:10,textAlign:"center",
-            animation:"panelIn 0.25s ease",
-          }}>
-            <p style={{fontFamily:F.b,fontWeight:700,fontSize:13,
-              color:"#43A047",margin:0}}>
-              {mascotName} is already full! 🌟
-            </p>
-          </div>
-        )}
-
-        {/* Feed button — always purple if has berries, grey if empty */}
+        {/* Feed button */}
         <button
           onClick={handleFeed}
           style={{
@@ -213,7 +199,7 @@ const BasketPanel = ({ berries, energy, mascotName, onClose, onFeed }) => {
             fontFamily:F.h, fontWeight:800, fontSize:15,
             color: hasBerries ? "#fff" : C.muted,
             display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-            marginBottom:14,
+            marginBottom:6,
             boxShadow: hasBerries ? "0 4px 16px rgba(124,77,255,0.35)" : "none",
             transition:"transform 0.15s",
           }}
@@ -222,6 +208,18 @@ const BasketPanel = ({ berries, energy, mascotName, onClose, onFeed }) => {
           <BerrySVG size={18}/>
           {hasBerries ? `Feed ${mascotName}` : "No berries yet!"}
         </button>
+
+        {/* Full message — simple text below button */}
+        <p style={{
+          fontFamily:F.b, fontWeight:600, fontSize:12,
+          color:"#43A047", textAlign:"center",
+          margin:"0 0 14px",
+          opacity: fullMsg ? 1 : 0,
+          transition:"opacity 0.3s ease",
+          minHeight:18,
+        }}>
+          {mascotName} is already full! 🌟
+        </p>
 
         {/* What earns berries */}
         <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:C.muted,
@@ -253,7 +251,7 @@ const BasketPanel = ({ berries, energy, mascotName, onClose, onFeed }) => {
 };
 
 /* ── Main BerryBasket component ── */
-export default function BerryBasket({ berries, energy, mascotName, onFeed, basketRef }) {
+export default function BerryBasket({ berries, energy, mascotName, onFeed, onGoToRoom, basketRef }) {
   const [open, setOpen]     = useState(false);
   const [bounce, setBounce] = useState(false);
 
@@ -307,7 +305,7 @@ export default function BerryBasket({ berries, energy, mascotName, onFeed, baske
           energy={energy}
           mascotName={mascotName}
           onClose={() => setOpen(false)}
-          onFeed={() => { onFeed(); setOpen(false); }}
+          onGoToRoom={onGoToRoom}
         />
       )}
     </>

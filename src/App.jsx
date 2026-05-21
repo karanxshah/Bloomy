@@ -1486,6 +1486,7 @@ export default function BloomyApp() {
           energy={energy}
           mascotName={cm.name}
           onFeed={feedMascot}
+          onGoToRoom={()=>setShowMascotRoom(true)}
           basketRef={basketRef}
         />
       </div>
