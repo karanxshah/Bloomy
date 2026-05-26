@@ -218,26 +218,6 @@ export default function HomeTab() {
         ))}
       </div>
 
-      {/* Streak nudge — shown when child hasn't checked in today */}
-      {!todayEntry && (
-        <div style={{
-          background:"linear-gradient(135deg,#F06292,#7C4DFF)",
-          borderRadius:20, padding:"16px 20px", marginBottom:14,
-          display:"flex", alignItems:"center", gap:14,
-          animation:"pulse 2s ease-in-out infinite",
-        }}>
-          <span style={{fontSize:28}}>👋</span>
-          <div style={{flex:1}}>
-            <p style={{color:"#fff",fontFamily:F.h,fontWeight:800,fontSize:17,margin:0}}>
-              How are you feeling today?
-            </p>
-            <p style={{color:"rgba(255,255,255,0.85)",fontSize:13,fontWeight:500,margin:0}}>
-              {streak>0?"Don't break your streak! Check in now.":"Tap Mood to log how you feel today."}
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Streak */}
       {streak > 0 && (
         <div style={{
