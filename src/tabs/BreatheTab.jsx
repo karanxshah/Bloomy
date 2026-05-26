@@ -50,11 +50,12 @@ export default function BreatheTab() {
         completeMission("breathe");
         if (activeChild) {
           const newCount = (activeChild.breath_sessions || 0) + 1;
+          const todayStr = new Date().toISOString().split("T")[0];
           const { error } = await supabase.from("children")
-            .update({ breath_sessions: newCount })
+            .update({ breath_sessions: newCount, last_breath_date: todayStr })
             .eq("id", activeChild.id);
           if (!error) {
-            const updatedChild = { ...activeChild, breath_sessions: newCount };
+            const updatedChild = { ...activeChild, breath_sessions: newCount, last_breath_date: todayStr };
             setActiveChild(updatedChild);
             setChildren(prev => prev.map(c => c.id === activeChild.id ? updatedChild : c));
             checkGrowthStageUp(moodLog, journals, updatedChild);

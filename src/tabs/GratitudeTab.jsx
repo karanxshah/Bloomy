@@ -40,13 +40,15 @@ export default function GratitudeTab() {
             </text>
           ) : (
             gratitudes.slice(0,8).map((g,i)=>{
-              const colors=["#FFD54F","#F06292","#CE93D8","#4DB6AC","#FF8A65","#4FC3F7","#A5D6A7","#FFD54F"];
+              const jarColors=["#FFD54F","#F06292","#CE93D8","#4DB6AC","#FF8A65","#4FC3F7","#A5D6A7","#FFD54F"];
+              const key = g.id || g.text || i;
+              const hash = String(key).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
               const xPos = 70+(i%3)*50+(i%2)*8;
               const yPos = 130+Math.floor(i/3)*40+(i%2)*12;
               const rot = (i%2===0?-1:1)*(i*3%8+2);
               return (
                 <g key={g.id||i} transform={`translate(${xPos},${yPos}) rotate(${rot})`}>
-                  <rect x="-28" y="-10" width="56" height="22" rx="4" fill={colors[i%colors.length]} opacity="0.95"/>
+                  <rect x="-28" y="-10" width="56" height="22" rx="4" fill={jarColors[hash%jarColors.length]} opacity="0.95"/>
                   <text x="0" y="6" textAnchor="middle" fontFamily={F.b} fontSize="9" fontWeight="700" fill="#fff">
                     {g.text.length>10?g.text.slice(0,10)+"…":g.text}
                   </text>
@@ -105,7 +107,12 @@ export default function GratitudeTab() {
             }}>
               <div style={{
                 width:10, height:10, borderRadius:"50%", flexShrink:0, marginTop:5,
-                background:["#FFD54F","#F06292","#7C4DFF","#4DB6AC","#FF7043","#4FC3F7"][i%6],
+                background:(()=>{
+                  const colors=["#FFD54F","#F06292","#7C4DFF","#4DB6AC","#FF7043","#4FC3F7"];
+                  const key = g.id || g.text || i;
+                  const hash = String(key).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+                  return colors[hash%colors.length];
+                })(),
               }}/>
               <div style={{ flex:1 }}>
                 <p style={{ fontFamily:F.b, fontWeight:600, fontSize:14, color:C.text, margin:0, lineHeight:1.6 }}>{g.text}</p>

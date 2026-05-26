@@ -8,7 +8,7 @@ export function JournalTab() {
   const {
     theme, journalText, setJournalText, journalSaved, setJournalSaved,
     promptIdx, setPromptIdx, saveLoading, saveJournal,
-    journals, cm, seenTooltips, setSeenTooltips,
+    journals, setJournals, cm, seenTooltips, setSeenTooltips,
     activeChild, setActiveChild, setChildren, supabase,
   } = useApp();
 
@@ -108,11 +108,26 @@ export function JournalTab() {
           <Label>Past Entries ({journals.length})</Label>
           {journals.slice(0,5).map((j,i)=>(
             <div key={j.id} style={{ padding:"12px 0", borderBottom:i<Math.min(4,journals.length-1)?"1px solid #F0EAFF":"none" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:C.purple, fontFamily:F.b }}>{j.prompt}</span>
-                <span style={{ fontSize:11, color:C.muted, fontFamily:F.b, flexShrink:0, marginLeft:8 }}>
-                  {j.date===today()?"Today":j.date}
-                </span>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:4, gap:8 }}>
+                <div style={{ flex:1 }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:C.purple, fontFamily:F.b }}>{j.prompt}</span>
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+                  <span style={{ fontSize:11, color:C.muted, fontFamily:F.b }}>
+                    {j.date===today()?"Today":j.date}
+                  </span>
+                  <button
+                    onClick={async()=>{
+                      if (!window.confirm("Delete this journal entry?")) return;
+                      await supabase.from("journal_entries").delete().eq("id", j.id);
+                      setJournals(prev=>prev.filter(e=>e.id!==j.id));
+                    }}
+                    style={{ background:"#FFF5F5", border:"1px solid #FFCDD2", borderRadius:8,
+                      padding:"3px 7px", cursor:"pointer", fontSize:11, color:"#E53935",
+                      fontFamily:F.b, fontWeight:700 }}>
+                    Delete
+                  </button>
+                </div>
               </div>
               <p style={{ color:C.text, fontSize:14, lineHeight:1.6, fontWeight:500, margin:0,
                 overflow:"hidden", textOverflow:"ellipsis", display:"-webkit-box",
@@ -163,7 +178,15 @@ export function AffirmTab() {
       />
 
       {/* Card deck */}
-      <div style={{ position:"relative", height:260, marginBottom:20, cursor:"pointer" }} onClick={nextAffirm}>
+      <div
+        style={{ position:"relative", height:260, marginBottom:20, cursor:"pointer" }}
+        onClick={nextAffirm}
+        onTouchStart={e=>{ e._touchStartX = e.touches[0].clientX; }}
+        onTouchEnd={e=>{
+          const dx = e.changedTouches[0].clientX - (e._touchStartX || e.changedTouches[0].clientX);
+          if (Math.abs(dx) > 40) nextAffirm();
+        }}
+      >
         <div style={{ position:"absolute", top:8, left:"4%", right:"4%", bottom:0,
           background:`${ALL_AFFIRMATIONS[(affirmIdx+2)%ALL_AFFIRMATIONS.length].color}55`,
           borderRadius:24, transform:"rotate(-2deg)" }}/>

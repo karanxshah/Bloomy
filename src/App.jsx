@@ -294,6 +294,29 @@ export default function BloomyApp() {
   /* ── Mood actions ── */
   const logMood = async (mood) => {
     if (!activeChild) return;
+    const todayStr = today();
+    const alreadyLogged = moodLog.some(e => e.date === todayStr);
+    if (alreadyLogged) {
+      // Update the existing entry instead of inserting a new one
+      try {
+        const existing = [...moodLog].reverse().find(e => e.date === todayStr);
+        const {error} = await supabase.from("mood_logs")
+          .update({mood}).eq("id", existing.id);
+        if (error) throw error;
+        const newLog = moodLog.map(e => e.id === existing.id ? {...e, mood} : e);
+        setMoodLog(newLog);
+        setMoodLogged(true);
+        setTodayMood(mood);
+        setMoodNoteStep("note");
+        setMoodNote("");
+        playSound("chime", soundOn);
+        haptic(8);
+        checkGrowthStageUp(newLog, journals);
+      } catch(e) {
+        showToast("Couldn't update your mood. Please try again.");
+      }
+      return;
+    }
     try {
       const {data,error} = await supabase.from("mood_logs")
         .insert({child_id:activeChild.id, mood, date:today()}).select().single();
@@ -345,7 +368,9 @@ export default function BloomyApp() {
       playSound("chime", soundOn);
       haptic(10);
       showSeedPopup(2);
-      earnBerry();
+      // Only earn berry once per day for journaling
+      const alreadyEarnedToday = journals.some(j => j.date === today());
+      if (!alreadyEarnedToday) earnBerry();
       completeMission("journal");
       checkGrowthStageUp(moodLog, newJournals);
     } catch(e) {
@@ -368,7 +393,9 @@ export default function BloomyApp() {
       playSound("chime", soundOn);
       haptic(8);
       showSeedPopup(1);
-      earnBerry();
+      // Only earn berry once per day for gratitude
+      const alreadyEarnedToday = gratitudes.some(g => g.date === today());
+      if (!alreadyEarnedToday) earnBerry();
       completeMission("gratitude");
       setTimeout(()=>setGratitudeSaved(false),1500);
     } catch(e) {
@@ -398,7 +425,7 @@ export default function BloomyApp() {
       currentEnergy = child.energy ?? 100;
     } else {
       const daysMissed = Math.floor((new Date(todayStr)-new Date(lastActivity))/(1000*60*60*24));
-      currentEnergy = Math.max(0, (child.energy??100)-(daysMissed*25));
+      currentEnergy = Math.max(0, (child.energy??100)-(daysMissed*15));
       supabase.from("children").update({energy:currentEnergy}).eq("id",child.id);
     }
     setBerries(child.berries||0);
