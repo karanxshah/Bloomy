@@ -20,6 +20,8 @@ export default function BreatheTab() {
   useEffect(() => {
     if (tab !== "breathe") {
       setBreathActive(false);
+      setBreathPhase(0);
+      setBreathCount(0);
     }
   }, [tab]);
 
