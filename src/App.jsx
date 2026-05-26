@@ -664,6 +664,7 @@ export default function BloomyApp() {
   /* ── Parent Dashboard ── */
   if (!activeChild) return (
     <Shell>
+      {showSettings&&<SettingsPanel darkMode={darkMode} setDarkMode={setDarkMode} soundOn={soundOn} setSoundOn={setSoundOn} onClose={()=>setShowSettings(false)} theme={theme}/>}
       {deleteConfirm&&(
         <div style={{position:"fixed",inset:0,zIndex:9995,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px",backdropFilter:"blur(4px)"}}
           onClick={()=>setDeleteConfirm(null)}>
@@ -832,7 +833,7 @@ export default function BloomyApp() {
     <AppContext.Provider value={ctxValue}>
       <Shell stageBg={darkMode?undefined:stageBg} dark={darkMode}>
         <Toast visible={toast.visible} message={toast.message} type={toast.type}/>
-        {showSettings&&<SettingsPanel darkMode={darkMode} setDarkMode={setDarkMode} soundOn={soundOn} setSoundOn={setSoundOn} onClose={()=>setShowSettings(false)} theme={theme}/>}
+
         <SeedPopup visible={seedPopup.visible} amount={seedPopup.amount} gold={seedPopup.gold}/>
         <FloatingBerry visible={floatingBerry} targetRef={basketRef} onDone={()=>setFloatingBerry(false)}/>
         <NavBar/>
