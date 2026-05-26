@@ -98,7 +98,19 @@ export default function BloomyApp() {
 
   /* ── Affirmation state ── */
   const [affirmIdx, setAffirmIdx]   = useState(()=>{
-    try { return parseInt(localStorage.getItem("bloomy_affirm_idx") || "0", 10); } catch { return 0; }
+    try {
+      const stored = localStorage.getItem("bloomy_affirm_idx");
+      const storedDate = localStorage.getItem("bloomy_affirm_date");
+      const todayStr = new Date().toISOString().split("T")[0];
+      // If we already picked an index today, use it — otherwise pick a fresh random one
+      if (stored && storedDate === todayStr) {
+        return parseInt(stored, 10);
+      }
+      const fresh = Math.floor(Math.random() * 30);
+      localStorage.setItem("bloomy_affirm_idx", String(fresh));
+      localStorage.setItem("bloomy_affirm_date", todayStr);
+      return fresh;
+    } catch { return 0; }
   });
   const [affirmAnim, setAffirmAnim] = useState("idle");
   const [showAllAffirm, setShowAllAffirm] = useState(false);
@@ -358,14 +370,17 @@ export default function BloomyApp() {
       showSeedPopup(1);
       earnBerry();
       completeMission("gratitude");
-      setTimeout(()=>setGratitudeSaved(false),2000);
+      setTimeout(()=>setGratitudeSaved(false),1500);
     } catch(e) {
       showToast("Couldn't save your gratitude. Please try again.");
     }
   };
 
   /* ── Open child profile ── */
+  const [childLoading, setChildLoading] = useState(false);
+
   const openChild = async (child) => {
+    setChildLoading(true);
     setActiveChild(child); setTab("home");
     setMoodLogged(false); setJournalSaved(false); setJournalText("");
     setBreathActive(false); setBreathPhase(0); setBreathCount(0);
@@ -423,6 +438,7 @@ export default function BloomyApp() {
     const lastShieldDate = child.last_shield_date||"";
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
     setStreakShield(new Date(lastShieldDate)<weekAgo);
+    setChildLoading(false);
   };
 
   /* ── Add/Delete child ── */
@@ -698,7 +714,7 @@ export default function BloomyApp() {
                 </div>
               </div>
               <div style={{display:"flex",gap:8}}>
-                <Btn small style={{flex:1}} onClick={()=>openChild(child)}>Open Profile</Btn>
+                <Btn small style={{flex:1}} onClick={()=>openChild(child)} loading={childLoading}>Open Profile</Btn>
                 <button onClick={()=>setDeleteConfirm(child)} style={{background:"#FFF5F5",border:"1.5px solid #FFCDD2",borderRadius:50,padding:"8px 14px",cursor:"pointer",display:"flex",alignItems:"center"}}>
                   <Icon name="trash" size={16} color="#E53935"/>
                 </button>
@@ -777,7 +793,7 @@ export default function BloomyApp() {
       {[
         {id:"home",     icon:"home",  label:"Home"},
         {id:"mood",     icon:"mood",  label:"Mood"},
-        {id:"affirm",   icon:"star",  label:"Affirm"},
+        {id:"journal",  icon:"book",  label:"Journal"},
         {id:"breathe",  icon:"wind",  label:"Breathe"},
         {id:"gratitude",icon:"heart", label:"Grateful"},
       ].map(t=>(

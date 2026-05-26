@@ -68,7 +68,7 @@ export default function GratitudeTab() {
         </p>
         <textarea
           value={gratitudeText}
-          onChange={e=>setGratitudeText(e.target.value)}
+          onChange={e=>{ setGratitudeText(e.target.value); setGratitudeSaved(false); }}
           placeholder="I am grateful for..."
           maxLength={150}
           style={{
