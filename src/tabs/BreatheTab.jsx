@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Card, Btn, Tooltip } from "../components/UI.jsx";
 import { F, BREATHING } from "../constants.js";
@@ -10,15 +10,20 @@ export default function BreatheTab() {
     breathCount, setBreathCount, cm, currentStage,
     seenTooltips, setSeenTooltips, activeChild, setActiveChild,
     setChildren, supabase, showSeedPopup, earnBerry, completeMission,
-    checkGrowthStageUp, moodLog, journals, soundOn, playSound,
-    tab, // <-- used to stop breathing when user navigates away
+    checkGrowthStageUp, moodLog, journals,
+    tab,
   } = useApp();
 
   const C = theme;
+  const timerRef = useRef(null);
 
-  /* ── Stop breathing when the user taps a different nav tab ── */
+  /* ── Clear the timer and fully reset when user leaves the tab ── */
   useEffect(() => {
     if (tab !== "breathe") {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
       setBreathActive(false);
       setBreathPhase(0);
       setBreathCount(0);
@@ -27,12 +32,18 @@ export default function BreatheTab() {
 
   /* ── Breathing cycle timer ── */
   useEffect(() => {
-    if (!breathActive) return;
-    const t = setTimeout(async () => {
+    if (!breathActive) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
+    timerRef.current = setTimeout(async () => {
       const next = (breathPhase + 1) % BREATHING.length;
       setBreathPhase(next);
       if (next === 0) {
-        // Completed one full cycle
         setBreathCount(c => c + 1);
         showSeedPopup(2);
         earnBerry();
@@ -51,8 +62,32 @@ export default function BreatheTab() {
         }
       }
     }, BREATHING[breathPhase].duration * 1000);
-    return () => clearTimeout(t);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [breathActive, breathPhase]);
+
+  const handleStartStop = () => {
+    if (breathActive) {
+      // Stop — cancel timer and fully reset
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      setBreathActive(false);
+      setBreathPhase(0);
+      setBreathCount(0);
+    } else {
+      // Start fresh
+      setBreathPhase(0);
+      setBreathCount(0);
+      setBreathActive(true);
+    }
+  };
 
   const dismissTooltip = async () => {
     const updated = { ...seenTooltips, breathe:true };
@@ -128,7 +163,7 @@ export default function BreatheTab() {
             transition:"border-color 0.6s, background 0.6s, box-shadow 0.6s",
           }}/>
 
-          {/* Mascot + text — never scales */}
+          {/* Mascot + text */}
           <div style={{ position:"absolute", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:2 }}>
             <GrowthMascot id={cm.id} size={58} stage={currentStage.id}/>
             <p style={{ fontFamily:F.h, fontWeight:800, fontSize:15, color:BREATHING[breathPhase].color, marginTop:5, marginBottom:0, transition:"color 0.6s" }}>
@@ -145,13 +180,7 @@ export default function BreatheTab() {
 
       {/* Start/Stop */}
       <div style={{ display:"flex", justifyContent:"center", marginBottom:20 }}>
-        <Btn
-          onClick={()=>{
-            setBreathActive(!breathActive);
-            if (!breathActive) { setBreathPhase(0); setBreathCount(0); }
-          }}
-          color={breathActive?"#EF5350":C.mint}
-        >
+        <Btn onClick={handleStartStop} color={breathActive?"#EF5350":C.mint}>
           {breathActive ? "Stop" : "Start Breathing"}
         </Btn>
       </div>
