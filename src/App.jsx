@@ -781,7 +781,14 @@ export default function BloomyApp() {
         {id:"breathe",  icon:"wind",  label:"Breathe"},
         {id:"gratitude",icon:"heart", label:"Grateful"},
       ].map(t=>(
-        <button key={t.id} onClick={()=>setTab(t.id)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,opacity:tab===t.id?1:0.35,transform:tab===t.id?"scale(1.12)":"scale(1)",transition:"all 0.18s"}}>
+        <button key={t.id} onClick={()=>{
+          if (t.id!=="breathe" && breathActive) {
+            setBreathActive(false);
+            setBreathPhase(0);
+            setBreathCount(0);
+          }
+          setTab(t.id);
+        }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,opacity:tab===t.id?1:0.35,transform:tab===t.id?"scale(1.12)":"scale(1)",transition:"all 0.18s"}}>
           <Icon name={t.icon} size={24} color={tab===t.id?theme.purple:theme.muted}/>
           <span style={{fontSize:11,fontWeight:700,fontFamily:F.b,color:tab===t.id?theme.purple:theme.muted}}>{t.label}</span>
         </button>
