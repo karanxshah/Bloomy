@@ -297,107 +297,169 @@ const PinPad = ({ onSuccess, onCancel, existingPin, mode }) => {
    MAIN EXPORT
 ══════════════════════════════════════════ */
 
-/* ── Mood Chart ── */
-const MOOD_SCORE = { Amazing:5, Good:4, Okay:3, Worried:2, Sad:1, Angry:1 };
-const MOOD_CHART_COLOR = { Amazing:"#F9A825", Good:"#43A047", Okay:"#1E88E5", Worried:"#E64A19", Sad:"#7B1FA2", Angry:"#E53935" };
+/* ── Mood Heatmap ── */
+const HEATMAP_COLORS = {
+  Amazing: "#F9A825",
+  Good:    "#43A047",
+  Okay:    "#1E88E5",
+  Worried: "#E64A19",
+  Sad:     "#7B1FA2",
+  Angry:   "#E53935",
+};
 
-const MoodChart = ({ moodLog, days=30 }) => {
+const MoodHeatmap = ({ moodLog }) => {
   const [range, setRange] = useState(30);
+  const [tooltip, setTooltip] = useState(null);
 
-  const getLast = (n) => {
-    const result = [];
-    for (let i = n-1; i >= 0; i--) {
+  const getDays = (n) => {
+    const days = [];
+    for (let i = n - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split("T")[0];
       const entry = [...moodLog].reverse().find(e => e.date === dateStr);
-      result.push({ date: dateStr, label: d.toLocaleDateString("en",{month:"short",day:"numeric"}), entry });
+      days.push({ date: dateStr, entry });
     }
-    return result;
+    return days;
   };
 
-  const data = getLast(range);
-  const hasData = data.some(d => d.entry);
-  const chartW = 340;
-  const chartH = 120;
-  const barW = range === 7 ? 32 : range === 14 ? 18 : 8;
-  const gap = (chartW - barW * data.length) / (data.length + 1);
+  const days = getDays(range);
+
+  // Split into rows of 7
+  const weeks = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
+
+  const cellSize = range === 30 ? 36 : 28;
+  const cellGap = 5;
+  const dayLabels = ["S","M","T","W","T","F","S"];
+
+  // Figure out what day of week the first day falls on
+  const firstDayOfWeek = new Date(days[0].date + "T12:00:00").getDay();
+
+  // Build a padded grid — pad start so day 1 lands on correct column
+  const padded = [...Array(firstDayOfWeek).fill(null), ...days];
+  const paddedWeeks = [];
+  for (let i = 0; i < padded.length; i += 7) {
+    paddedWeeks.push(padded.slice(i, i + 7));
+  }
+
+  const hasData = days.some(d => d.entry);
 
   return (
     <div style={{ background:"#fff", borderRadius:20, padding:"20px", marginBottom:14, boxShadow:"0 2px 18px rgba(124,77,255,0.09)" }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-        <p style={{ fontFamily:F.h, fontWeight:800, fontSize:17, color:C.text, margin:0 }}>Mood Chart</p>
+
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <div>
+          <p style={{ fontFamily:F.h, fontWeight:800, fontSize:17, color:C.text, margin:0 }}>Mood Heatmap</p>
+          <p style={{ fontFamily:F.b, fontWeight:500, fontSize:12, color:C.muted, margin:0 }}>
+            Each square is one day
+          </p>
+        </div>
         <div style={{ display:"flex", gap:6 }}>
-          {[7,14,30].map(n => (
+          {[30, 60].map(n => (
             <button key={n} onClick={() => setRange(n)} style={{
               background: range===n ? C.purple : "#F0EAFF",
               color: range===n ? "#fff" : C.muted,
-              border:"none", borderRadius:50, padding:"4px 12px",
+              border:"none", borderRadius:50, padding:"5px 14px",
               fontSize:12, fontWeight:700, fontFamily:F.b, cursor:"pointer",
-            }}>{n}d</button>
+              transition:"all 0.18s",
+            }}>{n} days</button>
           ))}
         </div>
       </div>
 
-      {!hasData ? (
-        <div style={{ textAlign:"center", padding:"28px 0" }}>
-          <p style={{ fontFamily:F.b, fontWeight:500, fontSize:14, color:C.muted, margin:0 }}>
-            No mood data yet for this period.
+      {/* Day of week labels */}
+      <div style={{ display:"flex", gap:cellGap, marginBottom:4, paddingLeft:2 }}>
+        {dayLabels.map((d, i) => (
+          <div key={i} style={{
+            width:cellSize, textAlign:"center",
+            fontFamily:F.b, fontSize:10, fontWeight:700, color:C.muted,
+          }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div style={{ display:"flex", flexDirection:"column", gap:cellGap }}>
+        {paddedWeeks.map((week, wi) => (
+          <div key={wi} style={{ display:"flex", gap:cellGap }}>
+            {Array.from({length:7}).map((_, di) => {
+              const day = week[di];
+              if (!day) return (
+                <div key={di} style={{ width:cellSize, height:cellSize }}/>
+              );
+              const color = day.entry ? HEATMAP_COLORS[day.entry.mood] : "#EEE9FF";
+              const isToday = day.date === new Date().toISOString().split("T")[0];
+              const dateLabel = new Date(day.date + "T12:00:00").toLocaleDateString("en",{month:"short",day:"numeric"});
+              return (
+                <div
+                  key={di}
+                  onClick={() => setTooltip(tooltip?.date === day.date ? null : { date:day.date, mood:day.entry?.mood, label:dateLabel })}
+                  style={{
+                    width:cellSize, height:cellSize,
+                    borderRadius: range===30 ? 10 : 8,
+                    background: color,
+                    border: isToday ? `2px solid ${C.purple}` : "2px solid transparent",
+                    cursor: day.entry ? "pointer" : "default",
+                    transition:"transform 0.12s",
+                    position:"relative",
+                    flexShrink:0,
+                  }}
+                  onMouseEnter={e=>{ if(day.entry) e.currentTarget.style.transform="scale(1.15)"; }}
+                  onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}
+                >
+                  {/* Date number */}
+                  <span style={{
+                    position:"absolute", bottom:3, right:4,
+                    fontSize:9, fontWeight:700, fontFamily:F.b,
+                    color: day.entry ? "rgba(255,255,255,0.7)" : "#C5B8E8",
+                    lineHeight:1,
+                  }}>
+                    {new Date(day.date + "T12:00:00").getDate()}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div style={{
+          marginTop:14, background:C.bg, borderRadius:14,
+          padding:"10px 14px", display:"flex", alignItems:"center", gap:10,
+          animation:"fadeIn 0.2s ease",
+        }}>
+          <div style={{ width:14, height:14, borderRadius:4, background:HEATMAP_COLORS[tooltip.mood], flexShrink:0 }}/>
+          <p style={{ fontFamily:F.b, fontWeight:600, fontSize:13, color:C.text, margin:0 }}>
+            {tooltip.label} — <span style={{ color:HEATMAP_COLORS[tooltip.mood] }}>{tooltip.mood}</span>
           </p>
         </div>
-      ) : (
-        <>
-          <svg width="100%" viewBox={`0 0 ${chartW} ${chartH + 24}`} style={{ overflow:"visible" }}>
-            {/* Gridlines */}
-            {[1,2,3,4,5].map(v => (
-              <line key={v}
-                x1={0} y1={chartH - (v/5)*chartH}
-                x2={chartW} y2={chartH - (v/5)*chartH}
-                stroke="#EEE9FF" strokeWidth="1"
-              />
-            ))}
-
-            {/* Bars */}
-            {data.map((d, i) => {
-              if (!d.entry) return null;
-              const score = MOOD_SCORE[d.entry.mood] || 3;
-              const barH = Math.max(8, (score / 5) * chartH);
-              const x = gap + i * (barW + gap);
-              const y = chartH - barH;
-              const color = MOOD_CHART_COLOR[d.entry.mood] || C.purple;
-              return (
-                <g key={d.date}>
-                  <rect x={x} y={y} width={barW} height={barH}
-                    fill={color} rx={barW/2} opacity="0.85"/>
-                </g>
-              );
-            })}
-
-            {/* X axis labels — only show for 7 day view */}
-            {range === 7 && data.map((d, i) => {
-              const x = gap + i * (barW + gap) + barW/2;
-              const label = new Date(d.date + "T12:00:00").toLocaleDateString("en",{weekday:"short"});
-              return (
-                <text key={d.date} x={x} y={chartH + 16}
-                  textAnchor="middle" fontSize="10" fontFamily="Poppins, sans-serif"
-                  fill={C.muted} fontWeight="700">
-                  {label}
-                </text>
-              );
-            })}
-          </svg>
-
-          {/* Legend */}
-          <div style={{ display:"flex", flexWrap:"wrap", gap:"8px 14px", marginTop:8 }}>
-            {Object.entries(MOOD_CHART_COLOR).map(([mood, color]) => (
-              <div key={mood} style={{ display:"flex", alignItems:"center", gap:5 }}>
-                <div style={{ width:8, height:8, borderRadius:"50%", background:color }}/>
-                <span style={{ fontFamily:F.b, fontSize:11, color:C.muted, fontWeight:600 }}>{mood}</span>
-              </div>
-            ))}
-          </div>
-        </>
       )}
+
+      {/* Empty state */}
+      {!hasData && (
+        <p style={{ fontFamily:F.b, fontWeight:500, fontSize:13, color:C.muted, textAlign:"center", margin:"16px 0 0" }}>
+          No mood data yet. Check back once your child starts logging!
+        </p>
+      )}
+
+      {/* Legend */}
+      <div style={{ display:"flex", flexWrap:"wrap", gap:"8px 14px", marginTop:16 }}>
+        {Object.entries(HEATMAP_COLORS).map(([mood, color]) => (
+          <div key={mood} style={{ display:"flex", alignItems:"center", gap:5 }}>
+            <div style={{ width:10, height:10, borderRadius:3, background:color }}/>
+            <span style={{ fontFamily:F.b, fontSize:11, color:C.muted, fontWeight:600 }}>{mood}</span>
+          </div>
+        ))}
+        <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+          <div style={{ width:10, height:10, borderRadius:3, background:"#EEE9FF" }}/>
+          <span style={{ fontFamily:F.b, fontSize:11, color:C.muted, fontWeight:600 }}>No entry</span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -677,8 +739,8 @@ export default function ParentInsights({ session, children, onClose }) {
                 )}
               </Card>
 
-              {/* Mood chart */}
-              <MoodChart moodLog={moodLog}/>
+              {/* Mood heatmap */}
+              <MoodHeatmap moodLog={moodLog}/>
 
               {/* Weekly calendar */}
               <Card>
