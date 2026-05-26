@@ -473,6 +473,7 @@ export default function ParentInsights({ session, children, onClose }) {
   const [gratitudes,setGratitudes]       = useState([]);
   const [dataLoading,setDataLoading]     = useState(false);
   const [changingPin,setChangingPin]     = useState(false);
+  const [insightTab,setInsightTab]       = useState("overview");
 
   useEffect(()=>{
     const pin=session?.user?.user_metadata?.parent_pin;
@@ -625,7 +626,6 @@ export default function ParentInsights({ session, children, onClose }) {
     });
     const concernMoods=thisWeekMoods.filter(e=>["Sad","Angry","Worried"].includes(e.mood));
     const showAlert=concernMoods.length>=3;
-    const [insightTab, setInsightTab] = useState("overview");
 
     return (
       <Shell>
