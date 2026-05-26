@@ -625,14 +625,15 @@ export default function ParentInsights({ session, children, onClose }) {
     });
     const concernMoods=thisWeekMoods.filter(e=>["Sad","Angry","Worried"].includes(e.mood));
     const showAlert=concernMoods.length>=3;
+    const [insightTab, setInsightTab] = useState("overview");
 
     return (
       <Shell>
         <div style={{paddingTop:36}}>
+
           {/* Header */}
-          <div style={{display:"flex",justifyContent:"space-between",
-            alignItems:"center",marginBottom:20}}>
-            <button onClick={()=>{setSelectedChild(null);setMoodLog([]);setJournals([]);setGratitudes([]);}}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <button onClick={()=>{setSelectedChild(null);setMoodLog([]);setJournals([]);setGratitudes([]);setInsightTab("overview");}}
               style={{background:"none",border:"none",cursor:"pointer",
                 display:"flex",alignItems:"center",gap:5,
                 color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:14}}>
@@ -644,6 +645,48 @@ export default function ParentInsights({ session, children, onClose }) {
             <div style={{width:80}}/>
           </div>
 
+          {/* Identity card — always visible */}
+          <Card style={{background:`linear-gradient(135deg,${m.color},${C.pink})`,padding:"20px 22px",marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <div style={{background:"rgba(255,255,255,0.2)",borderRadius:16,padding:10}}>
+                <MascotFace id={m.id} size={52}/>
+              </div>
+              <div style={{flex:1}}>
+                <p style={{fontFamily:F.h,fontWeight:900,fontSize:22,color:"#fff",margin:0}}>
+                  {selectedChild.name}
+                </p>
+                <p style={{fontFamily:F.b,color:"rgba(255,255,255,0.85)",fontSize:14,fontWeight:500,margin:0}}>
+                  {m.name} · {streak>0?`${streak}-day streak`:"No streak yet"}
+                </p>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{background:"rgba(255,255,255,0.25)",borderRadius:12,padding:"6px 12px",marginBottom:4}}>
+                  <p style={{fontFamily:F.h,fontWeight:900,fontSize:18,color:"#fff",margin:0}}>🌱 {score}</p>
+                </div>
+                <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:"rgba(255,255,255,0.8)",margin:0}}>{stage.name}</p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Tabs */}
+          <div style={{display:"flex",gap:8,marginBottom:16}}>
+            {[
+              {id:"overview", label:"Overview"},
+              {id:"journal",  label:`Journal (${journals.length})`},
+              {id:"gratitude",label:`Gratitude (${gratitudes.length})`},
+            ].map(t=>(
+              <button key={t.id} onClick={()=>setInsightTab(t.id)} style={{
+                flex:1, padding:"10px 8px",
+                background:insightTab===t.id?C.purple:"#fff",
+                color:insightTab===t.id?"#fff":C.muted,
+                border:`1.5px solid ${insightTab===t.id?C.purple:C.border}`,
+                borderRadius:50, cursor:"pointer",
+                fontFamily:F.b, fontWeight:700, fontSize:13,
+                transition:"all 0.18s",
+              }}>{t.label}</button>
+            ))}
+          </div>
+
           {dataLoading ? (
             <Card style={{textAlign:"center",padding:"40px 20px"}}>
               <p style={{fontFamily:F.b,color:C.muted,fontWeight:500,fontSize:15,margin:0}}>
@@ -653,318 +696,137 @@ export default function ParentInsights({ session, children, onClose }) {
           ) : (
             <div style={{animation:"fadeIn 0.4s ease"}}>
 
-              {/* Identity card */}
-              <Card style={{background:`linear-gradient(135deg,${m.color},${C.pink})`,padding:"20px 22px"}}>
-                <div style={{display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{background:"rgba(255,255,255,0.2)",borderRadius:16,padding:10}}>
-                    <MascotFace id={m.id} size={52}/>
-                  </div>
-                  <div style={{flex:1}}>
-                    <p style={{fontFamily:F.h,fontWeight:900,fontSize:22,color:"#fff",margin:0}}>
-                      {selectedChild.name}
-                    </p>
-                    <p style={{fontFamily:F.b,color:"rgba(255,255,255,0.85)",
-                      fontSize:14,fontWeight:500,margin:0}}>
-                      {m.name} · {streak>0?`${streak}-day streak`:"No streak yet"}
-                    </p>
-                  </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{background:"rgba(255,255,255,0.25)",borderRadius:12,
-                      padding:"6px 12px",marginBottom:4}}>
-                      <p style={{fontFamily:F.h,fontWeight:900,fontSize:18,color:"#fff",margin:0}}>
-                        🌱 {score}
-                      </p>
-                    </div>
-                    <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
-                      color:"rgba(255,255,255,0.8)",margin:0}}>{stage.name}</p>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Alert */}
-              {showAlert && (
-                <Card style={{background:"#FFF3E0",border:"1.5px solid #FFB74D",padding:"16px 18px"}}>
-                  <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
-                    <Icon name="alert" size={24} color="#F57C00" style={{flexShrink:0,marginTop:2}}/>
-                    <div>
-                      <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,
-                        color:"#E65100",margin:"0 0 4px"}}>
-                        Worth checking in on
-                      </p>
-                      <p style={{fontFamily:F.b,color:"#BF360C",fontSize:14,
-                        fontWeight:500,margin:0,lineHeight:1.6}}>
-                        {selectedChild.name} has logged difficult emotions {concernMoods.length} times
-                        this week. A gentle conversation can make a big difference.
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              )}
-
-              {/* Quick stats */}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-                {[
-                  {label:"Day streak",   value:`${streak}d`,                          color:C.coral,  bg:"#FFF3E0"},
-                  {label:"Seeds",        value:`🌱 ${score}`,                         color:"#43A047",bg:"#E8F5E9"},
-                  {label:"Mood logs",    value:moodLog.length,                        color:C.purple, bg:"#EDE7F6"},
-                  {label:"Missions done",value:selectedChild.missions_completed||0,   color:"#F9A825",bg:"#FFF9C4"},
-                ].map(s=>(
-                  <div key={s.label} style={{background:s.bg,borderRadius:16,
-                    padding:"14px 12px",textAlign:"center"}}>
-                    <p style={{fontFamily:F.h,fontWeight:900,fontSize:22,
-                      color:s.color,margin:0}}>{s.value}</p>
-                    <p style={{fontFamily:F.b,color:s.color,fontSize:11,
-                      fontWeight:700,margin:0,marginTop:2}}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Today's mood */}
-              <Card>
-                <Label>Today's Mood</Label>
-                {todayMood ? (
-                  <div style={{display:"flex",alignItems:"center",gap:12}}>
-                    <MoodFace type={todayMood.mood} size={44}/>
-                    <div>
-                      <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,
-                        color:MOOD_COLORS[todayMood.mood],margin:0}}>{todayMood.mood}</p>
-                      <p style={{fontFamily:F.b,color:C.muted,fontSize:13,
-                        fontWeight:500,margin:0}}>Logged today</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p style={{fontFamily:F.b,color:C.muted,fontSize:15,fontWeight:500,margin:0}}>
-                    {selectedChild.name} hasn't logged a mood today yet.
-                  </p>
-                )}
-              </Card>
-
-              {/* Mood heatmap */}
-              <MoodHeatmap moodLog={moodLog}/>
-
-              {/* Weekly calendar */}
-              <Card>
-                <Label>This Week</Label>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
-                  {week.map(d=>{
-                    const entry=moodLog.slice().reverse().find(e=>e.date===d.date);
-                    return (
-                      <div key={d.date} style={{textAlign:"center",display:"flex",
-                        flexDirection:"column",alignItems:"center",gap:5}}>
-                        {entry
-                          ?<MoodFace type={entry.mood} size={34}/>
-                          :<div style={{width:34,height:34,borderRadius:"50%",
-                              background:"#f0f0f0",border:"1.5px dashed #ddd"}}/>}
-                        <span style={{fontFamily:F.b,fontSize:11,color:C.muted,fontWeight:700}}>
-                          {d.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
-
-              {/* Top mood */}
-              {topMood && (
-                <Card style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px"}}>
-                  <MoodFace type={topMood[0]} size={44}/>
-                  <div>
-                    <Label>Most Common Mood</Label>
-                    <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,
-                      color:MOOD_COLORS[topMood[0]],margin:0}}>
-                      {topMood[0]} — {topMood[1]} time{topMood[1]>1?"s":""}
-                    </p>
-                  </div>
-                </Card>
-              )}
-
-              {/* Mood history */}
-              {moodLog.length>0 && (
-                <Card>
-                  <Label>Full Mood History ({moodLog.length} entries)</Label>
-                  {[...moodLog].reverse().slice(0,10).map((e,i)=>(
-                    <div key={e.id} style={{
-                      padding:"9px 0",
-                      borderBottom:i<Math.min(9,moodLog.length-1)?"1px solid #F0EAFF":"none"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:12}}>
-                        <MoodFace type={e.mood} size={30}/>
-                        <span style={{flex:1,fontFamily:F.b,fontWeight:700,
-                          color:MOOD_COLORS[e.mood],fontSize:14}}>{e.mood}</span>
-                        <span style={{fontFamily:F.b,fontSize:12,color:C.muted}}>
-                          {e.date===today()?"Today":e.date}
-                        </span>
-                      </div>
-                      {e.note&&(
-                        <div style={{display:"flex",alignItems:"flex-start",gap:8,
-                          marginTop:6,marginLeft:38,
-                          background:"#F7F4FF",borderRadius:10,padding:"7px 12px"}}>
-                          <p style={{fontFamily:F.b,fontSize:13,fontWeight:500,
-                            color:C.purple,margin:0,fontStyle:"italic",lineHeight:1.5}}>
-                            "{e.note}"
+              {/* OVERVIEW TAB */}
+              {insightTab==="overview" && (
+                <>
+                  {showAlert && (
+                    <Card style={{background:"#FFF3E0",border:"1.5px solid #FFB74D",padding:"16px 18px"}}>
+                      <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+                        <Icon name="alert" size={24} color="#F57C00" style={{flexShrink:0,marginTop:2}}/>
+                        <div>
+                          <p style={{fontFamily:F.h,fontWeight:800,fontSize:16,color:"#E65100",margin:"0 0 4px"}}>
+                            Worth checking in on
+                          </p>
+                          <p style={{fontFamily:F.b,color:"#BF360C",fontSize:14,fontWeight:500,margin:0,lineHeight:1.6}}>
+                            {selectedChild.name} has logged difficult emotions {concernMoods.length} times this week. A gentle conversation can make a big difference.
                           </p>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                  {moodLog.length>10 && (
-                    <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,
-                      textAlign:"center",margin:"10px 0 0"}}>
-                      + {moodLog.length-10} more entries
-                    </p>
+                      </div>
+                    </Card>
                   )}
-                </Card>
+
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+                    {[
+                      {label:"Day streak",    value:`${streak}d`,                        color:C.coral,  bg:"#FFF3E0"},
+                      {label:"Seeds",         value:`🌱 ${score}`,                       color:"#43A047",bg:"#E8F5E9"},
+                      {label:"Mood logs",     value:moodLog.length,                      color:C.purple, bg:"#EDE7F6"},
+                      {label:"Missions done", value:selectedChild.missions_completed||0, color:"#F9A825",bg:"#FFF9C4"},
+                    ].map(s=>(
+                      <div key={s.label} style={{background:s.bg,borderRadius:16,padding:"14px 12px",textAlign:"center"}}>
+                        <p style={{fontFamily:F.h,fontWeight:900,fontSize:22,color:s.color,margin:0}}>{s.value}</p>
+                        <p style={{fontFamily:F.b,color:s.color,fontSize:11,fontWeight:700,margin:0,marginTop:2}}>{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Card>
+                    <Label>Today's Mood</Label>
+                    {todayMood ? (
+                      <div style={{display:"flex",alignItems:"center",gap:12}}>
+                        <MoodFace type={todayMood.mood} size={44}/>
+                        <div>
+                          <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,color:MOOD_COLORS[todayMood.mood],margin:0}}>{todayMood.mood}</p>
+                          {todayMood.note && (
+                            <p style={{fontFamily:F.b,fontSize:13,fontWeight:500,color:C.muted,margin:"4px 0 0",fontStyle:"italic"}}>
+                              "{todayMood.note}"
+                            </p>
+                          )}
+                          <p style={{fontFamily:F.b,color:C.muted,fontSize:12,fontWeight:500,margin:"2px 0 0"}}>Logged today</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p style={{fontFamily:F.b,color:C.muted,fontSize:15,fontWeight:500,margin:0}}>
+                        {selectedChild.name} hasn't logged a mood today yet.
+                      </p>
+                    )}
+                  </Card>
+
+                  <MoodHeatmap moodLog={moodLog}/>
+
+                  {topMood && (
+                    <Card style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px"}}>
+                      <MoodFace type={topMood[0]} size={44}/>
+                      <div>
+                        <Label>Most Common Mood</Label>
+                        <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,color:MOOD_COLORS[topMood[0]],margin:0}}>
+                          {topMood[0]} — {topMood[1]} time{topMood[1]>1?"s":""}
+                        </p>
+                      </div>
+                    </Card>
+                  )}
+                </>
               )}
 
-              {/* Garden stage progress */}
-              <Card>
-                <Label>Garden Progress</Label>
-                <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
-                  <div style={{background:stage.bg,borderRadius:14,padding:10,flexShrink:0}}>
-                    <span style={{fontSize:28}}>
-                      {["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]}
-                    </span>
-                  </div>
-                  <div style={{flex:1}}>
-                    <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,
-                      color:stage.color,margin:0}}>{stage.name}</p>
-                    <p style={{fontFamily:F.b,color:C.muted,fontSize:13,
-                      fontWeight:500,margin:0}}>{score} seeds earned total</p>
-                  </div>
-                </div>
-                {/* Progress bar to next stage */}
-                {stage.id < 6 && (()=>{
-                  const next = STAGES[stage.id+1];
-                  const pct = Math.min(100,Math.round(((score-stage.minScore)/(next.minScore-stage.minScore))*100));
-                  return (
-                    <div>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                        <span style={{fontFamily:F.b,fontSize:12,fontWeight:600,color:C.muted}}>
-                          Progress to {next.name}
-                        </span>
-                        <span style={{fontFamily:F.b,fontSize:12,fontWeight:700,color:stage.color}}>
-                          {pct}%
-                        </span>
-                      </div>
-                      <div style={{height:8,borderRadius:50,background:"#F0EAFF",overflow:"hidden"}}>
-                        <div style={{height:"100%",borderRadius:50,
-                          background:`linear-gradient(90deg,${stage.color},${C.pink})`,
-                          width:`${pct}%`,transition:"width 0.6s ease"}}/>
-                      </div>
-                      <p style={{fontFamily:F.b,color:C.muted,fontSize:12,
-                        fontWeight:500,margin:"6px 0 0"}}>
-                        {next.minScore-score} more seeds to reach {next.name}
+              {/* JOURNAL TAB */}
+              {insightTab==="journal" && (
+                <>
+                  {journals.length===0 ? (
+                    <Card style={{textAlign:"center",padding:"40px 20px"}}>
+                      <Icon name="book" size={40} color={C.muted} style={{margin:"0 auto 12px"}}/>
+                      <p style={{fontFamily:F.b,color:C.muted,fontWeight:500,fontSize:15,margin:0}}>
+                        {selectedChild.name} hasn't written any journal entries yet.
                       </p>
-                    </div>
-                  );
-                })()}
-                {stage.id===6 && (
-                  <p style={{fontFamily:F.b,fontWeight:600,fontSize:14,
-                    color:stage.color,margin:0,textAlign:"center"}}>
-                    🎉 {selectedChild.name} has reached Full Bloom — the highest stage!
-                  </p>
-                )}
-              </Card>
-
-              {/* Gratitudes */}
-              {gratitudes.length>0 && (
-                <Card>
-                  <Label>Gratitudes ({gratitudes.length})</Label>
-                  {gratitudes.slice(0,5).map((g,i)=>(
-                    <div key={g.id} style={{padding:"10px 0",
-                      borderBottom:i<Math.min(4,gratitudes.length-1)?"1px solid #F0EAFF":"none"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",
-                        alignItems:"center",marginBottom:4}}>
-                        <span style={{fontSize:16}}>🙏</span>
-                        <span style={{fontFamily:F.b,fontSize:11,color:C.muted}}>
-                          {g.date===today()?"Today":g.date}
-                        </span>
-                      </div>
-                      <p style={{fontFamily:F.b,color:C.text,fontSize:14,lineHeight:1.6,
-                        fontWeight:500,margin:0,padding:"8px 12px",
-                        background:C.bg,borderRadius:10}}>
-                        {g.text}
-                      </p>
-                    </div>
-                  ))}
-                  {gratitudes.length>5 && (
-                    <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,
-                      textAlign:"center",margin:"10px 0 0"}}>
-                      + {gratitudes.length-5} more gratitudes
-                    </p>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <Label>Journal Entries ({journals.length})</Label>
+                      {journals.map((j,i)=>(
+                        <div key={j.id} style={{padding:"14px 0",borderBottom:i<journals.length-1?`1px solid ${C.border}`:"none"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                            <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:C.purple,margin:0}}>{j.prompt}</p>
+                            <span style={{fontFamily:F.b,fontSize:11,color:C.muted,flexShrink:0,marginLeft:8}}>
+                              {j.date===today()?"Today":j.date}
+                            </span>
+                          </div>
+                          <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,color:C.text,margin:0,lineHeight:1.7}}>
+                            {j.text}
+                          </p>
+                        </div>
+                      ))}
+                    </Card>
                   )}
-                </Card>
+                </>
               )}
 
-              {/* Activity stats */}
-              <Card>
-                <Label>Activity</Label>
-                {[
-                  {label:"Affirmations read",    value:selectedChild.affirm_count||0,        icon:"star",     color:C.purple},
-                  {label:"Breathing sessions",   value:selectedChild.breath_sessions||0,     icon:"wind",     color:C.sky},
-                  {label:"Journal entries",      value:journals.length,                      icon:"book",     color:C.pink},
-                  {label:"Gratitudes written",   value:gratitudes.length,                    icon:"gratitude",color:"#43A047"},
-                  {label:"Daily missions done",  value:selectedChild.missions_completed||0,  icon:"target",   color:"#F9A825"},
-                ].map((a,i,arr)=>(
-                  <div key={a.label} style={{display:"flex",alignItems:"center",gap:12,
-                    padding:"10px 0",
-                    borderBottom:i<arr.length-1?"1px solid #F0EAFF":"none"}}>
-                    <div style={{background:C.bg,borderRadius:12,padding:8,flexShrink:0}}>
-                      <Icon name={a.icon} size={20} color={a.color}/>
-                    </div>
-                    <span style={{flex:1,fontFamily:F.b,fontWeight:600,
-                      color:C.text,fontSize:15}}>{a.label}</span>
-                    <span style={{fontFamily:F.h,fontWeight:900,fontSize:22,color:a.color}}>
-                      {a.value}
-                    </span>
-                  </div>
-                ))}
-              </Card>
-
-              {/* Journal entries */}
-              {journals.length>0 && (
-                <Card>
-                  <Label>Journal Entries ({journals.length})</Label>
-                  {journals.slice(0,5).map((j,i)=>(
-                    <div key={j.id} style={{padding:"12px 0",
-                      borderBottom:i<Math.min(4,journals.length-1)?"1px solid #F0EAFF":"none"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",
-                        alignItems:"center",marginBottom:6}}>
-                        <span style={{fontFamily:F.b,fontSize:12,fontWeight:700,color:C.purple}}>
-                          {j.prompt}
-                        </span>
-                        <span style={{fontFamily:F.b,fontSize:11,color:C.muted,
-                          flexShrink:0,marginLeft:8}}>
-                          {j.date===today()?"Today":j.date}
-                        </span>
-                      </div>
-                      <p style={{fontFamily:F.b,color:C.text,fontSize:14,lineHeight:1.6,
-                        fontWeight:500,margin:0,padding:"10px 14px",
-                        background:C.bg,borderRadius:12}}>
-                        {j.text}
+              {/* GRATITUDE TAB */}
+              {insightTab==="gratitude" && (
+                <>
+                  {gratitudes.length===0 ? (
+                    <Card style={{textAlign:"center",padding:"40px 20px"}}>
+                      <Icon name="heart" size={40} color={C.muted} style={{margin:"0 auto 12px"}}/>
+                      <p style={{fontFamily:F.b,color:C.muted,fontWeight:500,fontSize:15,margin:0}}>
+                        {selectedChild.name} hasn't added any gratitudes yet.
                       </p>
-                    </div>
-                  ))}
-                  {journals.length>5 && (
-                    <p style={{fontFamily:F.b,color:C.muted,fontSize:13,fontWeight:500,
-                      textAlign:"center",margin:"10px 0 0"}}>
-                      + {journals.length-5} more entries
-                    </p>
+                    </Card>
+                  ) : (
+                    <Card>
+                      <Label>Gratitudes ({gratitudes.length})</Label>
+                      {gratitudes.map((g,i)=>(
+                        <div key={g.id||i} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 0",borderBottom:i<gratitudes.length-1?`1px solid ${C.border}`:"none"}}>
+                          <div style={{width:10,height:10,borderRadius:"50%",flexShrink:0,marginTop:5,
+                            background:["#FFD54F","#F06292","#7C4DFF","#4DB6AC","#FF7043","#4FC3F7"][i%6]}}/>
+                          <div style={{flex:1}}>
+                            <p style={{fontFamily:F.b,fontWeight:600,fontSize:14,color:C.text,margin:0,lineHeight:1.6}}>{g.text}</p>
+                            <p style={{fontFamily:F.b,fontSize:11,color:C.muted,margin:"2px 0 0"}}>
+                              {g.date===today()?"Today":g.date}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </Card>
                   )}
-                </Card>
+                </>
               )}
-
-              {/* Tip */}
-              <Card style={{background:"linear-gradient(135deg,#F7F4FF,#FCE4EC)"}}>
-                <Label color={C.purple}>Tip for you</Label>
-                <p style={{fontFamily:F.b,color:C.text,fontSize:15,
-                  lineHeight:1.75,fontWeight:500,margin:0}}>
-                  {showAlert
-                    ?`${selectedChild.name} has been experiencing some difficult emotions this week. A gentle conversation or extra hug can make a big difference.`
-                    :streak>=3
-                    ?`${selectedChild.name} is on a ${streak}-day streak! Celebrate this with them — it builds great habits.`
-                    :`Try asking ${selectedChild.name} about their day tonight and encourage them to log how they feel in Bloomy.`}
-                </p>
-              </Card>
 
             </div>
           )}
