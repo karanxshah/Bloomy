@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Card, Icon, Btn, Label, Tooltip } from "../components/UI.jsx";
 import { F, JOURNAL_PROMPTS, ALL_AFFIRMATIONS, getSortedAffirmations } from "../constants.js";
@@ -149,6 +150,7 @@ export function AffirmTab() {
     showAllAffirm, setShowAllAffirm, lastMood, activeChild,
     seenTooltips, setSeenTooltips, setActiveChild, setChildren, supabase,
   } = useApp();
+  const swipeTouchX = useRef(null);
 
   const C = theme;
   const sorted = getSortedAffirmations(lastMood);
@@ -181,9 +183,11 @@ export function AffirmTab() {
       <div
         style={{ position:"relative", height:260, marginBottom:20, cursor:"pointer" }}
         onClick={nextAffirm}
-        onTouchStart={e=>{ e._touchStartX = e.touches[0].clientX; }}
+        onTouchStart={e=>{ swipeTouchX.current = e.touches[0].clientX; }}
         onTouchEnd={e=>{
-          const dx = e.changedTouches[0].clientX - (e._touchStartX || e.changedTouches[0].clientX);
+          if (swipeTouchX.current === null) return;
+          const dx = e.changedTouches[0].clientX - swipeTouchX.current;
+          swipeTouchX.current = null;
           if (Math.abs(dx) > 40) nextAffirm();
         }}
       >

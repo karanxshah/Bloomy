@@ -60,6 +60,9 @@ export default function GratitudeTab() {
         </svg>
         <p style={{ fontFamily:F.b, fontWeight:600, fontSize:13, color:C.muted, marginTop:4 }}>
           {gratitudes.length} gratitude{gratitudes.length!==1?"s":""} in your jar
+            {gratitudes.length > 8 && (
+              <span style={{ color:C.purple, fontWeight:700 }}> · showing 8 of {gratitudes.length}</span>
+            )}
         </p>
       </div>
 
@@ -99,11 +102,11 @@ export default function GratitudeTab() {
           <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:C.muted, letterSpacing:1.3, textTransform:"uppercase", marginBottom:10 }}>
             Recent Gratitudes
           </p>
-          {gratitudes.slice(0,8).map((g,i)=>(
+          {gratitudes.map((g,i)=>(
             <div key={g.id||i} style={{
               display:"flex", alignItems:"flex-start", gap:12,
               padding:"10px 0",
-              borderBottom:i<Math.min(7,gratitudes.length-1)?`1px solid ${C.border}`:"none",
+              borderBottom:i<gratitudes.length-1?`1px solid ${C.border}`:"none",
             }}>
               <div style={{
                 width:10, height:10, borderRadius:"50%", flexShrink:0, marginTop:5,

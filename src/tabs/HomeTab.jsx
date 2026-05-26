@@ -31,6 +31,7 @@ export default function HomeTab() {
     activeChild, tab, setTab, theme,
     todayEntry, cm, currentStage, growthScore, streak, streakShield,
     dailyMissions, affirmIdx, lastMood, setShowMascotRoom, darkMode,
+    todayJournalDone, todayGratitudeDone, todayBreathDone,
   } = useApp();
 
   const C = theme;
@@ -200,20 +201,34 @@ export default function HomeTab() {
       {/* Quick actions */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:14 }}>
         {[
-          {label:"Breathe", icon:"wind",  color:"#4FC3F7", bg:"#E1F5FE", action:()=>setTab("breathe")},
-          {label:"Journal", icon:"book",  color:"#F06292", bg:"#FCE4EC", action:()=>setTab("journal")},
-          {label:"Grateful",icon:"heart", color:"#43A047", bg:"#E8F5E9", action:()=>setTab("gratitude")},
+          {label:"Breathe", icon:"wind",  color:"#4FC3F7", bg:"#E1F5FE", action:()=>setTab("breathe"), done:todayBreathDone},
+          {label:"Journal", icon:"book",  color:"#F06292", bg:"#FCE4EC", action:()=>setTab("journal"), done:todayJournalDone},
+          {label:"Grateful",icon:"heart", color:"#43A047", bg:"#E8F5E9", action:()=>setTab("gratitude"), done:todayGratitudeDone},
         ].map(item=>(
           <button key={item.label} onClick={item.action} style={{
-            background:item.bg, border:`1.5px solid ${item.color}22`,
+            background:item.done ? item.color : item.bg,
+            border:`1.5px solid ${item.color}22`,
             borderRadius:18, padding:"16px 10px", cursor:"pointer", textAlign:"center",
-            transition:"transform 0.15s",
+            transition:"transform 0.15s", position:"relative",
           }}
             onMouseDown={e=>e.currentTarget.style.transform="scale(0.95)"}
             onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}
           >
-            <Icon name={item.icon} size={26} color={item.color} style={{ margin:"0 auto 8px" }}/>
-            <div style={{ fontSize:13, fontWeight:700, color:item.color, fontFamily:F.b }}>{item.label}</div>
+            {item.done && (
+              <div style={{
+                position:"absolute", top:6, right:6,
+                width:16, height:16, borderRadius:"50%",
+                background:"rgba(255,255,255,0.9)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+              }}>
+                <svg viewBox="0 0 24 24" width={10} height={10} fill="none"
+                  stroke={item.color} strokeWidth="3" strokeLinecap="round">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              </div>
+            )}
+            <Icon name={item.icon} size={26} color={item.done ? "#fff" : item.color} style={{ margin:"0 auto 8px" }}/>
+            <div style={{ fontSize:13, fontWeight:700, color:item.done ? "#fff" : item.color, fontFamily:F.b }}>{item.label}</div>
           </button>
         ))}
       </div>

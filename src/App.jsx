@@ -167,6 +167,7 @@ export default function BloomyApp() {
   };
 
   const showSeedPopup = (amount, gold=false) => {
+    if (!activeChild) return;
     setSeedPopup({visible:true, amount, gold});
     setTimeout(()=>setSeedPopup({visible:false,amount:0,gold:false}), 2200);
   };
@@ -311,6 +312,7 @@ export default function BloomyApp() {
         setMoodNote("");
         playSound("chime", soundOn);
         haptic(8);
+        // No seeds for updating — only for first log of the day
         checkGrowthStageUp(newLog, journals);
       } catch(e) {
         showToast("Couldn't update your mood. Please try again.");
@@ -510,6 +512,9 @@ export default function BloomyApp() {
 
   /* ── Computed values ── */
   const growthScore  = activeChild ? calcGrowthScore(activeChild,moodLog,journals,gratitudes) : 0;
+  const todayJournalDone   = journals.some(j => j.date === today());
+  const todayGratitudeDone = gratitudes.some(g => g.date === today());
+  const todayBreathDone    = activeChild?.last_breath_date === today();
   const currentStage = getStage(growthScore);
   const streak       = getStreak(moodLog);
   const todayEntry   = todayMood
@@ -560,6 +565,7 @@ export default function BloomyApp() {
     dailyMissions, streakShield,
     cm, currentStage, growthScore, streak,
     todayEntry, lastMood, badges,
+    todayJournalDone, todayGratitudeDone, todayBreathDone,
     setShowMascotRoom,
     logMood, saveMoodNote,
     saveJournal, saveGratitude,
@@ -884,11 +890,18 @@ export default function BloomyApp() {
               <Icon name="back" size={18} color={theme.muted}/> Home
             </button>
           ):(
-            <button onClick={()=>{setActiveChild(null);setBreathActive(false);}} style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:5,color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
+            <button onClick={()=>{
+              if (journalText.trim()) {
+                if (!window.confirm("You have an unsaved journal entry. Leave anyway?")) return;
+              }
+              setActiveChild(null); setBreathActive(false); setJournalText("");
+            }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:5,color:theme.muted,fontFamily:F.b,fontWeight:600,fontSize:13}}>
               <Icon name="back" size={18} color={theme.muted}/> Profiles
             </button>
           )}
-          <span style={{fontSize:13,fontWeight:700,color:theme.muted,fontFamily:F.b}}>{activeChild.name}</span>
+          <span style={{fontSize:13,fontWeight:700,color:theme.muted,fontFamily:F.b,
+            maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+            display:"inline-block"}}>{activeChild.name}</span>
           <BerryBasket berries={berries} energy={energy} mascotName={cm.name} onFeed={feedMascot} onGoToRoom={()=>setShowMascotRoom(true)} basketRef={basketRef}/>
         </div>
 
