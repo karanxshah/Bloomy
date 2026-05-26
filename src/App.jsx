@@ -381,6 +381,7 @@ export default function BloomyApp() {
 
   const openChild = async (child) => {
     setChildLoading(true);
+    setShowSettings(false);
     setActiveChild(child); setTab("home");
     setMoodLogged(false); setJournalSaved(false); setJournalText("");
     setBreathActive(false); setBreathPhase(0); setBreathCount(0);
