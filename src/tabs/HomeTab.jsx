@@ -3,6 +3,29 @@ import { Card, Icon, MoodFace } from "../components/UI.jsx";
 import { F, MOOD_BG, MOOD_COLORS, STAGE_BGSANIM, getTimeGreeting, getSortedAffirmations } from "../constants.js";
 import { GrowthMascot, GardenScene, GrowthProgressBar } from "../MascotGrowth.jsx";
 
+const MASCOT_DAILY_MESSAGES = [
+  "I'm so happy you're here today! 🌟",
+  "You make every day brighter! ☀️",
+  "I've been thinking about you all day! 💜",
+  "Ready for an amazing day together? 🌈",
+  "You are so special to me! 🐾",
+  "I believe in you with my whole heart! ❤️",
+  "Today is going to be a great day! 🎉",
+  "I'm your biggest fan, always! ⭐",
+  "Just seeing you makes me happy! 😊",
+  "We're going to have the best day! 🌸",
+  "You are brave, kind and wonderful! 🦋",
+  "I'm so lucky to be your buddy! 🍀",
+  "Something amazing is coming your way! ✨",
+  "You've got this — I'm right here! 💪",
+  "Every day with you is my favourite! 🌻",
+];
+
+const getDailyMessage = () => {
+  const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  return MASCOT_DAILY_MESSAGES[dayOfYear % MASCOT_DAILY_MESSAGES.length];
+};
+
 export default function HomeTab() {
   const {
     activeChild, tab, setTab, theme,
@@ -40,8 +63,20 @@ export default function HomeTab() {
             <GrowthMascot id={cm.id} size={120} stage={currentStage.id}/>
           </div>
           <div style={{
+            background:"rgba(255,255,255,0.92)", borderRadius:18,
+            borderBottomLeftRadius:4, padding:"8px 16px",
+            marginTop:14, marginBottom:8,
+            boxShadow:"0 2px 12px rgba(0,0,0,0.08)",
+            maxWidth:260,
+          }}>
+            <p style={{fontFamily:F.b, fontWeight:600, fontSize:13, color:"#2D2040", margin:0, textAlign:"center", lineHeight:1.4}}>
+              {getDailyMessage()}
+            </p>
+          </div>
+
+          <div style={{
             display:"inline-flex", alignItems:"center", gap:6,
-            background:currentStage.color, borderRadius:50, padding:"5px 16px", marginTop:14,
+            background:currentStage.color, borderRadius:50, padding:"5px 16px",
           }}>
             <span style={{ fontSize:14 }}>🌱</span>
             <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:"#fff", margin:0 }}>
@@ -182,6 +217,26 @@ export default function HomeTab() {
           </button>
         ))}
       </div>
+
+      {/* Streak nudge — shown when child hasn't checked in today */}
+      {!todayEntry && (
+        <div style={{
+          background:"linear-gradient(135deg,#F06292,#7C4DFF)",
+          borderRadius:20, padding:"16px 20px", marginBottom:14,
+          display:"flex", alignItems:"center", gap:14,
+          animation:"pulse 2s ease-in-out infinite",
+        }}>
+          <span style={{fontSize:28}}>👋</span>
+          <div style={{flex:1}}>
+            <p style={{color:"#fff",fontFamily:F.h,fontWeight:800,fontSize:17,margin:0}}>
+              How are you feeling today?
+            </p>
+            <p style={{color:"rgba(255,255,255,0.85)",fontSize:13,fontWeight:500,margin:0}}>
+              {streak>0?"Don't break your streak! Check in now.":"Tap Mood to log how you feel today."}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Streak */}
       {streak > 0 && (

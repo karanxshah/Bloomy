@@ -807,7 +807,7 @@ export default function BloomyApp() {
     <div style={{position:"fixed",bottom:0,left:0,right:0,background:darkMode?"#1e1438":"#fff",borderTop:`1.5px solid ${theme.border}`,display:"flex",justifyContent:"space-around",alignItems:"center",padding:"10px 0 20px",zIndex:100,boxShadow:darkMode?"0 -4px 20px rgba(0,0,0,0.3)":"0 -4px 20px rgba(124,77,255,0.07)"}}>
       {[
         {id:"home",     icon:"home",  label:"Home"},
-        {id:"mood",     icon:"mood",  label:"Mood"},
+        {id:"mood",     icon:"mood",  label:"Mood", dot:!todayEntry},
         {id:"journal",  icon:"book",  label:"Journal"},
         {id:"breathe",  icon:"wind",  label:"Breathe"},
         {id:"gratitude",icon:"heart", label:"Grateful"},
@@ -820,8 +820,19 @@ export default function BloomyApp() {
             setBreathCount(0);
           }
           setTab(t.id);
-        }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,opacity:tab===t.id?1:0.35,transform:tab===t.id?"scale(1.12)":"scale(1)",transition:"all 0.18s"}}>
-          <Icon name={t.icon} size={24} color={tab===t.id?theme.purple:theme.muted}/>
+        }} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,opacity:tab===t.id?1:0.35,transform:tab===t.id?"scale(1.12)":"scale(1)",transition:"all 0.18s",position:"relative"}}>
+          <div style={{position:"relative",display:"inline-flex"}}>
+            <Icon name={t.icon} size={24} color={tab===t.id?theme.purple:theme.muted}/>
+            {t.dot&&tab!==t.id&&(
+              <div style={{
+                position:"absolute",top:-2,right:-2,
+                width:8,height:8,borderRadius:"50%",
+                background:"#F06292",
+                boxShadow:"0 0 0 2px #fff",
+                animation:"pulse 1.8s ease-in-out infinite",
+              }}/>
+            )}
+          </div>
           <span style={{fontSize:11,fontWeight:700,fontFamily:F.b,color:tab===t.id?theme.purple:theme.muted}}>{t.label}</span>
         </button>
       ))}
