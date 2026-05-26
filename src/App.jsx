@@ -771,6 +771,19 @@ export default function BloomyApp() {
           </div>
           <Icon name="back" size={20} color={theme.muted} style={{transform:"rotate(180deg)"}}/>
         </button>
+
+        <button onClick={()=>setShowSettings(true)} style={{width:"100%",background:"#fff",border:`1.5px solid ${theme.border}`,borderRadius:20,padding:"18px 20px",cursor:"pointer",marginTop:8,display:"flex",alignItems:"center",gap:14,boxShadow:"0 2px 18px rgba(124,77,255,0.07)",transition:"transform 0.15s"}}
+          onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"}
+          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+          <div style={{background:"#EDE7F6",borderRadius:14,padding:10,flexShrink:0}}>
+            <Icon name="settings" size={24} color={theme.purple}/>
+          </div>
+          <div style={{flex:1,textAlign:"left"}}>
+            <p style={{fontFamily:F.h,fontWeight:800,fontSize:17,color:theme.text,margin:0}}>Settings</p>
+            <p style={{color:theme.muted,fontSize:13,fontWeight:500,margin:0}}>Dark mode, sound effects and more</p>
+          </div>
+          <Icon name="back" size={20} color={theme.muted} style={{transform:"rotate(180deg)"}}/>
+        </button>
       </div>
     </Shell>
   );
@@ -796,6 +809,7 @@ export default function BloomyApp() {
         {id:"journal",  icon:"book",  label:"Journal"},
         {id:"breathe",  icon:"wind",  label:"Breathe"},
         {id:"gratitude",icon:"heart", label:"Grateful"},
+        {id:"affirm",   icon:"star",  label:"Affirm"},
       ].map(t=>(
         <button key={t.id} onClick={()=>{
           if (t.id!=="breathe" && breathActive) {
@@ -809,12 +823,7 @@ export default function BloomyApp() {
           <span style={{fontSize:11,fontWeight:700,fontFamily:F.b,color:tab===t.id?theme.purple:theme.muted}}>{t.label}</span>
         </button>
       ))}
-      <button onClick={()=>setShowSettings(true)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,opacity:0.35,transition:"all 0.18s"}}
-        onMouseEnter={e=>e.currentTarget.style.opacity="0.7"}
-        onMouseLeave={e=>e.currentTarget.style.opacity="0.35"}>
-        <Icon name="settings" size={24} color={theme.muted}/>
-        <span style={{fontSize:11,fontWeight:700,fontFamily:F.b,color:theme.muted}}>Settings</span>
-      </button>
+
     </div>
   );
 
