@@ -249,7 +249,10 @@ export default function BloomyApp() {
         return updatedChild;
       });
       const allDone = updated.every(m=>m.done);
-      if (allDone) setPendingBonusPopup(true);
+      if (allDone) {
+        setPendingBonusPopup(true);
+        setTimeout(()=>showSeedPopup(3, true), 600);
+      }
       return updated;
     });
   };

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useState, useRef } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Card, Icon, Btn, Label, Tooltip } from "../components/UI.jsx";
 import { F, JOURNAL_PROMPTS, ALL_AFFIRMATIONS, getSortedAffirmations } from "../constants.js";
@@ -12,6 +12,8 @@ export function JournalTab() {
     journals, setJournals, cm, seenTooltips, setSeenTooltips,
     activeChild, setActiveChild, setChildren, supabase,
   } = useApp();
+  const [expandedId, setExpandedId] = useRef ? useRef(null) : { current: null };
+  const [expanded, setExpanded] = useState(null);
 
   const C = theme;
 
@@ -130,11 +132,26 @@ export function JournalTab() {
                   </button>
                 </div>
               </div>
-              <p style={{ color:C.text, fontSize:14, lineHeight:1.6, fontWeight:500, margin:0,
-                overflow:"hidden", textOverflow:"ellipsis", display:"-webkit-box",
-                WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
+              <p
+                onClick={()=>setExpanded(expanded===j.id?null:j.id)}
+                style={{ color:C.text, fontSize:14, lineHeight:1.6, fontWeight:500, margin:"0 0 4px",
+                  overflow:expanded===j.id?"visible":"hidden",
+                  textOverflow:expanded===j.id?"unset":"ellipsis",
+                  display:expanded===j.id?"block":"-webkit-box",
+                  WebkitLineClamp:expanded===j.id?undefined:2,
+                  WebkitBoxOrient:"vertical",
+                  cursor:"pointer",
+                }}>
                 {j.text}
               </p>
+              {j.text.length > 80 && (
+                <button onClick={()=>setExpanded(expanded===j.id?null:j.id)} style={{
+                  background:"none", border:"none", cursor:"pointer",
+                  color:C.purple, fontFamily:F.b, fontWeight:700, fontSize:12, padding:0,
+                }}>
+                  {expanded===j.id ? "Show less ↑" : "Read more ↓"}
+                </button>
+              )}
             </div>
           ))}
         </Card>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Card, Btn, Tooltip } from "../components/UI.jsx";
 import { F, BREATHING } from "../constants.js";
@@ -16,6 +16,7 @@ export default function BreatheTab() {
 
   const C = theme;
   const timerRef = useRef(null);
+  const [sessionCount, setSessionCount] = useState(0);
 
   /* ── Clear the timer and fully reset when user leaves the tab ── */
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function BreatheTab() {
       setBreathActive(false);
       setBreathPhase(0);
       setBreathCount(0);
+      setSessionCount(0);
     }
   }, [tab]);
 
@@ -45,6 +47,7 @@ export default function BreatheTab() {
       setBreathPhase(next);
       if (next === 0) {
         setBreathCount(c => c + 1);
+        setSessionCount(c => c + 1);
         showSeedPopup(2);
         earnBerry();
         completeMission("breathe");
@@ -74,18 +77,16 @@ export default function BreatheTab() {
 
   const handleStartStop = () => {
     if (breathActive) {
-      // Stop — cancel timer and fully reset
+      // Stop — cancel timer and reset phase only
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
       setBreathActive(false);
       setBreathPhase(0);
-      setBreathCount(0);
     } else {
-      // Start fresh
+      // Start — reset phase but keep accumulated count
       setBreathPhase(0);
-      setBreathCount(0);
       setBreathActive(true);
     }
   };
@@ -186,9 +187,9 @@ export default function BreatheTab() {
         </Btn>
       </div>
 
-      {breathCount > 0 && (
+      {sessionCount > 0 && (
         <p style={{ color:C.purple, fontWeight:700, fontSize:16, fontFamily:F.b, textAlign:"center", marginBottom:16 }}>
-          {breathCount} breath{breathCount>1?"s":""} complete — well done!
+          {sessionCount} breath{sessionCount>1?"s":""} complete today — well done!
         </p>
       )}
 

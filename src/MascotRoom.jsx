@@ -762,6 +762,23 @@ export default function MascotRoom({ activeChild, moodLog, journals, energy: ene
         </div>
 
         {/* Content sits above the garden */}
+        {/* Fixed back button — always visible even when scrolled */}
+        <button onClick={onClose} style={{
+          position:"fixed", top:20, left:20, zIndex:999,
+          background:"rgba(255,255,255,0.92)", border:`1.5px solid ${C.border}`,
+          borderRadius:50, padding:"8px 16px", cursor:"pointer",
+          display:"flex", alignItems:"center", gap:6,
+          color:C.muted, fontFamily:F.b, fontWeight:600, fontSize:14,
+          boxShadow:"0 2px 12px rgba(0,0,0,0.12)",
+          backdropFilter:"blur(8px)",
+        }}>
+          <svg viewBox="0 0 24 24" width={16} height={16} fill="none"
+            stroke={C.muted} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+          Back
+        </button>
+
         <div style={{position:"relative", zIndex:1}}>
 
           {/* Header */}
@@ -769,18 +786,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, energy: ene
             display:"flex",justifyContent:"space-between",alignItems:"center",
             padding:"52px 24px 16px",
           }}>
-            <button onClick={onClose} style={{
-              background:"rgba(255,255,255,0.85)",border:`1.5px solid ${C.border}`,
-              borderRadius:50,padding:"8px 16px",cursor:"pointer",
-              display:"flex",alignItems:"center",gap:6,
-              color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:14,
-              boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
-              <svg viewBox="0 0 24 24" width={16} height={16} fill="none"
-                stroke={C.muted} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 5l-7 7 7 7"/>
-              </svg>
-              Back
-            </button>
+            <div style={{width:80}}/>
             <h2 style={{fontFamily:F.h,fontSize:22,fontWeight:900,color:C.text,margin:0,
               textShadow:"0 2px 8px rgba(255,255,255,0.9)"}}>
               {cm.name}'s Room
