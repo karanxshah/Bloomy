@@ -296,6 +296,112 @@ const PinPad = ({ onSuccess, onCancel, existingPin, mode }) => {
 /* ══════════════════════════════════════════
    MAIN EXPORT
 ══════════════════════════════════════════ */
+
+/* ── Mood Chart ── */
+const MOOD_SCORE = { Amazing:5, Good:4, Okay:3, Worried:2, Sad:1, Angry:1 };
+const MOOD_CHART_COLOR = { Amazing:"#F9A825", Good:"#43A047", Okay:"#1E88E5", Worried:"#E64A19", Sad:"#7B1FA2", Angry:"#E53935" };
+
+const MoodChart = ({ moodLog, days=30 }) => {
+  const [range, setRange] = useState(30);
+
+  const getLast = (n) => {
+    const result = [];
+    for (let i = n-1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      const entry = [...moodLog].reverse().find(e => e.date === dateStr);
+      result.push({ date: dateStr, label: d.toLocaleDateString("en",{month:"short",day:"numeric"}), entry });
+    }
+    return result;
+  };
+
+  const data = getLast(range);
+  const hasData = data.some(d => d.entry);
+  const chartW = 340;
+  const chartH = 120;
+  const barW = range === 7 ? 32 : range === 14 ? 18 : 8;
+  const gap = (chartW - barW * data.length) / (data.length + 1);
+
+  return (
+    <div style={{ background:"#fff", borderRadius:20, padding:"20px", marginBottom:14, boxShadow:"0 2px 18px rgba(124,77,255,0.09)" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+        <p style={{ fontFamily:F.h, fontWeight:800, fontSize:17, color:C.text, margin:0 }}>Mood Chart</p>
+        <div style={{ display:"flex", gap:6 }}>
+          {[7,14,30].map(n => (
+            <button key={n} onClick={() => setRange(n)} style={{
+              background: range===n ? C.purple : "#F0EAFF",
+              color: range===n ? "#fff" : C.muted,
+              border:"none", borderRadius:50, padding:"4px 12px",
+              fontSize:12, fontWeight:700, fontFamily:F.b, cursor:"pointer",
+            }}>{n}d</button>
+          ))}
+        </div>
+      </div>
+
+      {!hasData ? (
+        <div style={{ textAlign:"center", padding:"28px 0" }}>
+          <p style={{ fontFamily:F.b, fontWeight:500, fontSize:14, color:C.muted, margin:0 }}>
+            No mood data yet for this period.
+          </p>
+        </div>
+      ) : (
+        <>
+          <svg width="100%" viewBox={`0 0 ${chartW} ${chartH + 24}`} style={{ overflow:"visible" }}>
+            {/* Gridlines */}
+            {[1,2,3,4,5].map(v => (
+              <line key={v}
+                x1={0} y1={chartH - (v/5)*chartH}
+                x2={chartW} y2={chartH - (v/5)*chartH}
+                stroke="#EEE9FF" strokeWidth="1"
+              />
+            ))}
+
+            {/* Bars */}
+            {data.map((d, i) => {
+              if (!d.entry) return null;
+              const score = MOOD_SCORE[d.entry.mood] || 3;
+              const barH = Math.max(8, (score / 5) * chartH);
+              const x = gap + i * (barW + gap);
+              const y = chartH - barH;
+              const color = MOOD_CHART_COLOR[d.entry.mood] || C.purple;
+              return (
+                <g key={d.date}>
+                  <rect x={x} y={y} width={barW} height={barH}
+                    fill={color} rx={barW/2} opacity="0.85"/>
+                </g>
+              );
+            })}
+
+            {/* X axis labels — only show for 7 day view */}
+            {range === 7 && data.map((d, i) => {
+              const x = gap + i * (barW + gap) + barW/2;
+              const label = new Date(d.date + "T12:00:00").toLocaleDateString("en",{weekday:"short"});
+              return (
+                <text key={d.date} x={x} y={chartH + 16}
+                  textAnchor="middle" fontSize="10" fontFamily="Poppins, sans-serif"
+                  fill={C.muted} fontWeight="700">
+                  {label}
+                </text>
+              );
+            })}
+          </svg>
+
+          {/* Legend */}
+          <div style={{ display:"flex", flexWrap:"wrap", gap:"8px 14px", marginTop:8 }}>
+            {Object.entries(MOOD_CHART_COLOR).map(([mood, color]) => (
+              <div key={mood} style={{ display:"flex", alignItems:"center", gap:5 }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", background:color }}/>
+                <span style={{ fontFamily:F.b, fontSize:11, color:C.muted, fontWeight:600 }}>{mood}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export default function ParentInsights({ session, children, onClose }) {
   const [pinState,setPinState]           = useState("check");
   const [savedPin,setSavedPin]           = useState(null);
@@ -570,6 +676,9 @@ export default function ParentInsights({ session, children, onClose }) {
                   </p>
                 )}
               </Card>
+
+              {/* Mood chart */}
+              <MoodChart moodLog={moodLog}/>
 
               {/* Weekly calendar */}
               <Card>
