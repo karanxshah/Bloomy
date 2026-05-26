@@ -1,7 +1,7 @@
 import { useApp } from "../AppContext.jsx";
-import { Card, Icon, MoodFace } from "./UI.jsx";
+import { Card, Icon, MoodFace } from "../components/UI.jsx";
 import { F, MOOD_BG, MOOD_COLORS, STAGE_BGSANIM, getTimeGreeting, getSortedAffirmations } from "../constants.js";
-import { GrowthMascot, GardenScene, GrowthProgressBar } from "./MascotGrowth.jsx";
+import { GrowthMascot, GardenScene, GrowthProgressBar } from "../MascotGrowth.jsx";
 
 export default function HomeTab() {
   const {

@@ -1,5 +1,5 @@
 import { useApp } from "../AppContext.jsx";
-import { Card, Icon, Btn, Label, Tooltip } from "./UI.jsx";
+import { Card, Icon, Btn, Label, Tooltip } from "../components/UI.jsx";
 import { F, JOURNAL_PROMPTS, ALL_AFFIRMATIONS, getSortedAffirmations } from "../constants.js";
 import { today } from "../constants.js";
 

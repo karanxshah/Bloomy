@@ -1,5 +1,5 @@
 import { useApp } from "../AppContext.jsx";
-import { Card, Icon, MoodFace, Btn, Tooltip } from "./UI.jsx";
+import { Card, Icon, MoodFace, Btn, Tooltip } from "../components/UI.jsx";
 import { F, MOODS, MOOD_COLORS, MOOD_BG, MOOD_MESSAGES } from "../constants.js";
 import { today, last7Days } from "../constants.js";
 

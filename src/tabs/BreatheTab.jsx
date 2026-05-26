@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useApp } from "../AppContext.jsx";
-import { Card, Btn, Tooltip } from "./UI.jsx";
+import { Card, Btn, Tooltip } from "../components/UI.jsx";
 import { F, BREATHING } from "../constants.js";
-import { GrowthMascot } from "./MascotGrowth.jsx";
+import { GrowthMascot } from "../MascotGrowth.jsx";
 
 export default function BreatheTab() {
   const {

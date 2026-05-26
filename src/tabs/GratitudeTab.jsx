@@ -1,5 +1,5 @@
 import { useApp } from "../AppContext.jsx";
-import { Btn } from "./UI.jsx";
+import { Btn } from "../components/UI.jsx";
 import { F } from "../constants.js";
 import { today } from "../constants.js";
 
