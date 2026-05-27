@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef } from "react"; // useRef kept for AffirmTab swipe
 import { useApp } from "../AppContext.jsx";
 import { Card, Icon, Btn, Label, Tooltip } from "../components/UI.jsx";
 import { F, JOURNAL_PROMPTS, ALL_AFFIRMATIONS, getSortedAffirmations } from "../constants.js";
@@ -12,7 +12,6 @@ export function JournalTab() {
     journals, setJournals, cm, seenTooltips, setSeenTooltips,
     activeChild, setActiveChild, setChildren, supabase,
   } = useApp();
-  const [expandedId, setExpandedId] = useRef ? useRef(null) : { current: null };
   const [expanded, setExpanded] = useState(null);
 
   const C = theme;

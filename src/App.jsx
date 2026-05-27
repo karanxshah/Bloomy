@@ -116,9 +116,18 @@ export default function BloomyApp() {
   const [showAllAffirm, setShowAllAffirm] = useState(false);
 
   /* ── Breathe state ── */
-  const [breathPhase, setBreathPhase]   = useState(0);
-  const [breathActive, setBreathActive] = useState(false);
-  const [breathCount, setBreathCount]   = useState(0);
+  const [breathPhase, setBreathPhase]       = useState(0);
+  const [breathActive, setBreathActive]     = useState(false);
+  const [breathCount, setBreathCount]       = useState(0);
+  const [dailyBreathCount, setDailyBreathCount] = useState(()=>{
+    try {
+      const stored = localStorage.getItem("bloomy_breath_count");
+      const storedDate = localStorage.getItem("bloomy_breath_date");
+      const todayStr = new Date().toISOString().split("T")[0];
+      if (storedDate === todayStr && stored) return parseInt(stored, 10);
+      return 0;
+    } catch { return 0; }
+  });
 
   /* ── Journal state ── */
   const [journalText, setJournalText]   = useState("");
@@ -417,6 +426,14 @@ export default function BloomyApp() {
     setActiveChild(child); setTab("home");
     setMoodLogged(false); setJournalSaved(false); setJournalText("");
     setBreathActive(false); setBreathPhase(0); setBreathCount(0);
+    // Reset daily breath count if it's a new day
+    const todayStr2 = new Date().toISOString().split("T")[0];
+    const storedBreathDate = localStorage.getItem("bloomy_breath_date");
+    if (storedBreathDate !== todayStr2) {
+      setDailyBreathCount(0);
+      localStorage.setItem("bloomy_breath_count", "0");
+      localStorage.setItem("bloomy_breath_date", todayStr2);
+    }
     setTodayMood(null); setPendingBonusPopup(false);
 
     /* Energy depletion */
@@ -556,6 +573,7 @@ export default function BloomyApp() {
     breathPhase, setBreathPhase,
     breathActive, setBreathActive,
     breathCount, setBreathCount,
+    dailyBreathCount, setDailyBreathCount,
     journalText, setJournalText,
     journalSaved, setJournalSaved,
     promptIdx, setPromptIdx,

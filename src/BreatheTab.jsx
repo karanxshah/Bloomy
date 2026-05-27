@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Card, Btn, Tooltip } from "../components/UI.jsx";
 import { F, BREATHING } from "../constants.js";
@@ -7,7 +7,7 @@ import { GrowthMascot } from "../MascotGrowth.jsx";
 export default function BreatheTab() {
   const {
     theme, breathPhase, setBreathPhase, breathActive, setBreathActive,
-    breathCount, setBreathCount, cm, currentStage,
+    breathCount, setBreathCount, dailyBreathCount, setDailyBreathCount, cm, currentStage,
     seenTooltips, setSeenTooltips, activeChild, setActiveChild,
     setChildren, supabase, showSeedPopup, earnBerry, completeMission,
     checkGrowthStageUp, moodLog, journals,
@@ -16,7 +16,6 @@ export default function BreatheTab() {
 
   const C = theme;
   const timerRef = useRef(null);
-  const [sessionCount, setSessionCount] = useState(0);
 
   /* ── Clear the timer and fully reset when user leaves the tab ── */
   useEffect(() => {
@@ -28,7 +27,6 @@ export default function BreatheTab() {
       setBreathActive(false);
       setBreathPhase(0);
       setBreathCount(0);
-      setSessionCount(0);
     }
   }, [tab]);
 
@@ -47,7 +45,15 @@ export default function BreatheTab() {
       setBreathPhase(next);
       if (next === 0) {
         setBreathCount(c => c + 1);
-        setSessionCount(c => c + 1);
+        setDailyBreathCount(c => {
+          const next = c + 1;
+          try {
+            const todayStr = new Date().toISOString().split("T")[0];
+            localStorage.setItem("bloomy_breath_count", String(next));
+            localStorage.setItem("bloomy_breath_date", todayStr);
+          } catch {}
+          return next;
+        });
         showSeedPopup(2);
         earnBerry();
         completeMission("breathe");
@@ -187,9 +193,9 @@ export default function BreatheTab() {
         </Btn>
       </div>
 
-      {sessionCount > 0 && (
+      {dailyBreathCount > 0 && (
         <p style={{ color:C.purple, fontWeight:700, fontSize:16, fontFamily:F.b, textAlign:"center", marginBottom:16 }}>
-          {sessionCount} breath{sessionCount>1?"s":""} complete today — well done!
+          {dailyBreathCount} breath{dailyBreathCount>1?"s":""} complete today — well done!
         </p>
       )}
 
