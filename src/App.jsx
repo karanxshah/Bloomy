@@ -872,7 +872,6 @@ export default function BloomyApp() {
         {id:"journal",  icon:"book",  label:"Journal"},
         {id:"breathe",  icon:"wind",  label:"Breathe"},
         {id:"gratitude",icon:"heart", label:"Grateful"},
-        {id:"affirm",   icon:"star",  label:"Affirm"},
       ].map(t=>(
         <button key={t.id} onClick={()=>{
           if (t.id!=="breathe" && breathActive) {
