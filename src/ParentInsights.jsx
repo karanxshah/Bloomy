@@ -663,6 +663,100 @@ export default function ParentInsights({ supabase, session, children, onClose })
             </div>
           </Card>
 
+          {/* Weekly Summary Card */}
+          {(() => {
+            const todayStr = new Date().toISOString().split("T")[0];
+            const weekAgo  = new Date(); weekAgo.setDate(weekAgo.getDate() - 6);
+            const weekMoods = moodLog.filter(e => new Date(e.date) >= weekAgo);
+            const weekJournals = journals.filter(e => new Date(e.date) >= weekAgo);
+            const weekGratitudes = gratitudes.filter(e => new Date(e.date) >= weekAgo);
+            const moodCount = weekMoods.length;
+            const activityCount = moodCount + weekJournals.length + weekGratitudes.length + (selectedChild.breath_sessions || 0);
+
+            // Most logged mood this week
+            const weekMoodCounts = weekMoods.reduce((acc,e) => ({...acc,[e.mood]:(acc[e.mood]||0)+1}), {});
+            const weekTopMood = Object.entries(weekMoodCounts).sort((a,b) => b[1]-a[1])[0];
+
+            // Trend: compare last 3 days to 3 days before
+            const recentDates = [0,1,2].map(i => { const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().split("T")[0]; });
+            const olderDates  = [3,4,5].map(i => { const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().split("T")[0]; });
+            const positiveWeight = {Amazing:2, Good:1, Okay:0, Sad:-1, Angry:-1, Worried:-1};
+            const recentScore = moodLog.filter(e=>recentDates.includes(e.date)).reduce((s,e)=>s+(positiveWeight[e.mood]||0),0);
+            const olderScore  = moodLog.filter(e=>olderDates.includes(e.date)).reduce((s,e)=>s+(positiveWeight[e.mood]||0),0);
+            const trend = recentScore > olderScore ? "up" : recentScore < olderScore ? "down" : "same";
+
+            // Personalised tip
+            const getTip = () => {
+              if (weekJournals.length === 0) return `Try asking ${selectedChild.name} to write one journal entry this week — even a sentence helps.`;
+              if (concernMoods.length >= 2) return `${selectedChild.name} has logged some tricky emotions. A gentle check-in conversation could go a long way.`;
+              if (streak >= 5) return `${selectedChild.name} is on a ${streak}-day streak! Celebrate this with them.`;
+              if (weekGratitudes.length === 0) return `Gratitude journaling builds optimism. Remind ${selectedChild.name} to add something to their jar!`;
+              return `${selectedChild.name} is doing great! Keep up the daily check-ins to maintain their momentum.`;
+            };
+
+            const trendColor = trend==="up" ? "#43A047" : trend==="down" ? "#E53935" : "#F9A825";
+            const trendLabel = trend==="up" ? "↑ Better than last few days" : trend==="down" ? "↓ Tougher than last few days" : "→ Steady this week";
+
+            return (
+              <div style={{
+                background:"linear-gradient(135deg,#EDE7F6,#E8F5E9)",
+                borderRadius:20, padding:"18px 20px", marginBottom:14,
+                border:"1.5px solid #EEE9FF",
+              }}>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14}}>
+                  <div>
+                    <p style={{fontFamily:F.b, fontWeight:700, fontSize:11, color:C.muted, letterSpacing:1.2, textTransform:"uppercase", margin:"0 0 4px"}}>
+                      This week
+                    </p>
+                    <p style={{fontFamily:F.h, fontWeight:900, fontSize:18, color:C.text, margin:0}}>
+                      Weekly Summary
+                    </p>
+                  </div>
+                  {trend !== "same" && (
+                    <div style={{background: trend==="up" ? "#E8F5E9" : "#FFEBEE", borderRadius:50, padding:"4px 12px"}}>
+                      <p style={{fontFamily:F.b, fontWeight:700, fontSize:12, color:trendColor, margin:0}}>
+                        {trendLabel}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Stats row */}
+                <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:14}}>
+                  {[
+                    {label:"Moods", value:moodCount,              color:C.purple, bg:"rgba(124,77,255,0.1)"},
+                    {label:"Journals", value:weekJournals.length, color:"#F06292", bg:"rgba(240,98,146,0.1)"},
+                    {label:"Grateful", value:weekGratitudes.length,color:"#43A047",bg:"rgba(67,160,71,0.1)"},
+                    {label:"Streak",   value:`${streak}d`,         color:"#FF7043",bg:"rgba(255,112,67,0.1)"},
+                  ].map(s => (
+                    <div key={s.label} style={{background:s.bg, borderRadius:12, padding:"10px 6px", textAlign:"center"}}>
+                      <p style={{fontFamily:F.h, fontWeight:900, fontSize:18, color:s.color, margin:0}}>{s.value}</p>
+                      <p style={{fontFamily:F.b, fontWeight:600, fontSize:10, color:s.color, margin:0, marginTop:2}}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Top mood + tip */}
+                <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                  {weekTopMood && (
+                    <div style={{display:"flex", alignItems:"center", gap:8, background:"rgba(255,255,255,0.7)", borderRadius:12, padding:"8px 12px"}}>
+                      <MoodFace type={weekTopMood[0]} size={28}/>
+                      <p style={{fontFamily:F.b, fontWeight:600, fontSize:13, color:C.text, margin:0}}>
+                        Most logged: <span style={{color:MOOD_COLORS[weekTopMood[0]], fontWeight:700}}>{weekTopMood[0]}</span> ({weekTopMood[1]}x this week)
+                      </p>
+                    </div>
+                  )}
+                  <div style={{display:"flex", alignItems:"flex-start", gap:8, background:"rgba(255,255,255,0.7)", borderRadius:12, padding:"10px 12px"}}>
+                    <span style={{fontSize:16, flexShrink:0}}>💡</span>
+                    <p style={{fontFamily:F.b, fontWeight:500, fontSize:13, color:C.text, margin:0, lineHeight:1.6}}>
+                      {getTip()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Tabs */}
           <div style={{display:"flex",gap:8,marginBottom:16}}>
             {[
