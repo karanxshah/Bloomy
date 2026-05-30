@@ -114,7 +114,7 @@ export default function HomeTab() {
                   transform: `rotate(${tilt}deg) translateY(${sag}px)`,
                   transition:"transform 0.6s cubic-bezier(0.34,1.56,0.64,1)",
                 }}>
-                  <GrowthMascot id={cm.id} size={120} stage={currentStage.id}/>
+                  <GrowthMascot id={cm.id} size={120} stage={currentStage.id} energyTier={tier}/>
                 </div>
 
                 {/* Energy badge — hidden at full energy */}

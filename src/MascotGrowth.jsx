@@ -60,9 +60,28 @@ const nextStage = (score) => {
 /* ══════════════════════════════════════════════
    GARDEN SCENE — evolves per stage
 ══════════════════════════════════════════════ */
-export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
+export const GrowthMascot = ({ id, size = 64, stage = 0, energyTier = 0 }) => {
   const s = size;
   const vb = "0 0 80 80";
+
+  /* energyTier: 0=happy, 1=tired, 2=hungry, 3=very hungry
+     Returns a mouth path for the small face mascot.
+     cx/cy = centre of mouth area, w = mouth width  */
+  const Mouth = ({ cx, cy, color = "#333" }) => {
+    if (energyTier === 0) {
+      // Big happy smile — deep curve upward
+      return <path d={`M ${cx-8} ${cy} Q ${cx} ${cy+8} ${cx+8} ${cy}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+    } else if (energyTier === 1) {
+      // Gentle smile — shallow curve
+      return <path d={`M ${cx-7} ${cy} Q ${cx} ${cy+4} ${cx+7} ${cy}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
+    } else if (energyTier === 2) {
+      // Flat / slight frown
+      return <path d={`M ${cx-7} ${cy+1} Q ${cx} ${cy-2} ${cx+7} ${cy+1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
+    } else {
+      // Big sad frown — deep curve downward
+      return <path d={`M ${cx-8} ${cy+3} Q ${cx} ${cy-5} ${cx+8} ${cy+3}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+    }
+  };
 
   const bases = {
     fox: <>
@@ -74,8 +93,7 @@ export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
       <circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/>
       <circle cx="32" cy="41" r="1" fill="#fff"/><circle cx="52" cy="41" r="1" fill="#fff"/>
       <ellipse cx="40" cy="53" rx="5" ry="3.5" fill="#EF5350"/>
-      {stage>=1?<path d="M34 57 Q40 63 46 57" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 56 Q40 60 44 56" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+      <Mouth cx={40} cy={57} color="#333"/>
     </>,
     bunny: <>
       <ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
@@ -86,8 +104,7 @@ export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
       <circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/>
       <circle cx="32" cy="46" r="1" fill="#fff"/><circle cx="52" cy="46" r="1" fill="#fff"/>
       <ellipse cx="40" cy="57" rx="5" ry="3" fill="#F48FB1"/>
-      {stage>=1?<path d="M34 61 Q40 67 46 61" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 60 Q40 64 44 60" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+      <Mouth cx={40} cy={61} color="#333"/>
     </>,
     bear: <>
       <circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/>
@@ -97,8 +114,7 @@ export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
       <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
       <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
       <ellipse cx="40" cy="58" rx="5" ry="3.5" fill="#795548"/>
-      {stage>=1?<path d="M34 62 Q40 68 46 62" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 61 Q40 65 44 61" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+      <Mouth cx={40} cy={62} color="#333"/>
     </>,
     owl: <>
       <ellipse cx="40" cy="48" rx="26" ry="26" fill="#7E57C2"/>
@@ -109,7 +125,7 @@ export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
       <circle cx="29" cy="44" r="5" fill="#4527A0"/><circle cx="51" cy="44" r="5" fill="#4527A0"/>
       <circle cx="30" cy="43" r="2" fill="#fff"/><circle cx="52" cy="43" r="2" fill="#fff"/>
       <polygon points="40,51 37,56 43,56" fill="#FFA726"/>
-      {stage>=1&&<path d="M34 60 Q40 65 46 60" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>}
+      <Mouth cx={40} cy={60} color="#333"/>
     </>,
     cat: <>
       <polygon points="17,30 12,10 30,26" fill="#26A69A"/>
@@ -120,8 +136,7 @@ export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
       <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
       <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
       <ellipse cx="40" cy="57" rx="5" ry="3" fill="#FF8A80"/>
-      {stage>=1?<path d="M34 61 Q40 67 46 61" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 60 Q40 64 44 60" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+      <Mouth cx={40} cy={61} color="#333"/>
     </>,
     dog: <>
       <ellipse cx="16" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(-20 16 36)"/>
@@ -132,8 +147,7 @@ export const GrowthMascot = ({ id, size = 64, stage = 0 }) => {
       <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
       <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
       <ellipse cx="40" cy="58" rx="6" ry="4" fill="#FF7043"/>
-      {stage>=1?<path d="M34 63 Q40 69 46 63" stroke="#333" strokeWidth="2" fill="none" strokeLinecap="round"/>
-               :<path d="M36 62 Q40 66 44 62" stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+      <Mouth cx={40} cy={63} color="#333"/>
     </>,
   };
 

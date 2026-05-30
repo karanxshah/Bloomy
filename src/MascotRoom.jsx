@@ -68,9 +68,41 @@ const SPEECH = {
 /* ══════════════════════════════════════════════
    FULL BODY MASCOT ILLUSTRATIONS
 ══════════════════════════════════════════════ */
-export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
+export const FullBodyMascot = ({ id, size = 220, stage = 0, energyTier = 0 }) => {
   const w = size;
   const h = size * 1.4;
+
+  /* ── Expression helpers ── */
+  /* Mouth: renders different smile/frown based on energyTier
+     lx/rx = left/right x endpoints, my = mouth centre y, cy = control point y offset */
+  const BodyMouth = ({ lx, rx, my, stroke = "#333" }) => {
+    const mx = (lx + rx) / 2;
+    if (energyTier === 0) {
+      // Big happy smile
+      return <path d={`M ${lx} ${my} Q ${mx} ${my + (rx-lx)*0.38} ${rx} ${my}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
+    } else if (energyTier === 1) {
+      // Gentle small smile
+      return <path d={`M ${lx} ${my} Q ${mx} ${my + (rx-lx)*0.18} ${rx} ${my}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+    } else if (energyTier === 2) {
+      // Flat / slight frown
+      return <path d={`M ${lx} ${my + (rx-lx)*0.05} Q ${mx} ${my - (rx-lx)*0.08} ${rx} ${my + (rx-lx)*0.05}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+    } else {
+      // Sad frown — deeper curve downward
+      return <path d={`M ${lx} ${my + (rx-lx)*0.12} Q ${mx} ${my - (rx-lx)*0.22} ${rx} ${my + (rx-lx)*0.12}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
+    }
+  };
+
+  /* Droopy eyelids — half-ellipse over each eye for tiers 2–3 */
+  const DroopyLids = ({ lx, rx, ey, eyeR, fill }) => {
+    if (energyTier < 2) return null;
+    const lidHeight = energyTier === 3 ? eyeR * 0.65 : eyeR * 0.42;
+    return (
+      <>
+        <ellipse cx={lx} cy={ey - eyeR * 0.2} rx={eyeR * 1.05} ry={lidHeight} fill={fill}/>
+        <ellipse cx={rx} cy={ey - eyeR * 0.2} rx={eyeR * 1.05} ry={lidHeight} fill={fill}/>
+      </>
+    );
+  };
 
   /* Stage accessories */
   const Scarf = ({ y = 95 }) => (
@@ -153,11 +185,8 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
         <circle cx={w*0.44} cy={h*0.248} r={w*0.01} fill="#fff"/>
         <circle cx={w*0.6}  cy={h*0.248} r={w*0.01} fill="#fff"/>
         <ellipse cx={w/2} cy={h*0.33} rx={w*0.055} ry={h*0.035} fill="#EF5350"/>
-        {stage>=1
-          ? <path d={`M ${w*0.43} ${h*0.365} Q ${w*0.5} ${h*0.4} ${w*0.57} ${h*0.365}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.355} Q ${w*0.5} ${h*0.385} ${w*0.56} ${h*0.355}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        <BodyMouth lx={w*0.43} rx={w*0.57} my={h*0.365} stroke="#333"/>
+        <DroopyLids lx={w*0.43} rx={w*0.59} ey={h*0.255} eyeR={w*0.05} fill="#FF8A65"/>
         {stage>=1 && <Scarf y={h*0.43}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.1}/>}
       </svg>
@@ -200,11 +229,8 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
         <circle cx={w*0.44} cy={h*0.268} r={w*0.01} fill="#fff"/>
         <circle cx={w*0.6}  cy={h*0.268} r={w*0.01} fill="#fff"/>
         <ellipse cx={w/2} cy={h*0.345} rx={w*0.045} ry={h*0.028} fill="#F48FB1"/>
-        {stage>=1
-          ? <path d={`M ${w*0.44} ${h*0.375} Q ${w*0.5} ${h*0.408} ${w*0.56} ${h*0.375}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.365} Q ${w*0.5} ${h*0.395} ${w*0.56} ${h*0.365}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        <BodyMouth lx={w*0.44} rx={w*0.56} my={h*0.375} stroke="#333"/>
+        <DroopyLids lx={w*0.43} rx={w*0.59} ey={h*0.275} eyeR={w*0.05} fill="#FCE4EC"/>
         {stage>=1 && <Scarf y={h*0.44}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.08}/>}
         </g>
@@ -244,11 +270,8 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
         <circle cx={w*0.43} cy={h*0.258} r={w*0.011} fill="#fff"/>
         <circle cx={w*0.61} cy={h*0.258} r={w*0.011} fill="#fff"/>
         <ellipse cx={w/2} cy={h*0.34} rx={w*0.055} ry={h*0.036} fill="#795548"/>
-        {stage>=1
-          ? <path d={`M ${w*0.43} ${h*0.375} Q ${w*0.5} ${h*0.41} ${w*0.57} ${h*0.375}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.365} Q ${w*0.5} ${h*0.395} ${w*0.56} ${h*0.365}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        <BodyMouth lx={w*0.43} rx={w*0.57} my={h*0.375} stroke="#333"/>
+        <DroopyLids lx={w*0.42} rx={w*0.60} ey={h*0.265} eyeR={w*0.055} fill="#8D6E63"/>
         {stage>=1 && <Scarf y={h*0.45}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
       </svg>
@@ -285,6 +308,7 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
         {/* Beak */}
         <polygon points={`${w*0.46},${h*0.34} ${w*0.5},${h*0.355} ${w*0.54},${h*0.34}`}
           fill="#FFA726"/>
+        <DroopyLids lx={w*0.41} rx={w*0.59} ey={h*0.282} eyeR={w*0.08} fill="#7E57C2"/>
         {stage>=1 && <Scarf y={h*0.44}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.1}/>}
       </svg>
@@ -334,11 +358,8 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
           stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
         <line x1={w*0.75} y1={h*0.34} x2={w*0.56} y2={h*0.34}
           stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        {stage>=1
-          ? <path d={`M ${w*0.43} ${h*0.365} Q ${w*0.5} ${h*0.398} ${w*0.57} ${h*0.365}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.355} Q ${w*0.5} ${h*0.385} ${w*0.56} ${h*0.355}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        <BodyMouth lx={w*0.43} rx={w*0.57} my={h*0.365} stroke="#333"/>
+        <DroopyLids lx={w*0.43} rx={w*0.59} ey={h*0.27} eyeR={w*0.052} fill="#4DB6AC"/>
         {stage>=1 && <Scarf y={h*0.44}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
       </svg>
@@ -379,11 +400,8 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
         <circle cx={w*0.43} cy={h*0.253} r={w*0.011} fill="#fff"/>
         <circle cx={w*0.61} cy={h*0.253} r={w*0.011} fill="#fff"/>
         <ellipse cx={w/2} cy={h*0.34} rx={w*0.06} ry={h*0.04} fill="#FF7043"/>
-        {stage>=1
-          ? <path d={`M ${w*0.43} ${h*0.375} Q ${w*0.5} ${h*0.41} ${w*0.57} ${h*0.375}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.365} Q ${w*0.5} ${h*0.395} ${w*0.56} ${h*0.365}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        <BodyMouth lx={w*0.43} rx={w*0.57} my={h*0.375} stroke="#333"/>
+        <DroopyLids lx={w*0.42} rx={w*0.60} ey={h*0.26} eyeR={w*0.055} fill="#FFB74D"/>
         {stage>=1 && <Scarf y={h*0.45}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
       </svg>
@@ -821,7 +839,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, energy: ene
                 filter:`drop-shadow(0 16px 32px ${cm.color}77)`,
                 position:"relative",
               }}>
-              <FullBodyMascot id={cm.id} size={210} stage={stage.id}/>
+              <FullBodyMascot id={cm.id} size={210} stage={stage.id} energyTier={energy > 75 ? 0 : energy > 50 ? 1 : energy > 25 ? 2 : 3}/>
               {sparkles.map(sp=>(
                 <Sparkle key={sp.id} x={sp.x} y={sp.y} color={sp.color} delay={sp.delay}/>
               ))}
