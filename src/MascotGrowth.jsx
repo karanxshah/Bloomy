@@ -64,22 +64,23 @@ export const GrowthMascot = ({ id, size = 64, stage = 0, energyTier = 0 }) => {
   const s = size;
   const vb = "0 0 80 80";
 
-  /* energyTier: 0=happy, 1=tired, 2=hungry, 3=very hungry
-     Returns a mouth path for the small face mascot.
-     cx/cy = centre of mouth area, w = mouth width  */
+  /* Mouth paths — cx/cy is the horizontal centre of the mouth zone.
+     All paths are symmetric around cx. Control point is above endpoints
+     for a smile (cy - offset) and below for a frown (cy + offset).       */
   const Mouth = ({ cx, cy, color = "#333" }) => {
+    const r = 7; // half-width of mouth
     if (energyTier === 0) {
-      // Big happy smile — deep curve upward
-      return <path d={`M ${cx-8} ${cy} Q ${cx} ${cy+8} ${cx+8} ${cy}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+      // Big smile — control point well above
+      return <path d={`M ${cx-r} ${cy+2} Q ${cx} ${cy-6} ${cx+r} ${cy+2}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
     } else if (energyTier === 1) {
-      // Gentle smile — shallow curve
-      return <path d={`M ${cx-7} ${cy} Q ${cx} ${cy+4} ${cx+7} ${cy}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
+      // Small smile — shallow curve
+      return <path d={`M ${cx-r} ${cy+1} Q ${cx} ${cy-3} ${cx+r} ${cy+1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
     } else if (energyTier === 2) {
-      // Flat / slight frown
-      return <path d={`M ${cx-7} ${cy+1} Q ${cx} ${cy-2} ${cx+7} ${cy+1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
+      // Slight frown — control point gently below
+      return <path d={`M ${cx-r} ${cy-1} Q ${cx} ${cy+4} ${cx+r} ${cy-1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
     } else {
-      // Big sad frown — deep curve downward
-      return <path d={`M ${cx-8} ${cy+3} Q ${cx} ${cy-5} ${cx+8} ${cy+3}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+      // Sad frown — control point well below
+      return <path d={`M ${cx-r} ${cy-2} Q ${cx} ${cy+7} ${cx+r} ${cy-2}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
     }
   };
 

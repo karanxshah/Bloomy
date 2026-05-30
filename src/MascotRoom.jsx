@@ -73,33 +73,31 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0, energyTier = 0 }) =>
   const h = size * 1.4;
 
   /* ── Expression helpers ── */
-  /* Mouth: renders different smile/frown based on energyTier
-     lx/rx = left/right x endpoints, my = mouth centre y, cy = control point y offset */
+  /* BodyMouth: lx/rx = left/right x of mouth, my = vertical centre
+     Smile = control point above (my - offset), frown = below (my + offset) */
   const BodyMouth = ({ lx, rx, my, stroke = "#333" }) => {
     const mx = (lx + rx) / 2;
+    const hw = (rx - lx) / 2; // half-width
     if (energyTier === 0) {
-      // Big happy smile
-      return <path d={`M ${lx} ${my} Q ${mx} ${my + (rx-lx)*0.38} ${rx} ${my}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
+      return <path d={`M ${lx} ${my + hw*0.25} Q ${mx} ${my - hw*0.55} ${rx} ${my + hw*0.25}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
     } else if (energyTier === 1) {
-      // Gentle small smile
-      return <path d={`M ${lx} ${my} Q ${mx} ${my + (rx-lx)*0.18} ${rx} ${my}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+      return <path d={`M ${lx} ${my + hw*0.12} Q ${mx} ${my - hw*0.25} ${rx} ${my + hw*0.12}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
     } else if (energyTier === 2) {
-      // Flat / slight frown
-      return <path d={`M ${lx} ${my + (rx-lx)*0.05} Q ${mx} ${my - (rx-lx)*0.08} ${rx} ${my + (rx-lx)*0.05}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+      return <path d={`M ${lx} ${my - hw*0.1} Q ${mx} ${my + hw*0.3} ${rx} ${my - hw*0.1}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
     } else {
-      // Sad frown — deeper curve downward
-      return <path d={`M ${lx} ${my + (rx-lx)*0.12} Q ${mx} ${my - (rx-lx)*0.22} ${rx} ${my + (rx-lx)*0.12}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
+      return <path d={`M ${lx} ${my - hw*0.2} Q ${mx} ${my + hw*0.55} ${rx} ${my - hw*0.2}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
     }
   };
 
-  /* Droopy eyelids — half-ellipse over each eye for tiers 2–3 */
+  /* DroopyLids: half-ellipse over each eye, only at tiers 2–3.
+     Kept subtle — just enough to read as tired, not cartoonishly broken. */
   const DroopyLids = ({ lx, rx, ey, eyeR, fill }) => {
     if (energyTier < 2) return null;
-    const lidHeight = energyTier === 3 ? eyeR * 0.65 : eyeR * 0.42;
+    const lidH = energyTier === 3 ? eyeR * 0.55 : eyeR * 0.35;
     return (
       <>
-        <ellipse cx={lx} cy={ey - eyeR * 0.2} rx={eyeR * 1.05} ry={lidHeight} fill={fill}/>
-        <ellipse cx={rx} cy={ey - eyeR * 0.2} rx={eyeR * 1.05} ry={lidHeight} fill={fill}/>
+        <ellipse cx={lx} cy={ey - eyeR * 0.3} rx={eyeR * 1.02} ry={lidH} fill={fill}/>
+        <ellipse cx={rx} cy={ey - eyeR * 0.3} rx={eyeR * 1.02} ry={lidH} fill={fill}/>
       </>
     );
   };

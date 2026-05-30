@@ -36,10 +36,27 @@ export default function HomeTab() {
 
   const C = theme;
 
+  // Energy tier — only affects face expression and speech bubble text
+  const tier = energy > 75 ? 0 : energy > 50 ? 1 : energy > 25 ? 2 : 3;
+
+  const bubbleMessage = tier === 0 ? getDailyMessage()
+    : tier === 1 ? `${cm.name} is feeling a little tired…`
+    : tier === 2 ? `${cm.name} is getting hungry — tap the basket 🧺`
+    : `${cm.name} is really hungry! Please feed them 🥺`;
+
+  const pillBg = tier === 0 ? currentStage.color
+    : tier === 1 ? "#F9A825"
+    : tier === 2 ? "#FF7043"
+    : "#E53935";
+
+  const pillLabel = tier === 0
+    ? `${currentStage.name} · ${growthScore} seeds · Tap to visit`
+    : `${energy}% energy · Tap to visit`;
+
   return (
     <div style={{ paddingTop:12, animation:"fadeIn 0.4s ease" }}>
 
-      {/* Hero — garden scene */}
+      {/* Hero */}
       <div style={{ textAlign:"center", marginBottom:16 }}>
         <p style={{ color:C.muted, fontWeight:600, fontSize:13, marginBottom:2 }}>
           {getTimeGreeting()}
@@ -47,128 +64,50 @@ export default function HomeTab() {
         <h2 style={{ fontFamily:F.h, fontSize:30, fontWeight:900, color:C.text, marginBottom:12 }}>
           {activeChild.name}
         </h2>
-        {(() => {
-          // 4 tiers based on energy level
-          // tier 0: 76–100  — happy, floating, normal
-          // tier 1: 51–75   — slightly tired, gentle tilt, subtle grey tint
-          // tier 2: 26–50   — noticeably droopy, more tilt, yellow warning
-          // tier 3: 0–25    — very hungry, big tilt, red badge, stops floating
-          const tier = energy > 75 ? 0 : energy > 50 ? 1 : energy > 25 ? 2 : 3;
 
-          const tilt       = [0, -4, -9, -15][tier];
-          const sag        = [0,  3,  7,  12][tier];
-          const greyAmount = [0, 0.08, 0.22, 0.42][tier]; // how washed-out the circle bg gets
+        <button
+          onClick={()=>setShowMascotRoom(true)}
+          style={{ border:"none", background:"none", cursor:"pointer", transition:"transform 0.15s", display:"block", margin:"0 auto" }}
+          onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
+          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}
+        >
+          {/* Mascot circle — always centred, same size, same position */}
+          <div style={{
+            width:180, height:180, borderRadius:"50%",
+            background:`radial-gradient(circle at 40% 35%, ${currentStage.bg}, ${cm.bg||currentStage.bg})`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            margin:"0 auto",
+            boxShadow:`0 8px 32px ${cm.color}44, 0 2px 12px rgba(0,0,0,0.08)`,
+            animation:"floatUp 3s ease-in-out infinite",
+          }}>
+            <GrowthMascot id={cm.id} size={120} stage={currentStage.id} energyTier={tier}/>
+          </div>
 
-          // Blend circle bg from normal colour toward grey as energy drops
-          const circleNormal = `radial-gradient(circle at 40% 35%, ${currentStage.bg}, ${cm.bg||currentStage.bg})`;
-          const circleGrey   = `radial-gradient(circle at 40% 35%, #E8E0F0, #D8D0E8)`;
-          const circleBg     = tier === 0 ? circleNormal
-            : tier === 1 ? `radial-gradient(circle at 40% 35%, ${currentStage.bg}cc, #E0D8EC)`
-            : tier === 2 ? `radial-gradient(circle at 40% 35%, #EDE8F4, #DDD4EA)`
-            : circleGrey;
+          {/* Speech bubble */}
+          <div style={{
+            background:"rgba(255,255,255,0.92)", borderRadius:18,
+            borderBottomLeftRadius:4, padding:"8px 16px",
+            marginTop:14, marginBottom:8,
+            boxShadow:"0 2px 12px rgba(0,0,0,0.08)",
+            maxWidth:260,
+          }}>
+            <p style={{fontFamily:F.b, fontWeight:600, fontSize:13, color:"#2D2040", margin:0, textAlign:"center", lineHeight:1.4}}>
+              {bubbleMessage}
+            </p>
+          </div>
 
-          const shadowColor  = tier === 0 ? `${cm.color}55`
-            : tier === 1 ? `${cm.color}33`
-            : tier === 2 ? "rgba(200,150,80,0.25)"
-            : "rgba(0,0,0,0.15)";
-
-          const badgeColor   = ["", "#F9A825", "#FF7043", "#E53935"][tier];
-          const badgeText    = ["", "A little tired…", "Getting hungry!", "Really hungry!"][tier];
-          const badgeEmoji   = ["", "😴", "🍇", "🥺"][tier];
-          const pillColor    = tier === 0 ? currentStage.color : tier === 1 ? "#F9A825" : tier === 2 ? "#FF7043" : "#E53935";
-          const pillEmoji    = tier === 0 ? "🌱" : tier === 1 ? "😴" : tier === 2 ? "🍇" : "🥺";
-          const bubbleBg     = tier === 0 ? "rgba(255,255,255,0.92)"
-            : tier === 1 ? "rgba(255,248,220,0.92)"
-            : tier === 2 ? "rgba(255,237,200,0.92)"
-            : "rgba(255,224,210,0.92)";
-          const bubbleBorder = tier === 0 ? "none"
-            : `1.5px solid ${badgeColor}44`;
-          const bubbleText   = tier === 0 ? "#2D2040"
-            : tier === 1 ? "#7A5800"
-            : tier === 2 ? "#BF5000"
-            : "#BF360C";
-          const bubbleMessage = tier === 0 ? getDailyMessage()
-            : tier === 1 ? `${cm.name} is feeling a little tired today 😴`
-            : tier === 2 ? `${cm.name} is getting hungry — tap the basket 🧺`
-            : `${cm.name} is really hungry! Please feed them 🥺`;
-
-          return (
-            <button
-              onClick={()=>setShowMascotRoom(true)}
-              style={{ border:"none", background:"none", cursor:"pointer", transition:"transform 0.15s", display:"block", margin:"0 auto" }}
-              onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
-              onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}
-            >
-              <div style={{
-                width:180, height:180, borderRadius:"50%",
-                background: circleBg,
-                display:"flex", alignItems:"center", justifyContent:"center",
-                margin:"0 auto",
-                boxShadow:`0 8px 32px ${shadowColor}, 0 2px 12px rgba(0,0,0,0.08)`,
-                animation: tier === 3 ? "none" : tier === 2 ? "floatUp 4s ease-in-out infinite" : "floatUp 3s ease-in-out infinite",
-                position:"relative",
-                transition:"background 0.6s ease, box-shadow 0.6s ease",
-              }}>
-                {/* Progressive tilt + sag */}
-                <div style={{
-                  transform: `rotate(${tilt}deg) translateY(${sag}px)`,
-                  transition:"transform 0.6s cubic-bezier(0.34,1.56,0.64,1)",
-                }}>
-                  <GrowthMascot id={cm.id} size={120} stage={currentStage.id} energyTier={tier}/>
-                </div>
-
-                {/* Energy badge — hidden at full energy */}
-                {tier > 0 && (
-                  <div style={{
-                    position:"absolute", bottom:8, left:"50%", transform:"translateX(-50%)",
-                    background: badgeColor,
-                    borderRadius:50, padding:"3px 10px",
-                    display:"flex", alignItems:"center", gap:4,
-                    boxShadow:`0 2px 8px ${badgeColor}55`,
-                    animation: tier === 3 ? "pulse 1.4s ease-in-out infinite" : "none",
-                    whiteSpace:"nowrap",
-                  }}>
-                    <span style={{ fontSize:11 }}>{badgeEmoji}</span>
-                    <p style={{ fontFamily:F.b, fontWeight:700, fontSize:11, color:"#fff", margin:0 }}>
-                      {badgeText}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Speech bubble */}
-              <div style={{
-                background: bubbleBg,
-                borderRadius:18, borderBottomLeftRadius:4,
-                padding:"8px 16px",
-                marginTop:14, marginBottom:8,
-                boxShadow:"0 2px 12px rgba(0,0,0,0.08)",
-                maxWidth:260,
-                border: bubbleBorder,
-                transition:"background 0.5s ease, border 0.5s ease",
-              }}>
-                <p style={{fontFamily:F.b, fontWeight:600, fontSize:13, color: bubbleText, margin:0, textAlign:"center", lineHeight:1.4}}>
-                  {bubbleMessage}
-                </p>
-              </div>
-
-              {/* Stage / energy pill */}
-              <div style={{
-                display:"inline-flex", alignItems:"center", gap:6,
-                background: pillColor,
-                borderRadius:50, padding:"5px 16px",
-                transition:"background 0.5s ease",
-              }}>
-                <span style={{ fontSize:14 }}>{pillEmoji}</span>
-                <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:"#fff", margin:0 }}>
-                  {tier === 0
-                    ? `${currentStage.name} · ${growthScore} seeds · Tap to visit`
-                    : `${energy}% energy · Tap to visit`}
-                </p>
-              </div>
-            </button>
-          );
-        })()}
+          {/* Stage / energy pill */}
+          <div style={{
+            display:"inline-flex", alignItems:"center", gap:6,
+            background: pillBg, borderRadius:50, padding:"5px 16px",
+            transition:"background 0.5s ease",
+          }}>
+            <span style={{ fontSize:14 }}>🌱</span>
+            <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:"#fff", margin:0 }}>
+              {pillLabel}
+            </p>
+          </div>
+        </button>
       </div>
 
       {/* Daily missions */}
