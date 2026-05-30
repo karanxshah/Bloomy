@@ -73,31 +73,43 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0, energyTier = 0 }) =>
   const h = size * 1.4;
 
   /* ── Expression helpers ── */
-  /* BodyMouth: lx/rx = left/right x of mouth, my = vertical centre
-     Smile = control point above (my - offset), frown = below (my + offset) */
+  /* BodyMouth: smile = control point BELOW (larger y), frown = ABOVE. */
   const BodyMouth = ({ lx, rx, my, stroke = "#333" }) => {
     const mx = (lx + rx) / 2;
-    const hw = (rx - lx) / 2; // half-width
+    const hw = (rx - lx) / 2;
     if (energyTier === 0) {
-      return <path d={`M ${lx} ${my + hw*0.25} Q ${mx} ${my - hw*0.55} ${rx} ${my + hw*0.25}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
+      return <path d={`M ${lx} ${my - hw*0.22} Q ${mx} ${my + hw*0.55} ${rx} ${my - hw*0.22}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
     } else if (energyTier === 1) {
-      return <path d={`M ${lx} ${my + hw*0.12} Q ${mx} ${my - hw*0.25} ${rx} ${my + hw*0.12}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+      return <path d={`M ${lx} ${my - hw*0.12} Q ${mx} ${my + hw*0.28} ${rx} ${my - hw*0.12}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
     } else if (energyTier === 2) {
-      return <path d={`M ${lx} ${my - hw*0.1} Q ${mx} ${my + hw*0.3} ${rx} ${my - hw*0.1}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+      return <path d={`M ${lx} ${my + hw*0.06} Q ${mx} ${my - hw*0.18} ${rx} ${my + hw*0.06}`} stroke={stroke} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
     } else {
-      return <path d={`M ${lx} ${my - hw*0.2} Q ${mx} ${my + hw*0.55} ${rx} ${my - hw*0.2}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
+      return <path d={`M ${lx} ${my + hw*0.2} Q ${mx} ${my - hw*0.55} ${rx} ${my + hw*0.2}`} stroke={stroke} strokeWidth="2.4" fill="none" strokeLinecap="round"/>;
     }
   };
 
-  /* DroopyLids: half-ellipse over each eye, only at tiers 2–3.
-     Kept subtle — just enough to read as tired, not cartoonishly broken. */
+  /* Tired/sad overlay drawn on top of each mascot's eyes.
+     tier 2 → heavy lids;  tier 3 → heavier lids + worried brows + tear. */
   const DroopyLids = ({ lx, rx, ey, eyeR, fill }) => {
     if (energyTier < 2) return null;
-    const lidH = energyTier === 3 ? eyeR * 0.55 : eyeR * 0.35;
+    const lidH = energyTier === 3 ? eyeR * 0.6 : eyeR * 0.38;
     return (
       <>
-        <ellipse cx={lx} cy={ey - eyeR * 0.3} rx={eyeR * 1.02} ry={lidH} fill={fill}/>
-        <ellipse cx={rx} cy={ey - eyeR * 0.3} rx={eyeR * 1.02} ry={lidH} fill={fill}/>
+        {/* heavy upper lids */}
+        <ellipse cx={lx} cy={ey - eyeR * 0.32} rx={eyeR * 1.04} ry={lidH} fill={fill}/>
+        <ellipse cx={rx} cy={ey - eyeR * 0.32} rx={eyeR * 1.04} ry={lidH} fill={fill}/>
+        {/* lid edge lines */}
+        <line x1={lx - eyeR} y1={ey - eyeR * 0.05} x2={lx + eyeR} y2={ey - eyeR * 0.05} stroke="#333" strokeWidth={eyeR * 0.2} strokeLinecap="round"/>
+        <line x1={rx - eyeR} y1={ey - eyeR * 0.05} x2={rx + eyeR} y2={ey - eyeR * 0.05} stroke="#333" strokeWidth={eyeR * 0.2} strokeLinecap="round"/>
+        {energyTier === 3 && (
+          <>
+            {/* worried brows — inner ends raised */}
+            <path d={`M ${lx - eyeR*1.2} ${ey - eyeR*1.5} Q ${lx} ${ey - eyeR*2.1} ${lx + eyeR*1.2} ${ey - eyeR*2.4}`} stroke="#333" strokeWidth={eyeR*0.22} fill="none" strokeLinecap="round"/>
+            <path d={`M ${rx + eyeR*1.2} ${ey - eyeR*1.5} Q ${rx} ${ey - eyeR*2.1} ${rx - eyeR*1.2} ${ey - eyeR*2.4}`} stroke="#333" strokeWidth={eyeR*0.22} fill="none" strokeLinecap="round"/>
+            {/* tear under right eye */}
+            <path d={`M ${rx} ${ey + eyeR*0.9} q ${-eyeR*0.32} ${eyeR*0.55} 0 ${eyeR*0.95} q ${eyeR*0.32} ${-eyeR*0.4} 0 ${-eyeR*0.95} Z`} fill="#4FC3F7"/>
+          </>
+        )}
       </>
     );
   };

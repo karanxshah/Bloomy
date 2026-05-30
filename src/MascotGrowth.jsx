@@ -64,23 +64,102 @@ export const GrowthMascot = ({ id, size = 64, stage = 0, energyTier = 0 }) => {
   const s = size;
   const vb = "0 0 80 80";
 
-  /* Mouth paths — cx/cy is the horizontal centre of the mouth zone.
-     All paths are symmetric around cx. Control point is above endpoints
-     for a smile (cy - offset) and below for a frown (cy + offset).       */
-  const Mouth = ({ cx, cy, color = "#333" }) => {
-    const r = 7; // half-width of mouth
+  /* ──────────────────────────────────────────────
+     EXPRESSION SYSTEM
+     energyTier: 0 = happy (full), 1 = content,
+                 2 = tired, 3 = sad/hungry (empty)
+     Eyes, brows and mouth all change together so the
+     face reads as one coherent emotion at every level.
+  ────────────────────────────────────────────── */
+
+  /* Eyes — pass each eye centre, sclera radius, and the colour behind the
+     eye (used to draw eyelids). owl=true tunes proportions for big eyes.  */
+  const Eyes = ({ lx, rx, ey, sr, behind, iris, irisR, owl }) => {
+    const pcol = iris || "#1a1a2e";
+    const pr   = iris ? irisR : sr * 0.5;
+    const hl   = pr * 0.42 + 0.3;
+    const browW = owl ? sr * 0.7 : sr * 1.15;
+    const browTop = owl ? ey - sr + 1 : ey - sr - 0.5; // keep owl brows clear of ear tufts
+
     if (energyTier === 0) {
-      // Big smile — control point well above
-      return <path d={`M ${cx-r} ${cy+2} Q ${cx} ${cy-6} ${cx+r} ${cy+2}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+      // HAPPY — wide bright eyes, big sparkle
+      return (
+        <g>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={lx} cy={ey + 0.4} r={pr} fill={pcol}/>
+          <circle cx={rx} cy={ey + 0.4} r={pr} fill={pcol}/>
+          <circle cx={lx + pr * 0.45} cy={ey - pr * 0.5} r={hl + 0.4} fill="#fff"/>
+          <circle cx={rx + pr * 0.45} cy={ey - pr * 0.5} r={hl + 0.4} fill="#fff"/>
+        </g>
+      );
+    }
+    if (energyTier === 1) {
+      // CONTENT — calm open eyes, smaller highlight
+      return (
+        <g>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={lx} cy={ey + 0.4} r={pr} fill={pcol}/>
+          <circle cx={rx} cy={ey + 0.4} r={pr} fill={pcol}/>
+          <circle cx={lx + pr * 0.45} cy={ey - pr * 0.5} r={hl} fill="#fff"/>
+          <circle cx={rx + pr * 0.45} cy={ey - pr * 0.5} r={hl} fill="#fff"/>
+        </g>
+      );
+    }
+    if (energyTier === 2) {
+      // TIRED — heavy upper eyelids in the skin/feather colour, pupils low
+      const lidDrop = owl ? sr * 0.55 : 0.4; // how far down the lid covers
+      return (
+        <g>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={lx} cy={ey + sr * 0.42} r={pr * (owl ? 0.85 : 1)} fill={pcol}/>
+          <circle cx={rx} cy={ey + sr * 0.42} r={pr * (owl ? 0.85 : 1)} fill={pcol}/>
+          {/* eyelid */}
+          <path d={`M ${lx - sr - 0.6} ${ey + lidDrop} A ${sr + 0.6} ${sr + 0.6} 0 0 1 ${lx + sr + 0.6} ${ey + lidDrop} L ${lx + sr + 0.6} ${ey - sr - 1.5} L ${lx - sr - 0.6} ${ey - sr - 1.5} Z`} fill={behind}/>
+          <path d={`M ${rx - sr - 0.6} ${ey + lidDrop} A ${sr + 0.6} ${sr + 0.6} 0 0 1 ${rx + sr + 0.6} ${ey + lidDrop} L ${rx + sr + 0.6} ${ey - sr - 1.5} L ${rx - sr - 0.6} ${ey - sr - 1.5} Z`} fill={behind}/>
+          {/* lid edge */}
+          <path d={`M ${lx - sr} ${ey + lidDrop} A ${sr} ${sr} 0 0 1 ${lx + sr} ${ey + lidDrop}`} stroke="#333" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
+          <path d={`M ${rx - sr} ${ey + lidDrop} A ${sr} ${sr} 0 0 1 ${rx + sr} ${ey + lidDrop}`} stroke="#333" strokeWidth="1.3" fill="none" strokeLinecap="round"/>
+        </g>
+      );
+    }
+    // TIER 3 — SAD/HUNGRY: smaller downcast eyes, worried brows, tear
+    const esr = owl ? sr * 0.62 : sr * 0.82;
+    const epr = owl ? pr * 0.7 : pr * 0.92;
+    return (
+      <g>
+        <circle cx={lx} cy={ey + 1} r={esr} fill="#fff"/>
+        <circle cx={rx} cy={ey + 1} r={esr} fill="#fff"/>
+        <circle cx={lx} cy={ey + 1 + esr * 0.55} r={epr} fill={pcol}/>
+        <circle cx={rx} cy={ey + 1 + esr * 0.55} r={epr} fill={pcol}/>
+        {/* worried brows — inner ends raised (classic sad/pleading) */}
+        <path d={`M ${lx - browW} ${browTop} Q ${lx} ${browTop - 2.5} ${lx + browW} ${browTop - 3.5}`} stroke="#333" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d={`M ${rx + browW} ${browTop} Q ${rx} ${browTop - 2.5} ${rx - browW} ${browTop - 3.5}`} stroke="#333" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        {/* tear under the right eye */}
+        <path d={`M ${rx} ${ey + esr + 1} q -1.7 2.6 0 4.4 q 1.7 -1.8 0 -4.4 Z`} fill="#4FC3F7"/>
+      </g>
+    );
+  };
+
+  /* Mouth — symmetric around cx. In SVG (y grows downward) a smile is a
+     U: corners up (smaller y), middle down (larger y) → control point BELOW.
+     A frown is the reverse → control point ABOVE.                          */
+  const Mouth = ({ cx, cy, color = "#333" }) => {
+    const r = 7;
+    if (energyTier === 0) {
+      // Big happy smile
+      return <path d={`M ${cx-r} ${cy-2} Q ${cx} ${cy+6} ${cx+r} ${cy-2}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
     } else if (energyTier === 1) {
-      // Small smile — shallow curve
-      return <path d={`M ${cx-r} ${cy+1} Q ${cx} ${cy-3} ${cx+r} ${cy+1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
+      // Gentle smile
+      return <path d={`M ${cx-r} ${cy-1} Q ${cx} ${cy+3} ${cx+r} ${cy-1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
     } else if (energyTier === 2) {
-      // Slight frown — control point gently below
-      return <path d={`M ${cx-r} ${cy-1} Q ${cx} ${cy+4} ${cx+r} ${cy-1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
+      // Slight frown (tired)
+      return <path d={`M ${cx-r} ${cy+0.5} Q ${cx} ${cy-1.5} ${cx+r} ${cy+0.5}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"/>;
     } else {
-      // Sad frown — control point well below
-      return <path d={`M ${cx-r} ${cy-2} Q ${cx} ${cy+7} ${cx+r} ${cy-2}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+      // Deep sad frown
+      return <path d={`M ${cx-r} ${cy+2} Q ${cx} ${cy-6} ${cx+r} ${cy+2}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
     }
   };
 
@@ -90,63 +169,51 @@ export const GrowthMascot = ({ id, size = 64, stage = 0, energyTier = 0 }) => {
       <polygon points="13,18 26,44 38,24" fill="#FF7043"/>
       <polygon points="67,18 54,44 42,24" fill="#FF7043"/>
       <ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/>
-      <circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/>
-      <circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/>
-      <circle cx="32" cy="41" r="1" fill="#fff"/><circle cx="52" cy="41" r="1" fill="#fff"/>
+      <Eyes lx={30} rx={50} ey={41} sr={5} behind="#FF8A65"/>
       <ellipse cx="40" cy="53" rx="5" ry="3.5" fill="#EF5350"/>
-      <Mouth cx={40} cy={57} color="#333"/>
+      <Mouth cx={40} cy={58} color="#333"/>
     </>,
     bunny: <>
       <ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
       <ellipse cx="53" cy="20" rx="7" ry="17" fill="#F8BBD0"/>
       <ellipse cx="40" cy="50" rx="26" ry="22" fill="#FCE4EC"/>
       <ellipse cx="40" cy="55" rx="14" ry="10" fill="#F8BBD0"/>
-      <circle cx="30" cy="46" r="5" fill="#fff"/><circle cx="50" cy="46" r="5" fill="#fff"/>
-      <circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/>
-      <circle cx="32" cy="46" r="1" fill="#fff"/><circle cx="52" cy="46" r="1" fill="#fff"/>
+      <Eyes lx={30} rx={50} ey={46} sr={5} behind="#FCE4EC"/>
       <ellipse cx="40" cy="57" rx="5" ry="3" fill="#F48FB1"/>
-      <Mouth cx={40} cy={61} color="#333"/>
+      <Mouth cx={40} cy={62} color="#333"/>
     </>,
     bear: <>
       <circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/>
       <ellipse cx="40" cy="50" rx="27" ry="23" fill="#8D6E63"/>
       <ellipse cx="40" cy="56" rx="16" ry="11" fill="#BCAAA4"/>
-      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
+      <Eyes lx={29} rx={51} ey={45} sr={5.5} behind="#8D6E63"/>
       <ellipse cx="40" cy="58" rx="5" ry="3.5" fill="#795548"/>
-      <Mouth cx={40} cy={62} color="#333"/>
+      <Mouth cx={40} cy={63} color="#333"/>
     </>,
     owl: <>
       <ellipse cx="40" cy="48" rx="26" ry="26" fill="#7E57C2"/>
       <ellipse cx="40" cy="52" rx="18" ry="18" fill="#B39DDB"/>
       <ellipse cx="22" cy="24" rx="7" ry="9" fill="#7E57C2"/>
       <ellipse cx="58" cy="24" rx="7" ry="9" fill="#7E57C2"/>
-      <circle cx="29" cy="43" r="9" fill="#fff"/><circle cx="51" cy="43" r="9" fill="#fff"/>
-      <circle cx="29" cy="44" r="5" fill="#4527A0"/><circle cx="51" cy="44" r="5" fill="#4527A0"/>
-      <circle cx="30" cy="43" r="2" fill="#fff"/><circle cx="52" cy="43" r="2" fill="#fff"/>
+      <Eyes lx={29} rx={51} ey={43} sr={9} behind="#7E57C2" iris="#4527A0" irisR={5} owl/>
       <polygon points="40,51 37,56 43,56" fill="#FFA726"/>
-      <Mouth cx={40} cy={60} color="#333"/>
+      <Mouth cx={40} cy={61} color="#333"/>
     </>,
     cat: <>
       <polygon points="17,30 12,10 30,26" fill="#26A69A"/>
       <polygon points="63,30 68,10 50,26" fill="#26A69A"/>
       <ellipse cx="40" cy="50" rx="26" ry="23" fill="#4DB6AC"/>
       <ellipse cx="40" cy="55" rx="15" ry="11" fill="#B2DFDB"/>
-      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
+      <Eyes lx={29} rx={51} ey={45} sr={5.5} behind="#4DB6AC"/>
       <ellipse cx="40" cy="57" rx="5" ry="3" fill="#FF8A80"/>
-      <Mouth cx={40} cy={61} color="#333"/>
+      <Mouth cx={40} cy={62} color="#333"/>
     </>,
     dog: <>
       <ellipse cx="16" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(-20 16 36)"/>
       <ellipse cx="64" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(20 64 36)"/>
       <ellipse cx="40" cy="50" rx="27" ry="23" fill="#FFB74D"/>
       <ellipse cx="40" cy="56" rx="17" ry="12" fill="#FFE0B2"/>
-      <circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/>
-      <circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/>
-      <circle cx="31" cy="45" r="1.1" fill="#fff"/><circle cx="53" cy="45" r="1.1" fill="#fff"/>
+      <Eyes lx={29} rx={51} ey={45} sr={5.5} behind="#FFB74D"/>
       <ellipse cx="40" cy="58" rx="6" ry="4" fill="#FF7043"/>
       <Mouth cx={40} cy={63} color="#333"/>
     </>,
