@@ -1,9 +1,4 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const SUPABASE_URL = "https://ymfvezvezzmckcdwjvzm.supabase.co";
-const SUPABASE_KEY = "sb_publishable_5CR_k4TEBUYXhqm3AuN7bQ_Csiafdcs";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ── Font loader — same as main app ── */
 const FontLoader = () => (
@@ -464,7 +459,7 @@ const MoodHeatmap = ({ moodLog }) => {
   );
 };
 
-export default function ParentInsights({ session, children, onClose }) {
+export default function ParentInsights({ supabase, session, children, onClose }) {
   const [pinState,setPinState]           = useState("check");
   const [savedPin,setSavedPin]           = useState(null);
   const [selectedChild,setSelectedChild] = useState(null);

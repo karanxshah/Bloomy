@@ -298,7 +298,14 @@ export default function BloomyApp() {
         setActiveChild(updatedChild);
         setChildren(prev=>prev.map(c=>c.id===activeChild.id?updatedChild:c));
         showSeedPopup(1);
-        if (newCount%3===0) completeMission("affirm");
+        // Only complete the affirm mission the first time they hit 3 today
+        const todayStr2 = new Date().toISOString().split("T")[0];
+        const affirmMissionKey = `bloomy_affirm_mission_${activeChild.id}_${todayStr2}`;
+        const alreadyCompletedToday = localStorage.getItem(affirmMissionKey);
+        if (newCount % 3 === 0 && !alreadyCompletedToday) {
+          localStorage.setItem(affirmMissionKey, "1");
+          completeMission("affirm");
+        }
         checkGrowthStageUp(moodLog, journals, updatedChild);
       }
     }
@@ -477,7 +484,7 @@ export default function BloomyApp() {
       {id:"journal",   label:"Write a journal entry",        seeds:2, icon:"book",  done:todayJournals.length>0},
       /* FIX: breathe completion now checks a dedicated field, not mood logs */
       {id:"breathe",   label:"Complete a breathing session", seeds:2, icon:"wind",  done:(child.last_breath_date===todayStr)},
-      {id:"affirm",    label:"Read 3 affirmations",          seeds:1, icon:"star",  done:(child.affirm_count||0)%3===0&&(child.affirm_count||0)>0},
+      {id:"affirm",    label:"Read 3 affirmations",          seeds:1, icon:"star",  done: !!localStorage.getItem(`bloomy_affirm_mission_${child.id}_${todayStr}`)},
       {id:"gratitude", label:"Add a gratitude",              seeds:1, icon:"heart", done:todayGratitudes.length>0},
     ];
     const idx1 = seedNum%all.length;
@@ -712,7 +719,7 @@ export default function BloomyApp() {
 
   /* ── Parent Insights ── */
   if (showInsights) return (
-    <ParentInsights session={session} children={children} onClose={()=>setShowInsights(false)}/>
+    <ParentInsights supabase={supabase} session={session} children={children} onClose={()=>setShowInsights(false)}/>
   );
 
   /* ── Parent Dashboard ── */

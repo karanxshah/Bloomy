@@ -99,7 +99,7 @@ export function JournalTab() {
           <p style={{ fontFamily:F.h, fontWeight:800, fontSize:20, color:"#2E7D32", marginBottom:4 }}>Amazing job writing today!</p>
           <p style={{ color:"#66BB6A", fontSize:14, fontWeight:500 }}>{cm.name} is so proud of you.</p>
           <Btn small color="#fff" textColor="#43A047" style={{ marginTop:12, border:"1.5px solid #A5D6A7" }}
-            onClick={()=>{setJournalText("");setJournalSaved(false);setPromptIdx(i=>(i+1)%JOURNAL_PROMPTS.length);}}>
+            onClick={()=>{setJournalText("");setJournalSaved(false);setPromptIdx(i=>(i+1)%JOURNAL_PROMPTS.length);setExpanded(null);}}>
             Write another
           </Btn>
         </Card>

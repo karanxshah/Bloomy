@@ -5,7 +5,7 @@ import { today } from "../constants.js";
 
 export default function GratitudeTab() {
   const {
-    theme, gratitudeText, setGratitudeText, gratitudeSaved,
+    theme, gratitudeText, setGratitudeText, gratitudeSaved, setGratitudeSaved,
     gratitudes, saveGratitude, darkMode,
   } = useApp();
 
