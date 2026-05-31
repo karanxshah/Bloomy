@@ -510,14 +510,6 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
              : activeDays>=1 ? { label:"Could use love 💜", color:"#CE93D8" }
              :                 { label:"Missing you 🥺",   color:"#EF5350" };
 
-  const tabBase = {
-    flex:1, borderRadius:20, padding:"18px 12px", cursor:"pointer",
-    border:`1.5px solid ${C.border}`, background:"#fff",
-    display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-    gap:8, textAlign:"center", transition:"transform 0.15s",
-    boxShadow:"0 2px 18px rgba(124,77,255,0.08)", position:"relative", overflow:"hidden",
-    minHeight:160,
-  };
 
   return (
     <>
@@ -543,85 +535,112 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
 
       <div style={{display:"flex", gap:12, marginBottom:14}}>
 
-        {/* ── Watering Can Tab ── */}
+        {/* ── Watering Can Tab — solid blue button, just the can SVG ── */}
         <button
           onClick={handleWater}
-          style={{...tabBase, background: watering ? "#E8F5E9" : "#fff",
-            borderColor: watering ? "#81C784" : C.border }}
+          style={{
+            flex:1, borderRadius:20, padding:"22px 12px", cursor:"pointer",
+            border:"none", textAlign:"center", transition:"transform 0.15s",
+            background: watering
+              ? "linear-gradient(135deg,#29B6F6,#0288D1)"
+              : "linear-gradient(135deg,#4FC3F7,#039BE5)",
+            boxShadow: watering
+              ? "0 6px 20px rgba(2,136,209,0.5)"
+              : "0 4px 16px rgba(79,195,247,0.4)",
+            minHeight:160, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", gap:10,
+            position:"relative", overflow:"hidden",
+          }}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
 
-          {/* Animation stage — mascot reacts, drops fall */}
-          <div style={{position:"relative", width:"100%", height:90, overflow:"hidden"}}>
-
-            {/* Mascot */}
-            <div style={{
-              position:"absolute", bottom:0, left:"50%", transform:"translateX(-50%)",
-              animation: mascotBounce ? "mascotPop 0.6s ease" : "none",
+          {/* Ripple water drops when tapped */}
+          {drops.map(d=>(
+            <div key={d.id} style={{
+              position:"absolute", top:"30%", left: d.x+"%",
+              animation:`dropFall 0.55s ease ${d.delay}ms forwards`,
+              pointerEvents:"none",
             }}>
-              <FullBodyMascot id={mascotId} size={70} stage={stageId} energyTier={activityTier}/>
+              <svg width="8" height="14" viewBox="0 0 8 14">
+                <path d="M4 0 Q8 6 4 13 Q0 6 4 0Z" fill="rgba(255,255,255,0.7)"/>
+              </svg>
             </div>
+          ))}
 
-            {/* Water drops */}
-            {drops.map(d=>(
-              <div key={d.id} style={{
-                position:"absolute", bottom:20, left: d.x+"%",
-                animation:`dropFall 0.55s ease ${d.delay}ms forwards`,
-                pointerEvents:"none",
-              }}>
-                <svg width="8" height="14" viewBox="0 0 8 14">
-                  <path d="M4 0 Q8 6 4 13 Q0 6 4 0Z" fill="#4FC3F7" opacity="0.85"/>
-                </svg>
-              </div>
-            ))}
+          {/* Floating message */}
+          {msg && (
+            <div style={{
+              position:"absolute", top:10, left:"50%", transform:"translateX(-50%)",
+              background:"rgba(255,255,255,0.25)", color:"#fff", borderRadius:50,
+              padding:"4px 14px", whiteSpace:"nowrap",
+              fontFamily:F.b, fontWeight:700, fontSize:12,
+              animation:"msgPop 1.4s ease forwards", pointerEvents:"none",
+              backdropFilter:"blur(4px)",
+            }}>{msg}</div>
+          )}
 
-            {/* Floating message */}
-            {msg && (
-              <div style={{
-                position:"absolute", top:4, left:"50%", transform:"translateX(-50%)",
-                background:C.purple, color:"#fff", borderRadius:50,
-                padding:"4px 12px", whiteSpace:"nowrap",
-                fontFamily:F.b, fontWeight:700, fontSize:12,
-                animation:"msgPop 1.4s ease forwards", pointerEvents:"none",
-                zIndex:10,
-              }}>{msg}</div>
-            )}
-          </div>
+          {/* Watering can SVG in white/light-blue — app colour scheme */}
+          <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
+            <ellipse cx="22" cy="36" rx="16" ry="12" fill="rgba(255,255,255,0.92)" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
+            <path d="M 6 36 Q 4 52 10 54 L 34 54 Q 40 52 38 36" fill="rgba(255,255,255,0.75)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8"/>
+            <path d="M 38 32 Q 52 26 58 22" stroke="rgba(255,255,255,0.9)" strokeWidth="3.5" strokeLinecap="round"/>
+            <circle cx="58" cy="21" r="4" fill="#B3E5FC" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5"/>
+            <path d="M 22 24 Q 16 10 22 4" stroke="rgba(255,255,255,0.85)" strokeWidth="3" strokeLinecap="round"/>
+            <ellipse cx="22" cy="4" rx="5" ry="3" fill="rgba(255,255,255,0.8)"/>
+            {/* spout holes */}
+            <circle cx="54" cy="26" r="1.5" fill="#B3E5FC" opacity="0.9"/>
+            <circle cx="57" cy="24" r="1.5" fill="#B3E5FC" opacity="0.9"/>
+            <circle cx="60" cy="23" r="1.5" fill="#B3E5FC" opacity="0.9"/>
+          </svg>
 
-          {/* Watering can image — static, no sweep animation */}
-          <WateringCanSVG size={40}/>
+          <p style={{fontFamily:F.h, fontWeight:800, fontSize:14, color:"#fff", margin:0}}>
+            Water {mascotName}
+          </p>
 
-          {/* Status pill */}
-          <div style={{display:"flex",alignItems:"center",gap:5,
-            background:`${vibe.color}18`,borderRadius:50,padding:"3px 10px"}}>
-            <div style={{width:7,height:7,borderRadius:"50%",background:vibe.color}}/>
-            <span style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:vibe.color}}>
+          {/* Activity vibe pill */}
+          <div style={{display:"flex", alignItems:"center", gap:5,
+            background:"rgba(255,255,255,0.2)", borderRadius:50, padding:"3px 10px"}}>
+            <div style={{width:7, height:7, borderRadius:"50%", background:"#fff"}}/>
+            <span style={{fontFamily:F.b, fontWeight:700, fontSize:11, color:"#fff"}}>
               {vibe.label}
             </span>
           </div>
-          <p style={{fontFamily:F.h,fontWeight:800,fontSize:14,color:C.text,margin:0}}>
-            Water {mascotName}
-          </p>
         </button>
 
-        {/* ── Shop Tab ── */}
+        {/* ── Shop Tab — static MascotFace + shopping bag ── */}
         <button
           onClick={()=>setShowShop(true)}
-          style={{...tabBase}}
+          style={{
+            flex:1, borderRadius:20, padding:"22px 12px", cursor:"pointer",
+            border:`1.5px solid ${C.border}`, background:"#fff",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:10, textAlign:"center",
+            transition:"transform 0.15s", minHeight:160,
+            boxShadow:"0 2px 18px rgba(124,77,255,0.08)",
+          }}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
 
-          {/* Mascot face + shopping bag overlay */}
-          <div style={{position:"relative", display:"inline-block", marginBottom:4}}>
-            <FullBodyMascot id={mascotId} size={80} stage={stageId} energyTier={activityTier}/>
+          {/* Static MascotFace — always happy tier 0, simple face SVG */}
+          <div style={{position:"relative", display:"inline-block"}}>
+            {({
+              fox:   <svg width="60" height="60" viewBox="0 0 80 80"><ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/><polygon points="13,18 26,44 38,24" fill="#FF7043"/><polygon points="67,18 54,44 42,24" fill="#FF7043"/><ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/><circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/><circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="32" cy="40.5" r="1.2" fill="#fff"/><circle cx="52" cy="40.5" r="1.2" fill="#fff"/></svg>,
+              bunny: <svg width="60" height="60" viewBox="0 0 80 80"><ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/><ellipse cx="53" cy="20" rx="7" ry="17" fill="#F8BBD0"/><ellipse cx="40" cy="50" rx="26" ry="22" fill="#FCE4EC"/><circle cx="30" cy="46" r="5" fill="#fff"/><circle cx="50" cy="46" r="5" fill="#fff"/><circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="32" cy="45.5" r="1.2" fill="#fff"/><circle cx="52" cy="45.5" r="1.2" fill="#fff"/></svg>,
+              bear:  <svg width="60" height="60" viewBox="0 0 80 80"><circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/><ellipse cx="40" cy="50" rx="27" ry="23" fill="#8D6E63"/><circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/><circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="31" cy="44.5" r="1.3" fill="#fff"/><circle cx="53" cy="44.5" r="1.3" fill="#fff"/></svg>,
+              owl:   <svg width="60" height="60" viewBox="0 0 80 80"><ellipse cx="40" cy="48" rx="26" ry="26" fill="#7E57C2"/><ellipse cx="22" cy="24" rx="7" ry="9" fill="#7E57C2"/><ellipse cx="58" cy="24" rx="7" ry="9" fill="#7E57C2"/><circle cx="29" cy="43" r="9" fill="#D1C4E9"/><circle cx="51" cy="43" r="9" fill="#D1C4E9"/><circle cx="29" cy="44" r="5" fill="#4527A0"/><circle cx="51" cy="44" r="5" fill="#4527A0"/><circle cx="30" cy="42.5" r="2" fill="#fff"/><circle cx="52" cy="42.5" r="2" fill="#fff"/></svg>,
+              cat:   <svg width="60" height="60" viewBox="0 0 80 80"><polygon points="17,30 12,10 30,26" fill="#26A69A"/><polygon points="63,30 68,10 50,26" fill="#26A69A"/><ellipse cx="40" cy="50" rx="26" ry="23" fill="#4DB6AC"/><circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/><circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="31" cy="44.5" r="1.3" fill="#fff"/><circle cx="53" cy="44.5" r="1.3" fill="#fff"/></svg>,
+              dog:   <svg width="60" height="60" viewBox="0 0 80 80"><ellipse cx="16" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(-20 16 36)"/><ellipse cx="64" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(20 64 36)"/><ellipse cx="40" cy="50" rx="27" ry="23" fill="#FFB74D"/><circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/><circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="31" cy="44.5" r="1.3" fill="#fff"/><circle cx="53" cy="44.5" r="1.3" fill="#fff"/></svg>,
+            })[mascotId] || null}
+
+            {/* Shopping bag badge */}
             <div style={{
               position:"absolute", bottom:-4, right:-8,
               background:`linear-gradient(135deg,${C.purple},#9C6FFF)`,
-              borderRadius:"50%", width:28, height:28,
+              borderRadius:"50%", width:26, height:26,
               display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow:"0 2px 8px rgba(124,77,255,0.4)",
+              boxShadow:"0 2px 8px rgba(124,77,255,0.45)",
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
                 <line x1="3" y1="6" x2="21" y2="6"/>
@@ -630,14 +649,14 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
             </div>
           </div>
 
-          <div style={{display:"flex",alignItems:"center",gap:5,
-            background:`${C.purple}15`,borderRadius:50,padding:"3px 10px"}}>
+          <div style={{display:"flex", alignItems:"center", gap:5,
+            background:`${C.purple}15`, borderRadius:50, padding:"3px 10px"}}>
             <span style={{fontSize:12}}>🌱</span>
-            <span style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:C.purple}}>
+            <span style={{fontFamily:F.b, fontWeight:700, fontSize:11, color:C.purple}}>
               {score} seeds
             </span>
           </div>
-          <p style={{fontFamily:F.h,fontWeight:800,fontSize:14,color:C.text,margin:0}}>
+          <p style={{fontFamily:F.h, fontWeight:800, fontSize:14, color:C.text, margin:0}}>
             Mascot Shop
           </p>
         </button>
