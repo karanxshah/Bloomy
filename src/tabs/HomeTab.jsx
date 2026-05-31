@@ -4,6 +4,7 @@ import { Card, Icon, MoodFace } from "../components/UI.jsx";
 import { F, MOOD_BG, MOOD_COLORS, STAGE_BGSANIM, getTimeGreeting, getSortedAffirmations } from "../constants.js";
 import { today } from "../constants.js";
 import { GrowthMascot, GardenScene, GrowthProgressBar } from "../MascotGrowth.jsx";
+import { getActivityTier } from "../MascotRoom.jsx";
 
 /* ── Feelings vocabulary word bank ───────────────────────────────── */
 const FEELINGS_WORDS = [
@@ -65,10 +66,12 @@ export default function HomeTab() {
     todayEntry, cm, currentStage, growthScore, streak, streakShield,
     dailyMissions, affirmIdx, lastMood, setShowMascotRoom, darkMode,
     todayJournalDone, todayGratitudeDone, todayBreathDone,
+    moodLog,
   } = useApp();
 
   const C = theme;
   const todaysWord = getTodaysWord();
+  const activityTier = getActivityTier(moodLog);
   const [wordExpanded, setWordExpanded] = useState(false);
 
   return (
@@ -96,7 +99,7 @@ export default function HomeTab() {
             boxShadow:`0 8px 32px ${cm.color}55, 0 2px 12px rgba(0,0,0,0.08)`,
             animation:"floatUp 3s ease-in-out infinite",
           }}>
-            <GrowthMascot id={cm.id} size={120} stage={currentStage.id}/>
+            <GrowthMascot id={cm.id} size={120} stage={currentStage.id} energyTier={activityTier}/>
           </div>
           <div style={{
             background:"rgba(255,255,255,0.92)", borderRadius:18,

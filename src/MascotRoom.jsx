@@ -1,6 +1,25 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { GrowthMascot, GardenScene, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
 
+/* ── Activity-based expression tier ─────────────────────────────────
+   Replaces the old energy bar. Driven by days active in the last 7.
+   0 = thriving (5-7 days) → happy
+   1 = good     (3-4 days) → content
+   2 = low      (1-2 days) → tired
+   3 = missing  (0 days)   → sad                                     */
+export const getActivityTier = (moodLog) => {
+  if (!moodLog || moodLog.length === 0) return 3;
+  const sevenAgo = new Date();
+  sevenAgo.setDate(sevenAgo.getDate() - 7);
+  const activeDays = new Set(
+    moodLog.filter(e => new Date(e.date) >= sevenAgo).map(e => e.date)
+  ).size;
+  if (activeDays >= 5) return 0;
+  if (activeDays >= 3) return 1;
+  if (activeDays >= 1) return 2;
+  return 3;
+};
+
 const C = {
   purple:"#7C4DFF", pink:"#F06292", yellow:"#FFD54F",
   mint:"#4DB6AC", sky:"#4FC3F7", coral:"#FF7043",
@@ -66,377 +85,290 @@ const SPEECH = {
 
 /* ══════════════════════════════════════════════
    FULL BODY MASCOT ILLUSTRATIONS
-   Uses the same Eyes + Mouth expression system
-   as GrowthMascot so faces stay consistent.
 ══════════════════════════════════════════════ */
 export const FullBodyMascot = ({ id, size = 220, stage = 0, energyTier = 0 }) => {
-  const w = size;
-  const h = size * 1.4;
+  const VW = 200, VH = 256;
+  const w = size, h = size * (VH / VW);
 
-  /* ── Expression helpers (scaled to full-body proportions) ── */
+  const SPECS = {
+    fox:   { body:"#FF8A5E", line:"#E0673D", belly:"#FFE0CC", inner:"#F2785080", nose:"#4A3328", iris:"#2C2C40", foot:"#E0673D" },
+    bunny: { body:"#F7C5D6", line:"#E193AC", belly:"#FFEAF1", inner:"#F0A8C080", nose:"#D26A88", iris:"#2C2C40", foot:"#E193AC" },
+    bear:  { body:"#B68A66", line:"#8F6948", belly:"#E3D0B8", inner:"#C9AC8C80", nose:"#4A3328", iris:"#2C2C40", foot:"#8F6948" },
+    owl:   { body:"#9476CC", line:"#6F52A6", belly:"#D6C9EC", inner:"#B7A4DE80", nose:"#FF9E3D", iris:"#2E2150", foot:"#FF9E3D" },
+    cat:   { body:"#56C7BB", line:"#37A498", belly:"#C9ECE7", inner:"#8FD9D080", nose:"#F2887E", iris:"#2C2C40", foot:"#37A498" },
+    dog:   { body:"#FFC069", line:"#E09B41", belly:"#FFE8C7", inner:"#F5CB8E80", nose:"#4A3328", iris:"#2C2C40", foot:"#E09B41" },
+  };
+  const P = SPECS[id] || SPECS.fox;
+  const SW = 3;
 
-  /* Eyes: lx/rx = eye centre x, ey = eye centre y, sr = sclera radius,
-     behind = fill colour used for eyelid masking, iris/irisR for owls.
-     All coords in the 0→w / 0→h space of each mascot SVG.            */
+  /* ── Eyes ── */
   const Eyes = ({ lx, rx, ey, sr, behind, iris, irisR, owl }) => {
-    const pcol = iris || "#1a1a2e";
-    const pr   = iris ? irisR : sr * 0.5;
-    const hl   = pr * 0.42 + 0.5;
-    const browW = owl ? sr * 0.7 : sr * 1.1;
-    const browTop = ey - sr - w * 0.01;
+    const pcol = iris || P.iris;
+    const pr   = iris ? irisR : sr * 0.52;
+    const hl   = pr * 0.4 + 2;
+    const browW = owl ? sr * 0.66 : sr * 1.05;
+    const browTop = owl ? ey - sr + 2 : ey - sr - 3;
+    const clipL = `fbl-${id}-l`, clipR = `fbl-${id}-r`;
 
     if (energyTier === 0) {
       return (
         <g>
-          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
-          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
-          <circle cx={lx} cy={ey + sr * 0.08} r={pr} fill={pcol}/>
-          <circle cx={rx} cy={ey + sr * 0.08} r={pr} fill={pcol}/>
-          <circle cx={lx + pr * 0.45} cy={ey - pr * 0.5} r={hl + 0.5} fill="#fff"/>
-          <circle cx={rx + pr * 0.45} cy={ey - pr * 0.5} r={hl + 0.5} fill="#fff"/>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff" stroke={P.line} strokeWidth={SW*0.5}/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff" stroke={P.line} strokeWidth={SW*0.5}/>
+          <circle cx={lx} cy={ey + sr*0.12} r={pr} fill={pcol}/>
+          <circle cx={rx} cy={ey + sr*0.12} r={pr} fill={pcol}/>
+          <circle cx={lx + pr*0.42} cy={ey - pr*0.5} r={hl} fill="#fff"/>
+          <circle cx={rx + pr*0.42} cy={ey - pr*0.5} r={hl} fill="#fff"/>
         </g>
       );
     }
     if (energyTier === 1) {
       return (
         <g>
-          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
-          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
-          <circle cx={lx} cy={ey + sr * 0.08} r={pr} fill={pcol}/>
-          <circle cx={rx} cy={ey + sr * 0.08} r={pr} fill={pcol}/>
-          <circle cx={lx + pr * 0.45} cy={ey - pr * 0.5} r={hl} fill="#fff"/>
-          <circle cx={rx + pr * 0.45} cy={ey - pr * 0.5} r={hl} fill="#fff"/>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff" stroke={P.line} strokeWidth={SW*0.5}/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff" stroke={P.line} strokeWidth={SW*0.5}/>
+          <circle cx={lx} cy={ey + sr*0.12} r={pr} fill={pcol}/>
+          <circle cx={rx} cy={ey + sr*0.12} r={pr} fill={pcol}/>
+          <circle cx={lx + pr*0.42} cy={ey - pr*0.5} r={hl*0.7} fill="#fff"/>
+          <circle cx={rx + pr*0.42} cy={ey - pr*0.5} r={hl*0.7} fill="#fff"/>
         </g>
       );
     }
     if (energyTier === 2) {
-      const lidDrop = owl ? sr * 0.55 : sr * 0.38;
+      const lidMidY = ey - sr*0.22;
+      const lidSideY = ey + sr*0.2;
+      const cw = sr*0.92;
       return (
         <g>
-          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
-          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
-          <circle cx={lx} cy={ey + sr * 0.4} r={pr * (owl ? 0.85 : 1)} fill={pcol}/>
-          <circle cx={rx} cy={ey + sr * 0.4} r={pr * (owl ? 0.85 : 1)} fill={pcol}/>
-          <path d={`M ${lx-sr-1} ${ey+lidDrop} A ${sr+1} ${sr+1} 0 0 1 ${lx+sr+1} ${ey+lidDrop} L ${lx+sr+1} ${ey-sr-2} L ${lx-sr-1} ${ey-sr-2} Z`} fill={behind}/>
-          <path d={`M ${rx-sr-1} ${ey+lidDrop} A ${sr+1} ${sr+1} 0 0 1 ${rx+sr+1} ${ey+lidDrop} L ${rx+sr+1} ${ey-sr-2} L ${rx-sr-1} ${ey-sr-2} Z`} fill={behind}/>
-          <path d={`M ${lx-sr} ${ey+lidDrop} A ${sr} ${sr} 0 0 1 ${lx+sr} ${ey+lidDrop}`} stroke="#333" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
-          <path d={`M ${rx-sr} ${ey+lidDrop} A ${sr} ${sr} 0 0 1 ${rx+sr} ${ey+lidDrop}`} stroke="#333" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
+          <defs>
+            <clipPath id={clipL}><circle cx={lx} cy={ey} r={sr}/></clipPath>
+            <clipPath id={clipR}><circle cx={rx} cy={ey} r={sr}/></clipPath>
+          </defs>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff" stroke={P.line} strokeWidth={SW*0.5}/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff" stroke={P.line} strokeWidth={SW*0.5}/>
+          <circle cx={lx} cy={ey + sr*0.5} r={pr*0.82} fill={pcol}/>
+          <circle cx={rx} cy={ey + sr*0.5} r={pr*0.82} fill={pcol}/>
+          <g clipPath={`url(#${clipL})`}>
+            <path d={`M ${lx-sr-2} ${lidSideY} Q ${lx} ${lidMidY} ${lx+sr+2} ${lidSideY} L ${lx+sr+2} ${ey-sr-3} L ${lx-sr-2} ${ey-sr-3} Z`} fill={behind}/>
+          </g>
+          <g clipPath={`url(#${clipR})`}>
+            <path d={`M ${rx-sr-2} ${lidSideY} Q ${rx} ${lidMidY} ${rx+sr+2} ${lidSideY} L ${rx+sr+2} ${ey-sr-3} L ${rx-sr-2} ${ey-sr-3} Z`} fill={behind}/>
+          </g>
+          <path d={`M ${lx-cw} ${lidSideY-1} Q ${lx} ${lidMidY-1} ${lx+cw} ${lidSideY-1}`} stroke={P.iris} strokeWidth="2.2" fill="none" strokeLinecap="round"/>
+          <path d={`M ${rx-cw} ${lidSideY-1} Q ${rx} ${lidMidY-1} ${rx+cw} ${lidSideY-1}`} stroke={P.iris} strokeWidth="2.2" fill="none" strokeLinecap="round"/>
         </g>
       );
     }
-    // tier 3 — sad: smaller eyes, worried brows, tear
-    const esr = owl ? sr * 0.62 : sr * 0.82;
-    const epr = owl ? pr * 0.7  : pr * 0.92;
+    const esr = owl ? sr*0.66 : sr*0.8, epr = owl ? pr*0.72 : pr*0.9;
     return (
       <g>
-        <circle cx={lx} cy={ey + sr * 0.15} r={esr} fill="#fff"/>
-        <circle cx={rx} cy={ey + sr * 0.15} r={esr} fill="#fff"/>
-        <circle cx={lx} cy={ey + sr * 0.15 + esr * 0.5} r={epr} fill={pcol}/>
-        <circle cx={rx} cy={ey + sr * 0.15 + esr * 0.5} r={epr} fill={pcol}/>
-        <path d={`M ${lx-browW} ${browTop} Q ${lx} ${browTop - sr*0.4} ${lx+browW} ${browTop - sr*0.55}`} stroke="#333" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-        <path d={`M ${rx+browW} ${browTop} Q ${rx} ${browTop - sr*0.4} ${rx-browW} ${browTop - sr*0.55}`} stroke="#333" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-        <path d={`M ${rx} ${ey+esr+sr*0.2} q ${-sr*0.25} ${sr*0.4} 0 ${sr*0.65} q ${sr*0.25} ${-sr*0.28} 0 ${-sr*0.65} Z`} fill="#4FC3F7"/>
+        <circle cx={lx} cy={ey+2} r={esr} fill="#fff" stroke={P.line} strokeWidth={SW*0.5}/>
+        <circle cx={rx} cy={ey+2} r={esr} fill="#fff" stroke={P.line} strokeWidth={SW*0.5}/>
+        <circle cx={lx} cy={ey+2+esr*0.5} r={epr} fill={pcol}/>
+        <circle cx={rx} cy={ey+2+esr*0.5} r={epr} fill={pcol}/>
+        <circle cx={lx+epr*0.35} cy={ey+2+esr*0.5-epr*0.4} r={epr*0.3} fill="#fff"/>
+        <circle cx={rx+epr*0.35} cy={ey+2+esr*0.5-epr*0.4} r={epr*0.3} fill="#fff"/>
+        <path d={`M ${lx-browW} ${browTop} Q ${lx} ${browTop-5} ${lx+browW} ${browTop-7}`} stroke={P.iris} strokeWidth="2.6" fill="none" strokeLinecap="round"/>
+        <path d={`M ${rx+browW} ${browTop} Q ${rx} ${browTop-5} ${rx-browW} ${browTop-7}`} stroke={P.iris} strokeWidth="2.6" fill="none" strokeLinecap="round"/>
+        <path d={`M ${rx+esr*0.5} ${ey+esr+2} q -3 5 0 8 q 3 -3 0 -8 Z`} fill="#5BC8F5" stroke="#3BA3D8" strokeWidth="0.8"/>
       </g>
     );
   };
 
-  /* Mouth — same logic as GrowthMascot, scaled to body proportions */
-  const Mouth = ({ cx, cy, color = "#333" }) => {
-    const r = w * 0.07;
-    if (energyTier === 0) {
-      return <path d={`M ${cx-r} ${cy - r*0.25} Q ${cx} ${cy + r*0.8} ${cx+r} ${cy - r*0.25}`} stroke={color} strokeWidth="2.5" fill="none" strokeLinecap="round"/>;
-    } else if (energyTier === 1) {
-      return <path d={`M ${cx-r} ${cy - r*0.1} Q ${cx} ${cy + r*0.4} ${cx+r} ${cy - r*0.1}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
-    } else if (energyTier === 2) {
-      return <path d={`M ${cx-r} ${cy + r*0.05} Q ${cx} ${cy - r*0.2} ${cx+r} ${cy + r*0.05}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
-    } else {
-      return <path d={`M ${cx-r} ${cy + r*0.25} Q ${cx} ${cy - r*0.85} ${cx+r} ${cy + r*0.25}`} stroke={color} strokeWidth="2.5" fill="none" strokeLinecap="round"/>;
-    }
+  /* ── Mouth ── */
+  const Mouth = ({ cx, cy }) => {
+    const r = 13;
+    if (energyTier === 0)      return <path d={`M ${cx-r} ${cy-3} Q ${cx} ${cy+11} ${cx+r} ${cy-3}`} stroke={P.iris} strokeWidth="2.8" fill="none" strokeLinecap="round"/>;
+    else if (energyTier === 1) return <path d={`M ${cx-r} ${cy-2} Q ${cx} ${cy+6} ${cx+r} ${cy-2}`} stroke={P.iris} strokeWidth="2.6" fill="none" strokeLinecap="round"/>;
+    else if (energyTier === 2) return <path d={`M ${cx-r*0.8} ${cy+1} Q ${cx} ${cy-3} ${cx+r*0.8} ${cy+1}`} stroke={P.iris} strokeWidth="2.6" fill="none" strokeLinecap="round"/>;
+    else                       return <path d={`M ${cx-r} ${cy+3} Q ${cx} ${cy-10} ${cx+r} ${cy+3}`} stroke={P.iris} strokeWidth="2.8" fill="none" strokeLinecap="round"/>;
   };
 
-  /* Stage accessories */
-  const Scarf = ({ y = 95 }) => (
+  const Cheeks = ({ lx, rx, ly }) => energyTier <= 1 ? (
+    <g opacity="0.5">
+      <ellipse cx={lx} cy={ly} rx="9" ry="6" fill="#FF8FA0"/>
+      <ellipse cx={rx} cy={ly} rx="9" ry="6" fill="#FF8FA0"/>
+    </g>
+  ) : null;
+
+  const Limbs = () => (
     <g>
-      <ellipse cx={w/2} cy={y} rx={w*0.28} ry={h*0.04} fill="#4FC3F7"/>
-      <ellipse cx={w/2} cy={y-4} rx={w*0.28} ry={h*0.035} fill="#29B6F6"/>
-      <ellipse cx={w/2+w*0.18} cy={y+8} rx={w*0.07} ry={h*0.03} fill="#0288D1"/>
-      <ellipse cx={w/2+w*0.18} cy={y+16} rx={w*0.055} ry={h*0.025} fill="#0288D1"/>
+      <ellipse cx="46" cy="178" rx="15" ry="26" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(-16 46 178)"/>
+      <ellipse cx="154" cy="178" rx="15" ry="26" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(16 154 178)"/>
+      <ellipse cx="74" cy="240" rx="22" ry="13" fill={P.foot} stroke={P.line} strokeWidth={SW}/>
+      <ellipse cx="126" cy="240" rx="22" ry="13" fill={P.foot} stroke={P.line} strokeWidth={SW}/>
     </g>
   );
 
-  const FlowerCrown = ({ y = 18 }) => (
+  const Body = () => (
     <g>
-      {[-28,-14,0,14,28].map((x,i)=>(
-        <g key={i}>
-          <circle cx={w/2+x} cy={y} r={w*0.055}
-            fill={["#F48FB1","#FFD54F","#A5D6A7","#F48FB1","#FFD54F"][i]}/>
-          <circle cx={w/2+x} cy={y} r={w*0.025} fill="#fff" opacity="0.55"/>
-        </g>
-      ))}
-      <ellipse cx={w/2-44} cy={y+8} rx={w*0.06} ry={h*0.022}
-        fill="#81C784" transform={`rotate(-30 ${w/2-44} ${y+8})`}/>
-      <ellipse cx={w/2+44} cy={y+8} rx={w*0.06} ry={h*0.022}
-        fill="#81C784" transform={`rotate(30 ${w/2+44} ${y+8})`}/>
+      <ellipse cx="100" cy="196" rx="56" ry="52" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+      <ellipse cx="100" cy="202" rx="36" ry="40" fill={P.belly}/>
     </g>
   );
 
-  const GlowRings = () => (
+  const Scarf = () => stage >= 1 ? (
     <g>
-      <circle cx={w/2} cy={h*0.45} r={w*0.46} fill="none"
-        stroke="#FFD54F" strokeWidth="3" opacity="0.25"/>
-      <circle cx={w/2} cy={h*0.45} r={w*0.42} fill="none"
-        stroke="#FFA726" strokeWidth="2" opacity="0.15"/>
-      {[[-35,20],[35,20],[-40,55],[40,55],[-30,85],[30,85]].map(([dx,dy],i)=>(
+      <path d="M 60 150 Q 100 168 140 150 L 140 162 Q 100 180 60 162 Z" fill="#5BB8E8" stroke="#3D97C9" strokeWidth={SW}/>
+      <path d="M 128 158 L 142 196 L 120 196 L 116 160 Z" fill="#4AA6D6" stroke="#3D97C9" strokeWidth={SW}/>
+    </g>
+  ) : null;
+
+  const FlowerCrown = () => (stage === 2 || stage === 3) ? (
+    <g>
+      {[-44,-22,0,22,44].map((dx,i)=>(
         <g key={i}>
-          <line x1={w/2+dx} y1={dy-6} x2={w/2+dx} y2={dy+6}
-            stroke="#FFD54F" strokeWidth="2" opacity="0.8"/>
-          <line x1={w/2+dx-6} y1={dy} x2={w/2+dx+6} y2={dy}
-            stroke="#FFD54F" strokeWidth="2" opacity="0.8"/>
+          {[0,72,144,216,288].map(a=>(
+            <ellipse key={a} cx={100+dx} cy={20} rx="6" ry="3.5"
+              fill={["#F7A8C4","#FFD66B","#A8E0A0","#F7A8C4","#FFD66B"][i]}
+              transform={`rotate(${a} ${100+dx} 20)`}/>
+          ))}
+          <circle cx={100+dx} cy={20} r="3.5" fill="#FFF3C4"/>
         </g>
       ))}
     </g>
-  );
+  ) : null;
+
+  const Glow = () => stage === 3 ? (
+    <g opacity="0.5">
+      <circle cx="100" cy="120" r="96" fill="none" stroke="#FFD66B" strokeWidth="3"/>
+      <circle cx="100" cy="120" r="88" fill="none" stroke="#FFC23D" strokeWidth="2"/>
+    </g>
+  ) : null;
 
   const bodies = {
     fox: (
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-        {stage===3 && <GlowRings/>}
-        {/* Tail */}
-        <ellipse cx={w*0.8} cy={h*0.72} rx={w*0.14} ry={h*0.18}
-          fill="#FF7043" transform={`rotate(30 ${w*0.8} ${h*0.72})`}/>
-        <ellipse cx={w*0.85} cy={h*0.66} rx={w*0.07} ry={h*0.08}
-          fill="#fff" transform={`rotate(30 ${w*0.85} ${h*0.66})`}/>
-        {/* Body */}
-        <ellipse cx={w/2} cy={h*0.65} rx={w*0.3} ry={h*0.22} fill="#FF8A65"/>
-        {/* Tummy */}
-        <ellipse cx={w/2} cy={h*0.68} rx={w*0.18} ry={h*0.15} fill="#FFCCBC"/>
-        {/* Legs */}
-        <ellipse cx={w*0.38} cy={h*0.88} rx={w*0.1} ry={h*0.07} fill="#FF7043"/>
-        <ellipse cx={w*0.62} cy={h*0.88} rx={w*0.1} ry={h*0.07} fill="#FF7043"/>
-        {/* Feet */}
-        <ellipse cx={w*0.36} cy={h*0.93} rx={w*0.12} ry={h*0.04} fill="#FF5722"/>
-        <ellipse cx={w*0.64} cy={h*0.93} rx={w*0.12} ry={h*0.04} fill="#FF5722"/>
-        {/* Arms */}
-        <ellipse cx={w*0.22} cy={h*0.6} rx={w*0.08} ry={h*0.14}
-          fill="#FF8A65" transform={`rotate(-20 ${w*0.22} ${h*0.6})`}/>
-        <ellipse cx={w*0.78} cy={h*0.6} rx={w*0.08} ry={h*0.14}
-          fill="#FF8A65" transform={`rotate(20 ${w*0.78} ${h*0.6})`}/>
-        {/* Ears */}
-        <polygon points={`${w*0.3},${h*0.18} ${w*0.2},${h*0.04} ${w*0.38},${h*0.16}`} fill="#FF7043"/>
-        <polygon points={`${w*0.7},${h*0.18} ${w*0.8},${h*0.04} ${w*0.62},${h*0.16}`} fill="#FF7043"/>
-        {/* Head */}
-        <ellipse cx={w/2} cy={h*0.28} rx={w*0.26} ry={h*0.2} fill="#FF8A65"/>
-        {/* Muzzle */}
-        <ellipse cx={w/2} cy={h*0.32} rx={w*0.16} ry={h*0.13} fill="#FFCCBC"/>
-        {/* Eyes */}
-        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.255} sr={w*0.055} behind="#FF8A65"/>
-        {/* Nose */}
-        <ellipse cx={w/2} cy={h*0.33} rx={w*0.055} ry={h*0.033} fill="#EF5350"/>
-        {/* Mouth */}
-        <Mouth cx={w/2} cy={h*0.372}/>
-        {stage>=1 && <Scarf y={h*0.43}/>}
-        {(stage===2||stage===3) && <FlowerCrown y={h*0.1}/>}
+      <svg width={w} height={h} viewBox={`0 0 ${VW} ${VH}`}>
+        <Glow/>
+        <path d="M 150 210 Q 196 196 184 150 Q 176 120 150 128 Q 168 160 150 210 Z" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <Limbs/>
+        <Body/>
+        <path d="M 56 70 L 40 18 L 86 52 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <path d="M 144 70 L 160 18 L 114 52 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <path d="M 60 60 L 50 30 L 78 52 Z" fill={P.inner}/>
+        <path d="M 140 60 L 150 30 L 122 52 Z" fill={P.inner}/>
+        <ellipse cx="100" cy="90" rx="60" ry="55" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="78" rx="38" ry="26" fill={P.belly} opacity="0.45"/>
+        <Cheeks lx={64} rx={136} ly={104}/>
+        <Eyes lx={78} rx={122} ey={84} sr={15} behind={P.body}/>
+        <ellipse cx="100" cy="108" rx="8" ry="6" fill={P.nose}/>
+        <Mouth cx={100} cy={122}/>
+        <Scarf/>
+        <FlowerCrown/>
       </svg>
     ),
-
-    bunny: (()=>{
-      const pad = Math.round(h * 0.07);
-      return (
-      <svg width={w} height={h+pad} viewBox={`0 0 ${w} ${h+pad}`}>
-        <g transform={`translate(0,${pad})`}>
-        {stage===3 && <GlowRings/>}
-        {/* Long ears */}
-        <ellipse cx={w*0.38} cy={h*0.1} rx={w*0.07} ry={h*0.14} fill="#FCE4EC"/>
-        <ellipse cx={w*0.62} cy={h*0.1} rx={w*0.07} ry={h*0.14} fill="#FCE4EC"/>
-        <ellipse cx={w*0.38} cy={h*0.1} rx={w*0.035} ry={h*0.1} fill="#F48FB1"/>
-        <ellipse cx={w*0.62} cy={h*0.1} rx={w*0.035} ry={h*0.1} fill="#F48FB1"/>
-        {/* Body */}
-        <ellipse cx={w/2} cy={h*0.65} rx={w*0.28} ry={h*0.22} fill="#FCE4EC"/>
-        {/* Tummy */}
-        <ellipse cx={w/2} cy={h*0.68} rx={w*0.16} ry={h*0.14} fill="#F8BBD0"/>
-        {/* Tail */}
-        <circle cx={w*0.74} cy={h*0.72} r={w*0.06} fill="#fff"/>
-        {/* Legs */}
-        <ellipse cx={w*0.38} cy={h*0.88} rx={w*0.11} ry={h*0.07} fill="#FCE4EC"/>
-        <ellipse cx={w*0.62} cy={h*0.88} rx={w*0.11} ry={h*0.07} fill="#FCE4EC"/>
-        <ellipse cx={w*0.36} cy={h*0.93} rx={w*0.13} ry={h*0.04} fill="#F8BBD0"/>
-        <ellipse cx={w*0.64} cy={h*0.93} rx={w*0.13} ry={h*0.04} fill="#F8BBD0"/>
-        {/* Arms */}
-        <ellipse cx={w*0.23} cy={h*0.6} rx={w*0.07} ry={h*0.13}
-          fill="#FCE4EC" transform={`rotate(-15 ${w*0.23} ${h*0.6})`}/>
-        <ellipse cx={w*0.77} cy={h*0.6} rx={w*0.07} ry={h*0.13}
-          fill="#FCE4EC" transform={`rotate(15 ${w*0.77} ${h*0.6})`}/>
-        {/* Head */}
-        <ellipse cx={w/2} cy={h*0.3} rx={w*0.24} ry={h*0.19} fill="#FCE4EC"/>
-        {/* Muzzle */}
-        <ellipse cx={w/2} cy={h*0.34} rx={w*0.15} ry={h*0.12} fill="#F8BBD0"/>
-        {/* Eyes */}
-        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.275} sr={w*0.053} behind="#FCE4EC"/>
-        {/* Nose */}
-        <ellipse cx={w/2} cy={h*0.345} rx={w*0.045} ry={h*0.026} fill="#F48FB1"/>
-        {/* Mouth */}
-        <Mouth cx={w/2} cy={h*0.382}/>
-        {stage>=1 && <Scarf y={h*0.44}/>}
-        {(stage===2||stage===3) && <FlowerCrown y={h*0.08}/>}
-        </g>
+    bunny: (
+      <svg width={w} height={h} viewBox={`0 0 ${VW} ${VH}`}>
+        <Glow/>
+        <ellipse cx="76" cy="46" rx="15" ry="38" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(-8 76 46)"/>
+        <ellipse cx="124" cy="46" rx="15" ry="38" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(8 124 46)"/>
+        <ellipse cx="76" cy="48" rx="7" ry="26" fill={P.inner} transform="rotate(-8 76 48)"/>
+        <ellipse cx="124" cy="48" rx="7" ry="26" fill={P.inner} transform="rotate(8 124 48)"/>
+        <circle cx="150" cy="200" r="14" fill="#fff" stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="46" cy="172" rx="14" ry="24" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(-16 46 172)"/>
+        <ellipse cx="154" cy="172" rx="14" ry="24" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(16 154 172)"/>
+        <ellipse cx="74" cy="234" rx="21" ry="12" fill={P.foot} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="126" cy="234" rx="21" ry="12" fill={P.foot} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="190" rx="54" ry="50" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="196" rx="34" ry="38" fill={P.belly}/>
+        <ellipse cx="100" cy="100" rx="54" ry="50" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="108" rx="32" ry="28" fill={P.belly} opacity="0.6"/>
+        <Cheeks lx={64} rx={136} ly={114}/>
+        <Eyes lx={78} rx={122} ey={94} sr={15} behind={P.body}/>
+        <ellipse cx="100" cy="118" rx="7" ry="5" fill={P.nose}/>
+        <Mouth cx={100} cy={132}/>
+        <Scarf/>
+        <FlowerCrown/>
       </svg>
-      );
-    })(),
-
+    ),
     bear: (
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-        {stage===3 && <GlowRings/>}
-        {/* Ears */}
-        <circle cx={w*0.32} cy={h*0.15} r={w*0.1} fill="#A1887F"/>
-        <circle cx={w*0.68} cy={h*0.15} r={w*0.1} fill="#A1887F"/>
-        <circle cx={w*0.32} cy={h*0.15} r={w*0.055} fill="#8D6E63"/>
-        <circle cx={w*0.68} cy={h*0.15} r={w*0.055} fill="#8D6E63"/>
-        {/* Body */}
-        <ellipse cx={w/2} cy={h*0.65} rx={w*0.3} ry={h*0.23} fill="#8D6E63"/>
-        {/* Tummy */}
-        <ellipse cx={w/2} cy={h*0.67} rx={w*0.18} ry={h*0.16} fill="#BCAAA4"/>
-        {/* Legs */}
-        <ellipse cx={w*0.38} cy={h*0.88} rx={w*0.11} ry={h*0.07} fill="#795548"/>
-        <ellipse cx={w*0.62} cy={h*0.88} rx={w*0.11} ry={h*0.07} fill="#795548"/>
-        <ellipse cx={w*0.36} cy={h*0.93} rx={w*0.13} ry={h*0.04} fill="#6D4C41"/>
-        <ellipse cx={w*0.64} cy={h*0.93} rx={w*0.13} ry={h*0.04} fill="#6D4C41"/>
-        {/* Arms */}
-        <ellipse cx={w*0.21} cy={h*0.62} rx={w*0.09} ry={h*0.15}
-          fill="#8D6E63" transform={`rotate(-18 ${w*0.21} ${h*0.62})`}/>
-        <ellipse cx={w*0.79} cy={h*0.62} rx={w*0.09} ry={h*0.15}
-          fill="#8D6E63" transform={`rotate(18 ${w*0.79} ${h*0.62})`}/>
-        {/* Head */}
-        <ellipse cx={w/2} cy={h*0.29} rx={w*0.27} ry={h*0.21} fill="#8D6E63"/>
-        {/* Muzzle */}
-        <ellipse cx={w/2} cy={h*0.34} rx={w*0.16} ry={h*0.12} fill="#BCAAA4"/>
-        {/* Eyes */}
-        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.262} sr={w*0.057} behind="#8D6E63"/>
-        {/* Nose */}
-        <ellipse cx={w/2} cy={h*0.34} rx={w*0.055} ry={h*0.034} fill="#795548"/>
-        {/* Mouth */}
-        <Mouth cx={w/2} cy={h*0.378}/>
-        {stage>=1 && <Scarf y={h*0.45}/>}
-        {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
+      <svg width={w} height={h} viewBox={`0 0 ${VW} ${VH}`}>
+        <Glow/>
+        <circle cx="58" cy="44" r="22" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <circle cx="142" cy="44" r="22" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <circle cx="58" cy="44" r="11" fill={P.inner}/>
+        <circle cx="142" cy="44" r="11" fill={P.inner}/>
+        <Limbs/>
+        <Body/>
+        <ellipse cx="100" cy="90" rx="58" ry="53" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="106" rx="32" ry="26" fill={P.belly}/>
+        <Cheeks lx={62} rx={138} ly={104}/>
+        <Eyes lx={78} rx={122} ey={82} sr={15} behind={P.body}/>
+        <ellipse cx="100" cy="104" rx="9" ry="7" fill={P.nose}/>
+        <Mouth cx={100} cy={120}/>
+        <Scarf/>
+        <FlowerCrown/>
       </svg>
     ),
-
     owl: (
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-        {stage===3 && <GlowRings/>}
-        {/* Wings */}
-        <ellipse cx={w*0.18} cy={h*0.6} rx={w*0.12} ry={h*0.22}
-          fill="#7E57C2" transform={`rotate(-25 ${w*0.18} ${h*0.6})`}/>
-        <ellipse cx={w*0.82} cy={h*0.6} rx={w*0.12} ry={h*0.22}
-          fill="#7E57C2" transform={`rotate(25 ${w*0.82} ${h*0.6})`}/>
-        {/* Body */}
-        <ellipse cx={w/2} cy={h*0.64} rx={w*0.26} ry={h*0.24} fill="#7E57C2"/>
-        {/* Tummy pattern */}
-        <ellipse cx={w/2} cy={h*0.66} rx={w*0.16} ry={h*0.18} fill="#B39DDB"/>
-        {/* Feet */}
-        <ellipse cx={w*0.4} cy={h*0.9} rx={w*0.1} ry={h*0.04} fill="#FFA726"/>
-        <ellipse cx={w*0.6} cy={h*0.9} rx={w*0.1} ry={h*0.04} fill="#FFA726"/>
-        {/* Tufts */}
-        <ellipse cx={w*0.38} cy={h*0.17} rx={w*0.07} ry={h*0.09} fill="#7E57C2"/>
-        <ellipse cx={w*0.62} cy={h*0.17} rx={w*0.07} ry={h*0.09} fill="#7E57C2"/>
-        {/* Head */}
-        <ellipse cx={w/2} cy={h*0.3} rx={w*0.25} ry={h*0.2} fill="#7E57C2"/>
-        <ellipse cx={w/2} cy={h*0.32} rx={w*0.18} ry={h*0.16} fill="#B39DDB"/>
-        {/* Eyes */}
-        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.283} sr={w*0.083} behind="#7E57C2" iris="#4527A0" irisR={w*0.046} owl/>
-        {/* Beak */}
-        <polygon points={`${w*0.46},${h*0.35} ${w*0.5},${h*0.365} ${w*0.54},${h*0.35}`}
-          fill="#FFA726"/>
-        {stage>=1 && <Scarf y={h*0.44}/>}
-        {(stage===2||stage===3) && <FlowerCrown y={h*0.1}/>}
+      <svg width={w} height={h} viewBox={`0 0 ${VW} ${VH}`}>
+        <Glow/>
+        <path d="M 54 128 Q 10 126 4 160 Q 3 170 17 165 Q 11 184 27 180 Q 23 198 43 194 Q 51 194 53 178 Q 47 152 60 130 Z" fill={P.line} stroke={P.iris} strokeWidth="1.4" strokeLinejoin="round"/>
+        <path d="M 146 128 Q 190 126 196 160 Q 197 170 183 165 Q 189 184 173 180 Q 177 198 157 194 Q 149 194 147 178 Q 153 152 140 130 Z" fill={P.line} stroke={P.iris} strokeWidth="1.4" strokeLinejoin="round"/>
+        <g stroke={P.body} strokeWidth="1.6" fill="none" opacity="0.55" strokeLinecap="round">
+          <path d="M 18 150 Q 24 170 40 184"/><path d="M 28 140 Q 32 162 46 180"/>
+          <path d="M 182 150 Q 176 170 160 184"/><path d="M 172 140 Q 168 162 154 180"/>
+        </g>
+        <ellipse cx="80" cy="242" rx="15" ry="9" fill={P.nose} stroke={P.line} strokeWidth={SW*0.7}/>
+        <ellipse cx="120" cy="242" rx="15" ry="9" fill={P.nose} stroke={P.line} strokeWidth={SW*0.7}/>
+        <ellipse cx="100" cy="190" rx="52" ry="58" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="198" rx="34" ry="46" fill={P.belly}/>
+        <path d="M 58 50 L 48 18 L 82 46 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <path d="M 142 50 L 152 18 L 118 46 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <ellipse cx="100" cy="86" rx="60" ry="54" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <circle cx="73" cy="110" r="37" fill={P.belly} stroke={P.line} strokeWidth={SW*0.6}/>
+        <circle cx="127" cy="110" r="37" fill={P.belly} stroke={P.line} strokeWidth={SW*0.6}/>
+        <Eyes lx={73} rx={127} ey={110} sr={19} behind={P.body} iris={P.iris} irisR={14} owl/>
+        <path d="M 90 116 L 110 116 L 100 134 Z" fill={P.nose} stroke={P.line} strokeWidth={SW*0.6} strokeLinejoin="round"/>
+        <Scarf/>
+        <FlowerCrown/>
       </svg>
     ),
-
     cat: (
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-        {stage===3 && <GlowRings/>}
-        {/* Tail */}
-        <path d={`M ${w*0.72} ${h*0.88} Q ${w*0.92} ${h*0.75} ${w*0.82} ${h*0.58}`}
-          stroke="#4DB6AC" strokeWidth={w*0.08} fill="none" strokeLinecap="round"/>
-        {/* Body */}
-        <ellipse cx={w/2} cy={h*0.65} rx={w*0.28} ry={h*0.22} fill="#4DB6AC"/>
-        {/* Tummy */}
-        <ellipse cx={w/2} cy={h*0.68} rx={w*0.16} ry={h*0.15} fill="#B2DFDB"/>
-        {/* Legs */}
-        <ellipse cx={w*0.38} cy={h*0.87} rx={w*0.1} ry={h*0.07} fill="#26A69A"/>
-        <ellipse cx={w*0.62} cy={h*0.87} rx={w*0.1} ry={h*0.07} fill="#26A69A"/>
-        <ellipse cx={w*0.36} cy={h*0.92} rx={w*0.12} ry={h*0.04} fill="#00897B"/>
-        <ellipse cx={w*0.64} cy={h*0.92} rx={w*0.12} ry={h*0.04} fill="#00897B"/>
-        {/* Arms */}
-        <ellipse cx={w*0.22} cy={h*0.61} rx={w*0.08} ry={h*0.13}
-          fill="#4DB6AC" transform={`rotate(-20 ${w*0.22} ${h*0.61})`}/>
-        <ellipse cx={w*0.78} cy={h*0.61} rx={w*0.08} ry={h*0.13}
-          fill="#4DB6AC" transform={`rotate(20 ${w*0.78} ${h*0.61})`}/>
-        {/* Ears */}
-        <polygon points={`${w*0.3},${h*0.2} ${w*0.22},${h*0.06} ${w*0.4},${h*0.18}`}
-          fill="#26A69A"/>
-        <polygon points={`${w*0.7},${h*0.2} ${w*0.78},${h*0.06} ${w*0.6},${h*0.18}`}
-          fill="#26A69A"/>
-        {/* Head */}
-        <ellipse cx={w/2} cy={h*0.29} rx={w*0.25} ry={h*0.2} fill="#4DB6AC"/>
-        {/* Muzzle */}
-        <ellipse cx={w/2} cy={h*0.33} rx={w*0.15} ry={h*0.12} fill="#B2DFDB"/>
-        {/* Eyes */}
-        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.263} sr={w*0.054} behind="#4DB6AC"/>
-        {/* Nose */}
-        <ellipse cx={w/2} cy={h*0.335} rx={w*0.045} ry={h*0.026} fill="#FF8A80"/>
-        {/* Whiskers */}
-        <line x1={w*0.25} y1={h*0.322} x2={w*0.43} y2={h*0.334}
-          stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        <line x1={w*0.25} y1={h*0.342} x2={w*0.43} y2={h*0.342}
-          stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        <line x1={w*0.75} y1={h*0.322} x2={w*0.57} y2={h*0.334}
-          stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        <line x1={w*0.75} y1={h*0.342} x2={w*0.57} y2={h*0.342}
-          stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        {/* Mouth */}
-        <Mouth cx={w/2} cy={h*0.371}/>
-        {stage>=1 && <Scarf y={h*0.44}/>}
-        {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
+      <svg width={w} height={h} viewBox={`0 0 ${VW} ${VH}`}>
+        <Glow/>
+        <path d="M 150 220 Q 192 200 182 158 Q 178 138 162 144 Q 174 178 150 210 Z" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <Limbs/>
+        <Body/>
+        <path d="M 56 64 L 46 22 L 88 50 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <path d="M 144 64 L 154 22 L 112 50 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <path d="M 60 56 L 54 32 L 80 50 Z" fill={P.inner}/>
+        <path d="M 140 56 L 146 32 L 120 50 Z" fill={P.inner}/>
+        <ellipse cx="100" cy="90" rx="56" ry="51" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="104" rx="30" ry="24" fill={P.belly} opacity="0.55"/>
+        <Cheeks lx={62} rx={138} ly={104}/>
+        <Eyes lx={78} rx={122} ey={84} sr={15} behind={P.body}/>
+        <ellipse cx="100" cy="106" rx="7" ry="5" fill={P.nose}/>
+        <Mouth cx={100} cy={120}/>
+        <g stroke={P.line} strokeWidth="2" strokeLinecap="round" opacity="0.7">
+          <line x1="50" y1="104" x2="80" y2="108"/>
+          <line x1="48" y1="114" x2="80" y2="114"/>
+          <line x1="150" y1="104" x2="120" y2="108"/>
+          <line x1="152" y1="114" x2="120" y2="114"/>
+        </g>
+        <Scarf/>
+        <FlowerCrown/>
       </svg>
     ),
-
     dog: (
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-        {stage===3 && <GlowRings/>}
-        {/* Floppy ears */}
-        <ellipse cx={w*0.28} cy={h*0.27} rx={w*0.1} ry={h*0.18}
-          fill="#FFA726" transform={`rotate(-15 ${w*0.28} ${h*0.27})`}/>
-        <ellipse cx={w*0.72} cy={h*0.27} rx={w*0.1} ry={h*0.18}
-          fill="#FFA726" transform={`rotate(15 ${w*0.72} ${h*0.27})`}/>
-        {/* Tail */}
-        <path d={`M ${w*0.72} ${h*0.7} Q ${w*0.9} ${h*0.6} ${w*0.85} ${h*0.48}`}
-          stroke="#FFA726" strokeWidth={w*0.08} fill="none" strokeLinecap="round"/>
-        {/* Body */}
-        <ellipse cx={w/2} cy={h*0.65} rx={w*0.3} ry={h*0.23} fill="#FFB74D"/>
-        {/* Tummy */}
-        <ellipse cx={w/2} cy={h*0.68} rx={w*0.18} ry={h*0.16} fill="#FFE0B2"/>
-        {/* Legs */}
-        <ellipse cx={w*0.37} cy={h*0.88} rx={w*0.11} ry={h*0.07} fill="#FFA726"/>
-        <ellipse cx={w*0.63} cy={h*0.88} rx={w*0.11} ry={h*0.07} fill="#FFA726"/>
-        <ellipse cx={w*0.35} cy={h*0.93} rx={w*0.13} ry={h*0.04} fill="#FB8C00"/>
-        <ellipse cx={w*0.65} cy={h*0.93} rx={w*0.13} ry={h*0.04} fill="#FB8C00"/>
-        {/* Arms */}
-        <ellipse cx={w*0.21} cy={h*0.62} rx={w*0.09} ry={h*0.14}
-          fill="#FFB74D" transform={`rotate(-18 ${w*0.21} ${h*0.62})`}/>
-        <ellipse cx={w*0.79} cy={h*0.62} rx={w*0.09} ry={h*0.14}
-          fill="#FFB74D" transform={`rotate(18 ${w*0.79} ${h*0.62})`}/>
-        {/* Head */}
-        <ellipse cx={w/2} cy={h*0.29} rx={w*0.26} ry={h*0.21} fill="#FFB74D"/>
-        {/* Muzzle */}
-        <ellipse cx={w/2} cy={h*0.34} rx={w*0.17} ry={h*0.13} fill="#FFE0B2"/>
-        {/* Eyes */}
-        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.258} sr={w*0.056} behind="#FFB74D"/>
-        {/* Nose */}
-        <ellipse cx={w/2} cy={h*0.34} rx={w*0.06} ry={h*0.038} fill="#FF7043"/>
-        {/* Mouth */}
-        <Mouth cx={w/2} cy={h*0.381}/>
-        {stage>=1 && <Scarf y={h*0.45}/>}
-        {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
+      <svg width={w} height={h} viewBox={`0 0 ${VW} ${VH}`}>
+        <Glow/>
+        <path d="M 150 198 Q 188 186 192 152 Q 193 137 181 139 Q 181 166 148 184 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <Limbs/>
+        <Body/>
+        <ellipse cx="100" cy="92" rx="56" ry="51" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <path d="M 82 42 C 50 36 24 70 28 110 C 30 134 50 144 62 126 C 72 100 60 60 86 50 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <path d="M 118 42 C 150 36 176 70 172 110 C 170 134 150 144 138 126 C 128 100 140 60 114 50 Z" fill={P.body} stroke={P.line} strokeWidth={SW} strokeLinejoin="round"/>
+        <ellipse cx="46" cy="92" rx="9" ry="27" fill={P.line} opacity="0.28" transform="rotate(15 46 92)"/>
+        <ellipse cx="154" cy="92" rx="9" ry="27" fill={P.line} opacity="0.28" transform="rotate(-15 154 92)"/>
+        <path d="M 100 46 Q 87 72 92 104 Q 100 110 108 104 Q 113 72 100 46 Z" fill={P.belly}/>
+        <ellipse cx="100" cy="110" rx="34" ry="26" fill={P.belly}/>
+        <Cheeks lx={64} rx={136} ly={104}/>
+        <Eyes lx={80} rx={120} ey={82} sr={15} behind={P.body}/>
+        <ellipse cx="100" cy="108" rx="10" ry="7" fill={P.nose}/>
+        <Mouth cx={100} cy={124}/>
+        <Scarf/>
+        <FlowerCrown/>
       </svg>
     ),
   };
@@ -520,12 +452,13 @@ const SHOP_ITEMS = [
 ];
 
 /* ── Action Tabs — watering can + shop, side by side ── */
-const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
+const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTier=0,
   activeChild, growthScore, supabase, setActiveChild, setChildren }) => {
 
   /* ── Watering state ── */
   const [watering, setWatering]   = useState(false);
   const [drops, setDrops]         = useState([]);
+  const [mascotBounce, setMascotBounce] = useState(false);
   const [msg, setMsg]             = useState(null);
 
   /* ── Shop state ── */
@@ -543,7 +476,7 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
     if (watering) return;
     setWatering(true);
 
-    // Spawn drops
+    // Spawn drops over the mascot
     const newDrops = Array.from({ length: 6 }, (_, i) => ({
       id: Date.now() + i,
       x: 28 + i * 8,
@@ -551,6 +484,10 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
     }));
     setTimeout(() => setDrops(newDrops), 100);
     setTimeout(() => setDrops([]), 900);
+
+    // Mascot bounce
+    setTimeout(() => setMascotBounce(true), 500);
+    setTimeout(() => setMascotBounce(false), 1100);
 
     // Message
     setTimeout(() => {
@@ -564,9 +501,28 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
     }, 1500);
   };
 
+  /* Activity vibe for watering tab */
+  const recentDates = [...new Set((moodLog||[]).map(e=>e.date))];
+  const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate()-7);
+  const activeDays = recentDates.filter(d=>new Date(d)>=sevenAgo).length;
+  const vibe = activeDays>=5 ? { label:"Thriving 🌟", color:"#43A047" }
+             : activeDays>=3 ? { label:"Doing well 🌿", color:"#4DB6AC" }
+             : activeDays>=1 ? { label:"Could use love 💜", color:"#CE93D8" }
+             :                 { label:"Missing you 🥺",   color:"#EF5350" };
+
+  const tabBase = {
+    flex:1, borderRadius:20, padding:"18px 12px", cursor:"pointer",
+    border:`1.5px solid ${C.border}`, background:"#fff",
+    display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+    gap:8, textAlign:"center", transition:"transform 0.15s",
+    boxShadow:"0 2px 18px rgba(124,77,255,0.08)", position:"relative", overflow:"hidden",
+    minHeight:160,
+  };
+
   return (
     <>
       <style>{`
+        @keyframes canSweep { from{opacity:0} to{opacity:1} }
         @keyframes dropFall {
           0%   { opacity:1; transform:translateY(0) scaleY(1); }
           80%  { opacity:0.7; transform:translateY(28px) scaleY(1.2); }
@@ -583,98 +539,89 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
           80%{opacity:1;}
           100%{opacity:0;}
         }
-        @keyframes canTilt {
-          0%,100%{transform:rotate(0deg)}
-          40%{transform:rotate(-22deg) translateY(-4px)}
-          70%{transform:rotate(-18deg) translateY(-2px)}
-        }
       `}</style>
 
       <div style={{display:"flex", gap:12, marginBottom:14}}>
 
-        {/* ── Watering Can Card ── */}
+        {/* ── Watering Can Tab ── */}
         <button
           onClick={handleWater}
-          style={{
-            flex:1, borderRadius:22, padding:"20px 12px",
-            cursor:"pointer", border:`1.5px solid ${watering ? "#81C784" : C.border}`,
-            background: watering ? "#F1F8F1" : "#fff",
-            display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:10, textAlign:"center",
-            transition:"all 0.15s", boxShadow:"0 2px 18px rgba(124,77,255,0.08)",
-            position:"relative", overflow:"hidden", minHeight:150,
-          }}
+          style={{...tabBase, background: watering ? "#E8F5E9" : "#fff",
+            borderColor: watering ? "#81C784" : C.border }}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
 
-          {/* Water drops animation layer */}
-          <div style={{position:"absolute", top:0, left:0, right:0, bottom:0, pointerEvents:"none"}}>
+          {/* Animation stage — mascot reacts, drops fall */}
+          <div style={{position:"relative", width:"100%", height:90, overflow:"hidden"}}>
+
+            {/* Mascot */}
+            <div style={{
+              position:"absolute", bottom:0, left:"50%", transform:"translateX(-50%)",
+              animation: mascotBounce ? "mascotPop 0.6s ease" : "none",
+            }}>
+              <FullBodyMascot id={mascotId} size={70} stage={stageId} energyTier={activityTier}/>
+            </div>
+
+            {/* Water drops */}
             {drops.map(d=>(
               <div key={d.id} style={{
-                position:"absolute", top:"30%", left: d.x+"%",
+                position:"absolute", bottom:20, left: d.x+"%",
                 animation:`dropFall 0.55s ease ${d.delay}ms forwards`,
+                pointerEvents:"none",
               }}>
-                <svg width="7" height="12" viewBox="0 0 8 14">
+                <svg width="8" height="14" viewBox="0 0 8 14">
                   <path d="M4 0 Q8 6 4 13 Q0 6 4 0Z" fill="#4FC3F7" opacity="0.85"/>
                 </svg>
               </div>
             ))}
+
+            {/* Floating message */}
+            {msg && (
+              <div style={{
+                position:"absolute", top:4, left:"50%", transform:"translateX(-50%)",
+                background:C.purple, color:"#fff", borderRadius:50,
+                padding:"4px 12px", whiteSpace:"nowrap",
+                fontFamily:F.b, fontWeight:700, fontSize:12,
+                animation:"msgPop 1.4s ease forwards", pointerEvents:"none",
+                zIndex:10,
+              }}>{msg}</div>
+            )}
           </div>
 
-          {/* Floating message */}
-          {msg && (
-            <div style={{
-              position:"absolute", top:10, left:"50%", transform:"translateX(-50%)",
-              background:C.purple, color:"#fff", borderRadius:50,
-              padding:"4px 14px", whiteSpace:"nowrap",
-              fontFamily:F.b, fontWeight:700, fontSize:12,
-              animation:"msgPop 1.4s ease forwards", pointerEvents:"none",
-              zIndex:10,
-            }}>{msg}</div>
-          )}
+          {/* Watering can image — static, no sweep animation */}
+          <WateringCanSVG size={40}/>
 
-          {/* Watering can — main visual */}
-          <div style={{
-            animation: watering ? "canTilt 0.6s ease" : "none",
-            transformOrigin:"bottom center",
-          }}>
-            <WateringCanSVG size={58} watering={watering}/>
+          {/* Status pill */}
+          <div style={{display:"flex",alignItems:"center",gap:5,
+            background:`${vibe.color}18`,borderRadius:50,padding:"3px 10px"}}>
+            <div style={{width:7,height:7,borderRadius:"50%",background:vibe.color}}/>
+            <span style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:vibe.color}}>
+              {vibe.label}
+            </span>
           </div>
-
-          <p style={{fontFamily:F.h, fontWeight:800, fontSize:14,
-            color:C.text, margin:0}}>
+          <p style={{fontFamily:F.h,fontWeight:800,fontSize:14,color:C.text,margin:0}}>
             Water {mascotName}
           </p>
         </button>
 
-        {/* ── Mascot Shop Card ── */}
+        {/* ── Shop Tab ── */}
         <button
           onClick={()=>setShowShop(true)}
-          style={{
-            flex:1, borderRadius:22, padding:"20px 12px",
-            cursor:"pointer", border:`1.5px solid ${C.border}`,
-            background:"#fff",
-            display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:10, textAlign:"center",
-            transition:"all 0.15s", boxShadow:"0 2px 18px rgba(124,77,255,0.08)",
-            position:"relative", overflow:"hidden", minHeight:150,
-          }}
+          style={{...tabBase}}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
 
-          {/* Mascot face + shopping bag badge */}
-          <div style={{position:"relative", display:"inline-block"}}>
-            <GrowthMascot id={mascotId} size={62} stage={stageId}/>
-            {/* Shopping bag badge */}
+          {/* Mascot face + shopping bag overlay */}
+          <div style={{position:"relative", display:"inline-block", marginBottom:4}}>
+            <FullBodyMascot id={mascotId} size={80} stage={stageId} energyTier={activityTier}/>
             <div style={{
-              position:"absolute", bottom:-6, right:-10,
+              position:"absolute", bottom:-4, right:-8,
               background:`linear-gradient(135deg,${C.purple},#9C6FFF)`,
               borderRadius:"50%", width:28, height:28,
               display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow:"0 3px 10px rgba(124,77,255,0.4)",
-              border:"2px solid #fff",
+              boxShadow:"0 2px 8px rgba(124,77,255,0.4)",
             }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
                 <line x1="3" y1="6" x2="21" y2="6"/>
@@ -683,8 +630,14 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
             </div>
           </div>
 
-          <p style={{fontFamily:F.h, fontWeight:800, fontSize:14,
-            color:C.text, margin:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:5,
+            background:`${C.purple}15`,borderRadius:50,padding:"3px 10px"}}>
+            <span style={{fontSize:12}}>🌱</span>
+            <span style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:C.purple}}>
+              {score} seeds
+            </span>
+          </div>
+          <p style={{fontFamily:F.h,fontWeight:800,fontSize:14,color:C.text,margin:0}}>
             Mascot Shop
           </p>
         </button>
@@ -855,7 +808,7 @@ const StageEvolution = ({ currentScore, mascotId, stageId }) => {
           position:"relative",
         }}>
           <div style={{overflow:"hidden", width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center"}}>
-            <FullBodyMascot id={mascotId} size={50} stage={stage.id}/>
+            <FullBodyMascot id={mascotId} size={50} stage={stage.id} energyTier={0}/>
           </div>
           {unlocked&&(
             <div style={{position:"absolute",bottom:2,right:2,
@@ -907,18 +860,12 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
   const personality   = PERSONALITIES[cm.id]||PERSONALITIES.fox;
   const score         = growthScore || calcGrowthScore(activeChild, moodLog, journals);
   const stage         = getStage(score);
+  const activityTier  = getActivityTier(moodLog);
   const lastEntry     = moodLog?.length>0 ? moodLog[moodLog.length-1] : null;
   const lastMood      = lastEntry?.mood||null;
   const lastMoodDate  = lastEntry?.date||null;
   const mascotState   = getMascotState(lastMoodDate, lastMood);
   const daysAway      = daysSince(lastMoodDate);
-
-  /* Map mascotState → energyTier for the full-body mascot expressions */
-  const energyTier = mascotState === "happy" || mascotState === "away" ? 0
-    : mascotState === "worried" ? 1
-    : mascotState === "sad" || mascotState === "angry" ? 2
-    : mascotState === "droopy" ? 3
-    : 0;
   const joinedDate    = activeChild.created_at?.split("T")[0]||null;
   const daysTogether  = joinedDate
     ? Math.max(0,Math.floor((new Date(todayStr())-new Date(joinedDate))/(1000*60*60*24)))
@@ -1092,7 +1039,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
                 filter:`drop-shadow(0 16px 32px ${cm.color}77)`,
                 position:"relative",
               }}>
-              <FullBodyMascot id={cm.id} size={210} stage={stage.id} energyTier={energyTier}/>
+              <FullBodyMascot id={cm.id} size={210} stage={stage.id} energyTier={activityTier}/>
               {sparkles.map(sp=>(
                 <Sparkle key={sp.id} x={sp.x} y={sp.y} color={sp.color} delay={sp.delay}/>
               ))}
@@ -1187,6 +1134,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
           mascotName={cm.name}
           moodLog={moodLog}
           score={score}
+          activityTier={activityTier}
           activeChild={activeChild}
           growthScore={score}
           supabase={supabase}
