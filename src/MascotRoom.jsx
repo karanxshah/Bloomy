@@ -467,30 +467,57 @@ const SHOP_ITEMS = [
   { id:"jar_mint",    type:"jar", label:"Mint Jar",        cost:15, value:"#4DB6AC", emoji:"🌿" },
 ];
 
-/* ── Water Card ── */
-const WaterCard = ({ mascotId, stageId, mascotName, moodLog }) => {
-  const [watering, setWatering] = useState(false);
-  const [drops, setDrops]       = useState([]);
-  const [msg, setMsg]           = useState(null);
+/* ── Action Tabs — watering can + shop, side by side ── */
+const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
+  activeChild, growthScore, supabase, setActiveChild, setChildren }) => {
+
+  /* ── Watering state ── */
+  const [watering, setWatering]   = useState(false);
+  const [drops, setDrops]         = useState([]);
+  const [mascotBounce, setMascotBounce] = useState(false);
+  const [msg, setMsg]             = useState(null);
+
+  /* ── Shop state ── */
+  const [showShop, setShowShop]   = useState(false);
 
   const WATER_MESSAGES = [
     `${mascotName} loved that! 💧`,
     "Growing stronger! 🌱",
     "So refreshing! ✨",
-    "Thank you! 🥰",
+    `Thank you! 🥰`,
     "Keep it up! 🌿",
   ];
 
   const handleWater = () => {
     if (watering) return;
     setWatering(true);
-    setDrops([Date.now()]);
-    setMsg(WATER_MESSAGES[Math.floor(Math.random()*WATER_MESSAGES.length)]);
-    setTimeout(() => { setWatering(false); setDrops([]); }, 800);
-    setTimeout(() => setMsg(null), 2000);
+
+    // Spawn drops over the mascot
+    const newDrops = Array.from({ length: 6 }, (_, i) => ({
+      id: Date.now() + i,
+      x: 28 + i * 8,
+      delay: i * 80,
+    }));
+    setTimeout(() => setDrops(newDrops), 100);
+    setTimeout(() => setDrops([]), 900);
+
+    // Mascot bounce
+    setTimeout(() => setMascotBounce(true), 500);
+    setTimeout(() => setMascotBounce(false), 1100);
+
+    // Message
+    setTimeout(() => {
+      setMsg(WATER_MESSAGES[Math.floor(Math.random() * WATER_MESSAGES.length)]);
+    }, 600);
+
+    // Reset
+    setTimeout(() => {
+      setWatering(false);
+      setTimeout(() => setMsg(null), 1200);
+    }, 1500);
   };
 
-  /* Mood-based activity pulse — how active this week */
+  /* Activity vibe for watering tab */
   const recentDates = [...new Set((moodLog||[]).map(e=>e.date))];
   const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate()-7);
   const activeDays = recentDates.filter(d=>new Date(d)>=sevenAgo).length;
@@ -499,60 +526,151 @@ const WaterCard = ({ mascotId, stageId, mascotName, moodLog }) => {
              : activeDays>=1 ? { label:"Could use love 💜", color:"#CE93D8" }
              :                 { label:"Missing you 🥺",   color:"#EF5350" };
 
+  const tabBase = {
+    flex:1, borderRadius:20, padding:"18px 12px", cursor:"pointer",
+    border:`1.5px solid ${C.border}`, background:"#fff",
+    display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+    gap:8, textAlign:"center", transition:"transform 0.15s",
+    boxShadow:"0 2px 18px rgba(124,77,255,0.08)", position:"relative", overflow:"hidden",
+    minHeight:160,
+  };
+
   return (
-    <div style={{background:"#fff",borderRadius:20,padding:"18px 20px",
-      boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14,textAlign:"center"}}>
+    <>
       <style>{`
-        @keyframes waterWiggle{0%,100%{transform:rotate(0deg)}30%{transform:rotate(-18deg)}60%{transform:rotate(10deg)}}
-        @keyframes dropFall{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(32px)}}
-        @keyframes mascotBounce{0%,100%{transform:scale(1)}40%{transform:scale(1.18)}70%{transform:scale(0.95)}}
+        @keyframes canSweep { from{opacity:0} to{opacity:1} }
+        @keyframes dropFall {
+          0%   { opacity:1; transform:translateY(0) scaleY(1); }
+          80%  { opacity:0.7; transform:translateY(28px) scaleY(1.2); }
+          100% { opacity:0; transform:translateY(38px) scaleY(0.5); }
+        }
+        @keyframes mascotPop {
+          0%,100%{transform:scale(1) translateY(0)}
+          35%{transform:scale(1.22) translateY(-8px)}
+          65%{transform:scale(0.95) translateY(2px)}
+        }
+        @keyframes msgPop {
+          0%{opacity:0;transform:translateY(6px) scale(0.9)}
+          20%{opacity:1;transform:translateY(0) scale(1)}
+          80%{opacity:1;}
+          100%{opacity:0;}
+        }
       `}</style>
 
-      <div style={{position:"relative",display:"inline-block",marginBottom:12}}>
-        <div style={{animation: watering ? "mascotBounce 0.6s ease" : "none"}}>
-          <GrowthMascot id={mascotId} size={80} stage={stageId}/>
-        </div>
-        {drops.map(id=>(
-          <div key={id} style={{position:"absolute",top:"50%",left:"50%",
-            animation:"dropFall 0.8s ease forwards",pointerEvents:"none"}}>
-            <span style={{fontSize:20}}>💧</span>
+      <div style={{display:"flex", gap:12, marginBottom:14}}>
+
+        {/* ── Watering Can Tab ── */}
+        <button
+          onClick={handleWater}
+          style={{...tabBase, background: watering ? "#E8F5E9" : "#fff",
+            borderColor: watering ? "#81C784" : C.border }}
+          onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
+          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+
+          {/* Animation stage — mascot reacts, drops fall */}
+          <div style={{position:"relative", width:"100%", height:90, overflow:"hidden"}}>
+
+            {/* Mascot */}
+            <div style={{
+              position:"absolute", bottom:0, left:"50%", transform:"translateX(-50%)",
+              animation: mascotBounce ? "mascotPop 0.6s ease" : "none",
+            }}>
+              <FullBodyMascot id={mascotId} size={70} stage={stageId}/>
+            </div>
+
+            {/* Water drops */}
+            {drops.map(d=>(
+              <div key={d.id} style={{
+                position:"absolute", bottom:20, left: d.x+"%",
+                animation:`dropFall 0.55s ease ${d.delay}ms forwards`,
+                pointerEvents:"none",
+              }}>
+                <svg width="8" height="14" viewBox="0 0 8 14">
+                  <path d="M4 0 Q8 6 4 13 Q0 6 4 0Z" fill="#4FC3F7" opacity="0.85"/>
+                </svg>
+              </div>
+            ))}
+
+            {/* Floating message */}
+            {msg && (
+              <div style={{
+                position:"absolute", top:4, left:"50%", transform:"translateX(-50%)",
+                background:C.purple, color:"#fff", borderRadius:50,
+                padding:"4px 12px", whiteSpace:"nowrap",
+                fontFamily:F.b, fontWeight:700, fontSize:12,
+                animation:"msgPop 1.4s ease forwards", pointerEvents:"none",
+                zIndex:10,
+              }}>{msg}</div>
+            )}
           </div>
-        ))}
+
+          {/* Watering can image — static, no sweep animation */}
+          <WateringCanSVG size={40}/>
+
+          {/* Status pill */}
+          <div style={{display:"flex",alignItems:"center",gap:5,
+            background:`${vibe.color}18`,borderRadius:50,padding:"3px 10px"}}>
+            <div style={{width:7,height:7,borderRadius:"50%",background:vibe.color}}/>
+            <span style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:vibe.color}}>
+              {vibe.label}
+            </span>
+          </div>
+          <p style={{fontFamily:F.h,fontWeight:800,fontSize:14,color:C.text,margin:0}}>
+            Water {mascotName}
+          </p>
+        </button>
+
+        {/* ── Shop Tab ── */}
+        <button
+          onClick={()=>setShowShop(true)}
+          style={{...tabBase}}
+          onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
+          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+
+          {/* Mascot face + shopping bag overlay */}
+          <div style={{position:"relative", display:"inline-block", marginBottom:4}}>
+            <FullBodyMascot id={mascotId} size={80} stage={stageId}/>
+            <div style={{
+              position:"absolute", bottom:-4, right:-8,
+              background:`linear-gradient(135deg,${C.purple},#9C6FFF)`,
+              borderRadius:"50%", width:28, height:28,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              boxShadow:"0 2px 8px rgba(124,77,255,0.4)",
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 01-8 0"/>
+              </svg>
+            </div>
+          </div>
+
+          <div style={{display:"flex",alignItems:"center",gap:5,
+            background:`${C.purple}15`,borderRadius:50,padding:"3px 10px"}}>
+            <span style={{fontSize:12}}>🌱</span>
+            <span style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:C.purple}}>
+              {score} seeds
+            </span>
+          </div>
+          <p style={{fontFamily:F.h,fontWeight:800,fontSize:14,color:C.text,margin:0}}>
+            Mascot Shop
+          </p>
+        </button>
+
       </div>
 
-      <div style={{display:"inline-flex",alignItems:"center",gap:6,
-        background:`${vibe.color}18`,borderRadius:50,padding:"4px 14px",marginBottom:12}}>
-        <div style={{width:8,height:8,borderRadius:"50%",background:vibe.color}}/>
-        <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:12,color:vibe.color}}>
-          {vibe.label}
-        </span>
-      </div>
-
-      {msg && (
-        <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:16,
-          color:C.purple,marginBottom:8,animation:"scaleIn 0.2s ease"}}>{msg}</p>
+      {showShop && (
+        <ShopPanel
+          activeChild={activeChild}
+          growthScore={score}
+          supabase={supabase}
+          setActiveChild={setActiveChild}
+          setChildren={setChildren}
+          onClose={()=>setShowShop(false)}
+        />
       )}
-      {!msg && (
-        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:13,
-          color:C.muted,marginBottom:14,lineHeight:1.5}}>
-          Tap to water {mascotName}!
-        </p>
-      )}
-
-      <button onClick={handleWater} style={{
-        background:"linear-gradient(135deg,#4DB6AC,#26A69A)",
-        border:"none",borderRadius:50,padding:"11px 28px",
-        cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,
-        boxShadow:"0 4px 14px rgba(77,182,172,0.35)",transition:"transform 0.15s",
-      }}
-        onMouseDown={e=>e.currentTarget.style.transform="scale(0.96)"}
-        onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-        <WateringCanSVG size={22} watering={watering}/>
-        <span style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:15,color:"#fff"}}>
-          Water {mascotName}
-        </span>
-      </button>
-    </div>
+    </>
   );
 };
 
@@ -705,7 +823,9 @@ const StageEvolution = ({ currentScore, mascotId, stageId }) => {
           overflow:"hidden",
           position:"relative",
         }}>
-          <GrowthMascot id={mascotId} size={34} stage={stage.id}/>
+          <div style={{overflow:"hidden", width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center"}}>
+            <FullBodyMascot id={mascotId} size={50} stage={stage.id}/>
+          </div>
           {unlocked&&(
             <div style={{position:"absolute",bottom:2,right:2,
               width:8,height:8,borderRadius:"50%",background:stage.color}}/>
@@ -756,7 +876,6 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
   const personality   = PERSONALITIES[cm.id]||PERSONALITIES.fox;
   const score         = growthScore || calcGrowthScore(activeChild, moodLog, journals);
   const stage         = getStage(score);
-  const [showShop, setShowShop] = useState(false);
   const lastEntry     = moodLog?.length>0 ? moodLog[moodLog.length-1] : null;
   const lastMood      = lastEntry?.mood||null;
   const lastMoodDate  = lastEntry?.date||null;
@@ -1023,39 +1142,19 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
           </div>
         )}
 
-        {/* Water + Shop */}
-        <WaterCard
+        {/* Action tabs — water + shop side by side */}
+        <ActionTabs
           mascotId={cm.id}
           stageId={stage.id}
           mascotName={cm.name}
           moodLog={moodLog}
+          score={score}
+          activeChild={activeChild}
+          growthScore={score}
+          supabase={supabase}
+          setActiveChild={setActiveChild}
+          setChildren={setChildren}
         />
-
-        {/* Shop button */}
-        <button onClick={()=>setShowShop(true)} style={{
-          width:"100%",borderRadius:50,padding:"13px",marginBottom:14,
-          background:`linear-gradient(135deg,${C.purple},#9C6FFF)`,
-          border:"none",cursor:"pointer",
-          display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-          boxShadow:"0 4px 16px rgba(124,77,255,0.35)",transition:"transform 0.15s",
-          fontFamily:F.h,fontWeight:800,fontSize:15,color:"#fff",
-        }}
-          onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
-          onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-          <span style={{fontSize:20}}>🛍️</span>
-          Mascot Shop — {score} seeds
-        </button>
-
-        {showShop && (
-          <ShopPanel
-            activeChild={activeChild}
-            growthScore={score}
-            supabase={supabase}
-            setActiveChild={setActiveChild}
-            setChildren={setChildren}
-            onClose={()=>setShowShop(false)}
-          />
-        )}
 
         {/* Personality */}
         <div style={{background:`linear-gradient(135deg,${cm.color},${C.pink})`,
