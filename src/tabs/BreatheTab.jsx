@@ -1,8 +1,58 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Card, Btn, Tooltip } from "../components/UI.jsx";
 import { F, BREATHING } from "../constants.js";
 import { GrowthMascot } from "../MascotGrowth.jsx";
+
+/* ── Breathing technique library ─────────────────────────────────────
+   Each technique overrides the phase labels and durations used by the
+   existing BREATHING cycle engine. The engine itself is unchanged.    */
+const TECHNIQUES = [
+  {
+    id: "belly",
+    name: "Belly Breathing",
+    emoji: "🌬️",
+    desc: "Great for any time you need a moment.",
+    phases: [
+      { phase:"Breathe In",  duration:4, color:"#4FC3F7" },
+      { phase:"Hold",        duration:2, color:"#CE93D8" },
+      { phase:"Breathe Out", duration:4, color:"#81C784" },
+    ],
+  },
+  {
+    id: "box",
+    name: "Box Breathing",
+    emoji: "📦",
+    desc: "Equal counts — used by athletes and astronauts!",
+    phases: [
+      { phase:"Breathe In",  duration:4, color:"#4FC3F7" },
+      { phase:"Hold",        duration:4, color:"#CE93D8" },
+      { phase:"Breathe Out", duration:4, color:"#81C784" },
+    ],
+  },
+  {
+    id: "478",
+    name: "4-7-8 Breathing",
+    emoji: "💤",
+    desc: "Perfect for feeling sleepy or very worried.",
+    phases: [
+      { phase:"Breathe In",  duration:4, color:"#4FC3F7" },
+      { phase:"Hold",        duration:7, color:"#CE93D8" },
+      { phase:"Breathe Out", duration:8, color:"#81C784" },
+    ],
+  },
+  {
+    id: "star",
+    name: "Star Breathing",
+    emoji: "⭐",
+    desc: "Trace a star shape in your mind while you breathe.",
+    phases: [
+      { phase:"Breathe In",  duration:3, color:"#FFD54F" },
+      { phase:"Hold",        duration:1, color:"#FF8A65" },
+      { phase:"Breathe Out", duration:3, color:"#A5D6A7" },
+    ],
+  },
+];
 
 export default function BreatheTab() {
   const {
@@ -16,6 +66,10 @@ export default function BreatheTab() {
 
   const C = theme;
   const timerRef = useRef(null);
+  const [techIdx, setTechIdx]   = useState(0);
+  const technique = TECHNIQUES[techIdx];
+  /* Use the selected technique's phases instead of the global BREATHING array */
+  const PHASES = technique.phases;
 
   /* ── Clear the timer and fully reset when user leaves the tab ── */
   useEffect(() => {
@@ -41,7 +95,7 @@ export default function BreatheTab() {
     }
 
     timerRef.current = setTimeout(async () => {
-      const next = (breathPhase + 1) % BREATHING.length;
+      const next = (breathPhase + 1) % PHASES.length;
       setBreathPhase(next);
       if (next === 0) {
         setBreathCount(c => c + 1);
@@ -71,7 +125,7 @@ export default function BreatheTab() {
           }
         }
       }
-    }, BREATHING[breathPhase].duration * 1000);
+    }, PHASES[breathPhase].duration * 1000);
 
     return () => {
       if (timerRef.current) {
@@ -122,9 +176,41 @@ export default function BreatheTab() {
         />
       </div>
 
+      {/* Technique picker */}
+      {!breathActive && (
+        <div style={{ marginBottom:18 }}>
+          <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:C.muted, letterSpacing:1.2,
+            textTransform:"uppercase", marginBottom:10, textAlign:"center" }}>
+            Choose a technique
+          </p>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            {TECHNIQUES.map((t,i)=>(
+              <button key={t.id} onClick={()=>{ setTechIdx(i); setBreathPhase(0); }} style={{
+                background: techIdx===i ? C.purple : C.card,
+                border:`2px solid ${techIdx===i ? C.purple : C.border}`,
+                borderRadius:16, padding:"12px 10px", cursor:"pointer", textAlign:"left",
+                transition:"all 0.18s",
+              }}>
+                <div style={{ fontSize:20, marginBottom:4 }}>{t.emoji}</div>
+                <div style={{ fontFamily:F.b, fontWeight:700, fontSize:13,
+                  color: techIdx===i ? "#fff" : C.text, marginBottom:2 }}>{t.name}</div>
+                <div style={{ fontFamily:F.b, fontWeight:500, fontSize:11,
+                  color: techIdx===i ? "rgba(255,255,255,0.75)" : C.muted, lineHeight:1.4 }}>{t.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {breathActive && (
+        <p style={{ textAlign:"center", fontFamily:F.b, fontWeight:700, fontSize:14,
+          color:C.purple, marginBottom:12 }}>
+          {technique.emoji} {technique.name}
+        </p>
+      )}
+
       {/* Phase labels row */}
       <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:20 }}>
-        {BREATHING.map((b,i)=>(
+        {PHASES.map((b,i)=>(
           <div key={b.phase} style={{
             background:breathPhase===i&&breathActive?b.color:"#EEE9FF",
             color:breathPhase===i&&breathActive?"#fff":C.muted,
@@ -147,8 +233,8 @@ export default function BreatheTab() {
           {/* Outer glow ring */}
           <div style={{
             position:"absolute", width:220, height:220, borderRadius:"50%",
-            background:`radial-gradient(circle,${BREATHING[breathPhase].color}15,transparent 70%)`,
-            border:`3px solid ${BREATHING[breathPhase].color}30`,
+            background:`radial-gradient(circle,${PHASES[breathPhase].color}15,transparent 70%)`,
+            border:`3px solid ${PHASES[breathPhase].color}30`,
             animation: breathActive
               ? breathPhase===0 ? "breatheIn 4s ease-in-out forwards"
               : breathPhase===1 ? "breatheHold 2s linear forwards"
@@ -160,9 +246,9 @@ export default function BreatheTab() {
           {/* Inner bubble */}
           <div style={{
             position:"absolute", width:160, height:160, borderRadius:"50%",
-            background:`radial-gradient(circle at 38% 35%, ${BREATHING[breathPhase].color}28, ${BREATHING[breathPhase].color}08)`,
-            border:`2.5px solid ${BREATHING[breathPhase].color}88`,
-            boxShadow: breathActive ? `0 0 ${breathPhase===1?44:22}px ${BREATHING[breathPhase].color}40` : "none",
+            background:`radial-gradient(circle at 38% 35%, ${PHASES[breathPhase].color}28, ${PHASES[breathPhase].color}08)`,
+            border:`2.5px solid ${PHASES[breathPhase].color}88`,
+            boxShadow: breathActive ? `0 0 ${breathPhase===1?44:22}px ${PHASES[breathPhase].color}40` : "none",
             animation: breathActive
               ? breathPhase===0 ? "breatheIn 4s ease-in-out forwards"
               : breathPhase===1 ? "breatheHold 2s linear forwards"
@@ -174,12 +260,12 @@ export default function BreatheTab() {
           {/* Mascot + text */}
           <div style={{ position:"absolute", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:2 }}>
             <GrowthMascot id={cm.id} size={58} stage={currentStage.id}/>
-            <p style={{ fontFamily:F.h, fontWeight:800, fontSize:15, color:BREATHING[breathPhase].color, marginTop:5, marginBottom:0, transition:"color 0.6s" }}>
-              {breathActive ? BREATHING[breathPhase].phase : "Ready"}
+            <p style={{ fontFamily:F.h, fontWeight:800, fontSize:15, color:PHASES[breathPhase].color, marginTop:5, marginBottom:0, transition:"color 0.6s" }}>
+              {breathActive ? PHASES[breathPhase].phase : "Ready"}
             </p>
             {breathActive && (
               <p style={{ color:C.muted, fontSize:12, fontWeight:600, marginBottom:0 }}>
-                {BREATHING[breathPhase].duration}s
+                {PHASES[breathPhase].duration}s
               </p>
             )}
           </div>

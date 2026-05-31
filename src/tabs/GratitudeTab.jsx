@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Btn } from "../components/UI.jsx";
 import { F } from "../constants.js";
@@ -5,11 +6,22 @@ import { today } from "../constants.js";
 
 export default function GratitudeTab() {
   const {
-    theme, gratitudeText, setGratitudeText, gratitudeSaved, setGratitudeSaved,
+    theme, gratitudeText, setGratitudeText, gratitudeSaved,
     gratitudes, saveGratitude, darkMode,
   } = useApp();
 
   const C = theme;
+  const [shaking, setShaking]       = useState(false);
+  const [floater, setFloater]       = useState(null); // text to float up
+
+  const handleShake = () => {
+    if (gratitudes.length === 0 || shaking) return;
+    const pick = gratitudes[Math.floor(Math.random() * gratitudes.length)];
+    setShaking(true);
+    setFloater(pick.text);
+    setTimeout(() => setShaking(false), 600);
+    setTimeout(() => setFloater(null), 2200);
+  };
 
   return (
     <div style={{ paddingTop:12, animation:"fadeIn 0.4s ease" }}>
@@ -21,10 +33,41 @@ export default function GratitudeTab() {
       </p>
 
       {/* SVG Gratitude Jar */}
-      <div style={{ textAlign:"center", marginBottom:20 }}>
+      <div style={{ textAlign:"center", marginBottom:20, position:"relative" }}>
+        <style>{`
+          @keyframes jarShake {
+            0%{transform:rotate(0deg)} 20%{transform:rotate(-7deg)} 40%{transform:rotate(7deg)}
+            60%{transform:rotate(-5deg)} 80%{transform:rotate(4deg)} 100%{transform:rotate(0deg)}
+          }
+          @keyframes floatUp {
+            0%  { opacity:0; transform:translateY(0) scale(0.7); }
+            20% { opacity:1; transform:translateY(-18px) scale(1); }
+            80% { opacity:1; transform:translateY(-60px) scale(1); }
+            100%{ opacity:0; transform:translateY(-80px) scale(0.9); }
+          }
+        `}</style>
+        {floater && (
+          <div style={{
+            position:"absolute", left:"50%", top:"30%",
+            transform:"translateX(-50%)",
+            background:C.purple, color:"#fff",
+            borderRadius:14, padding:"8px 16px",
+            fontFamily:F.b, fontWeight:700, fontSize:13,
+            pointerEvents:"none", zIndex:10, maxWidth:180, textAlign:"center",
+            animation:"floatUp 2.2s ease forwards",
+          }}>
+            {floater.length > 40 ? floater.slice(0,40)+"…" : floater}
+          </div>
+        )}
         <svg viewBox="0 0 260 280" width="220" height="240"
-          style={{ overflow:"visible", display:"block", margin:"0 auto" }}
-          role="img" aria-label="Gratitude jar">
+          onClick={handleShake}
+          style={{
+            overflow:"visible", display:"block", margin:"0 auto",
+            cursor: gratitudes.length > 0 ? "pointer" : "default",
+            animation: shaking ? "jarShake 0.6s ease" : "none",
+            transformOrigin:"center bottom",
+          }}
+          role="img" aria-label={gratitudes.length > 0 ? "Gratitude jar — tap to shake!" : "Gratitude jar"}>
           <title>Gratitude jar</title>
           <ellipse cx="130" cy="268" rx="70" ry="8" fill="rgba(0,0,0,0.08)"/>
           <path d="M 60 100 Q 55 100 52 105 L 40 240 Q 38 260 60 265 L 200 265 Q 222 260 220 240 L 208 105 Q 205 100 200 100 Z"
@@ -64,6 +107,11 @@ export default function GratitudeTab() {
               <span style={{ color:C.purple, fontWeight:700 }}> · showing 8 of {gratitudes.length}</span>
             )}
         </p>
+        {gratitudes.length > 0 && (
+          <p style={{ fontFamily:F.b, fontWeight:600, fontSize:12, color:C.purple, marginTop:2 }}>
+            ✨ Tap the jar to shake it!
+          </p>
+        )}
       </div>
 
       {/* Add new gratitude */}

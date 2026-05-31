@@ -107,22 +107,42 @@ export default function MoodTab() {
         </Card>
       )}
 
-      {moodLogged && moodNoteStep==="done" && (
-        <Card style={{ textAlign:"center", animation:"scaleIn 0.3s ease" }}>
-          <div style={{ background:"#E0F2F1", borderRadius:"50%", width:68, height:68,
-            display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
-            <Icon name="check" size={36} color={C.mint}/>
-          </div>
-          <p style={{ fontFamily:F.h, fontWeight:800, fontSize:22, color:C.text, marginBottom:4 }}>Mood logged!</p>
-          <p style={{ color:C.muted, marginBottom:16, fontSize:14, fontWeight:500 }}>Great job checking in today.</p>
-          <Btn onClick={()=>{
-            setMoodLogged(false); setSelectedMood(null);
-            setMoodNoteStep("log"); setMoodNote(""); setTab("home");
-          }} color={C.purple} textColor="#fff" small icon="check">
-            Back to Home
-          </Btn>
-        </Card>
-      )}
+      {moodLogged && moodNoteStep==="done" && (() => {
+        const LOW_MOODS = ["Sad","Angry","Worried","Tired"];
+        const isLow = LOW_MOODS.includes(selectedMood);
+        const followUp = {
+          Sad:     { msg:"When we're sad, breathing slowly can really help 💙", action:"breathe", label:"Try Breathing", icon:"wind",  color:"#4FC3F7" },
+          Angry:   { msg:"Feeling angry? A breathing exercise can help you cool down 🌬️", action:"breathe", label:"Try Breathing", icon:"wind",  color:"#FF7043" },
+          Worried: { msg:"Writing down worries can make them feel smaller ✏️",  action:"journal", label:"Write It Out", icon:"book",  color:"#CE93D8" },
+          Tired:   { msg:"Even a quick breath can give you a little boost 🌿",   action:"breathe", label:"Try Breathing", icon:"wind",  color:"#A5D6A7" },
+        };
+        const tip = followUp[selectedMood];
+        return (
+          <Card style={{ textAlign:"center", animation:"scaleIn 0.3s ease" }}>
+            <div style={{ background:"#E0F2F1", borderRadius:"50%", width:68, height:68,
+              display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
+              <Icon name="check" size={36} color={C.mint}/>
+            </div>
+            <p style={{ fontFamily:F.h, fontWeight:800, fontSize:22, color:C.text, marginBottom:4 }}>Mood logged!</p>
+            <p style={{ color:C.muted, marginBottom:16, fontSize:14, fontWeight:500 }}>Great job checking in today.</p>
+            {isLow && tip && (
+              <div style={{ background:MOOD_BG[selectedMood], borderRadius:16, padding:"14px 16px", marginBottom:16 }}>
+                <p style={{ fontFamily:F.b, fontWeight:600, fontSize:14, color:C.text, margin:"0 0 12px", lineHeight:1.6 }}>
+                  {tip.msg}
+                </p>
+                <Btn onClick={()=>{ setMoodLogged(false); setSelectedMood(null); setMoodNoteStep("log"); setMoodNote(""); setTab(tip.action); }}
+                  color={tip.color} icon={tip.icon} style={{ width:"100%", justifyContent:"center" }}>
+                  {tip.label}
+                </Btn>
+              </div>
+            )}
+            <Btn onClick={()=>{ setMoodLogged(false); setSelectedMood(null); setMoodNoteStep("log"); setMoodNote(""); setTab("home"); }}
+              color={C.purple} textColor="#fff" small icon="check">
+              Back to Home
+            </Btn>
+          </Card>
+        );
+      })()}
 
       <Card>
         <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:C.muted, letterSpacing:1.3, textTransform:"uppercase", marginBottom:10 }}>

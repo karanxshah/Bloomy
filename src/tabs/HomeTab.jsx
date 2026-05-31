@@ -1,7 +1,40 @@
+import { useState } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Card, Icon, MoodFace } from "../components/UI.jsx";
 import { F, MOOD_BG, MOOD_COLORS, STAGE_BGSANIM, getTimeGreeting, getSortedAffirmations } from "../constants.js";
+import { today } from "../constants.js";
 import { GrowthMascot, GardenScene, GrowthProgressBar } from "../MascotGrowth.jsx";
+
+/* ── Feelings vocabulary word bank ───────────────────────────────── */
+const FEELINGS_WORDS = [
+  { word:"Joyful",      emoji:"😄", color:"#FFD54F", def:"Feeling really, really happy — like your heart is dancing!", example:"I felt joyful on my birthday." },
+  { word:"Calm",        emoji:"😌", color:"#81C784", def:"Feeling peaceful and still inside, like a quiet lake.",      example:"I felt calm after my breathing exercise." },
+  { word:"Proud",       emoji:"🌟", color:"#FF8A65", def:"Feeling good about something you did or who you are.",       example:"I felt proud when I helped my friend." },
+  { word:"Nervous",     emoji:"😬", color:"#CE93D8", def:"Feeling a little worried about something that hasn't happened yet.", example:"I felt nervous before my test." },
+  { word:"Frustrated",  emoji:"😤", color:"#EF5350", def:"Feeling stuck or annoyed when things don't go the way you wanted.", example:"I felt frustrated when I couldn't open the jar." },
+  { word:"Grateful",    emoji:"🙏", color:"#4DB6AC", def:"Feeling thankful for something good in your life.",          example:"I felt grateful for my warm bed." },
+  { word:"Overwhelmed", emoji:"😵", color:"#7E57C2", def:"Feeling like too many things are happening all at once.",    example:"I felt overwhelmed with so much homework." },
+  { word:"Curious",     emoji:"🔍", color:"#4FC3F7", def:"Feeling excited to learn or find out about something.",     example:"I felt curious about how butterflies are made." },
+  { word:"Embarrassed", emoji:"😳", color:"#F06292", def:"Feeling shy or uncomfortable when something goes wrong in front of others.", example:"I felt embarrassed when I tripped." },
+  { word:"Hopeful",     emoji:"🌈", color:"#66BB6A", def:"Feeling like good things are coming, even if today is hard.", example:"I felt hopeful that tomorrow would be better." },
+  { word:"Lonely",      emoji:"🥺", color:"#78909C", def:"Feeling like you wish you had someone to be with.",         example:"I felt lonely when my friend moved away." },
+  { word:"Excited",     emoji:"🎉", color:"#FFA726", def:"Feeling full of energy about something great that is happening!", example:"I felt excited on the first day of holidays." },
+  { word:"Disappointed",emoji:"😔", color:"#90A4AE", def:"Feeling sad when something you hoped for didn't happen.",   example:"I felt disappointed when the trip was cancelled." },
+  { word:"Loved",       emoji:"💖", color:"#EC407A", def:"Feeling cared for and important to someone.",               example:"I felt loved when my mum gave me a hug." },
+  { word:"Brave",       emoji:"🦁", color:"#FF7043", def:"Feeling ready to try something even if it feels scary.",    example:"I felt brave when I tried the high dive." },
+  { word:"Confused",    emoji:"😕", color:"#9575CD", def:"Feeling mixed up or unsure about what is happening.",       example:"I felt confused by the instructions." },
+  { word:"Cosy",        emoji:"🧸", color:"#A1887F", def:"Feeling warm, safe, and comfortable.",                      example:"I felt cosy reading under my blanket." },
+  { word:"Jealous",     emoji:"😒", color:"#8BC34A", def:"Feeling upset that someone else has something you want.",   example:"I felt jealous of my sister's new toy." },
+  { word:"Silly",       emoji:"🤪", color:"#FFCA28", def:"Feeling playful and wanting to laugh and joke around.",     example:"I felt silly wearing the funny hat." },
+  { word:"Relieved",    emoji:"😮‍💨", color:"#26C6DA", def:"Feeling much better after something scary or stressful is over.", example:"I felt relieved when I found my lost dog." },
+  { word:"Anxious",     emoji:"😰", color:"#AB47BC", def:"Feeling worried and tense, like something bad might happen.", example:"I felt anxious waiting for the doctor." },
+  { word:"Determined",  emoji:"💪", color:"#42A5F5", def:"Feeling strong and sure that you will keep trying no matter what.", example:"I felt determined to finish the puzzle." },
+];
+function getTodaysWord() {
+  const d = today();
+  const seed = d.split("-").reduce((a,n)=>a+Number(n),0);
+  return FEELINGS_WORDS[seed % FEELINGS_WORDS.length];
+}
 
 const MASCOT_DAILY_MESSAGES = [
   "I'm so happy you're here today! 🌟",
@@ -31,32 +64,17 @@ export default function HomeTab() {
     activeChild, tab, setTab, theme,
     todayEntry, cm, currentStage, growthScore, streak, streakShield,
     dailyMissions, affirmIdx, lastMood, setShowMascotRoom, darkMode,
-    todayJournalDone, todayGratitudeDone, todayBreathDone, energy,
+    todayJournalDone, todayGratitudeDone, todayBreathDone,
   } = useApp();
 
   const C = theme;
-
-  // Energy tier — only affects face expression and speech bubble text
-  const tier = energy > 75 ? 0 : energy > 50 ? 1 : energy > 25 ? 2 : 3;
-
-  const bubbleMessage = tier === 0 ? getDailyMessage()
-    : tier === 1 ? `${cm.name} is feeling a little tired…`
-    : tier === 2 ? `${cm.name} is getting hungry — tap the basket 🧺`
-    : `${cm.name} is really hungry! Please feed them 🥺`;
-
-  const pillBg = tier === 0 ? currentStage.color
-    : tier === 1 ? "#F9A825"
-    : tier === 2 ? "#FF7043"
-    : "#E53935";
-
-  const pillLabel = tier === 0
-    ? `${currentStage.name} · ${growthScore} seeds · Tap to visit`
-    : `${energy}% energy · Tap to visit`;
+  const todaysWord = getTodaysWord();
+  const [wordExpanded, setWordExpanded] = useState(false);
 
   return (
     <div style={{ paddingTop:12, animation:"fadeIn 0.4s ease" }}>
 
-      {/* Hero */}
+      {/* Hero — garden scene */}
       <div style={{ textAlign:"center", marginBottom:16 }}>
         <p style={{ color:C.muted, fontWeight:600, fontSize:13, marginBottom:2 }}>
           {getTimeGreeting()}
@@ -64,26 +82,22 @@ export default function HomeTab() {
         <h2 style={{ fontFamily:F.h, fontSize:30, fontWeight:900, color:C.text, marginBottom:12 }}>
           {activeChild.name}
         </h2>
-
         <button
           onClick={()=>setShowMascotRoom(true)}
           style={{ border:"none", background:"none", cursor:"pointer", transition:"transform 0.15s", display:"block", margin:"0 auto" }}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}
         >
-          {/* Mascot circle — always centred, same size, same position */}
           <div style={{
             width:180, height:180, borderRadius:"50%",
             background:`radial-gradient(circle at 40% 35%, ${currentStage.bg}, ${cm.bg||currentStage.bg})`,
             display:"flex", alignItems:"center", justifyContent:"center",
             margin:"0 auto",
-            boxShadow:`0 8px 32px ${cm.color}44, 0 2px 12px rgba(0,0,0,0.08)`,
+            boxShadow:`0 8px 32px ${cm.color}55, 0 2px 12px rgba(0,0,0,0.08)`,
             animation:"floatUp 3s ease-in-out infinite",
           }}>
-            <GrowthMascot id={cm.id} size={120} stage={currentStage.id} energyTier={tier}/>
+            <GrowthMascot id={cm.id} size={120} stage={currentStage.id}/>
           </div>
-
-          {/* Speech bubble */}
           <div style={{
             background:"rgba(255,255,255,0.92)", borderRadius:18,
             borderBottomLeftRadius:4, padding:"8px 16px",
@@ -92,19 +106,17 @@ export default function HomeTab() {
             maxWidth:260,
           }}>
             <p style={{fontFamily:F.b, fontWeight:600, fontSize:13, color:"#2D2040", margin:0, textAlign:"center", lineHeight:1.4}}>
-              {bubbleMessage}
+              {getDailyMessage()}
             </p>
           </div>
 
-          {/* Stage / energy pill */}
           <div style={{
             display:"inline-flex", alignItems:"center", gap:6,
-            background: pillBg, borderRadius:50, padding:"5px 16px",
-            transition:"background 0.5s ease",
+            background:currentStage.color, borderRadius:50, padding:"5px 16px",
           }}>
             <span style={{ fontSize:14 }}>🌱</span>
             <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:"#fff", margin:0 }}>
-              {pillLabel}
+              {currentStage.name} · {growthScore} seeds · Tap to visit
             </p>
           </div>
         </button>
@@ -254,6 +266,37 @@ export default function HomeTab() {
             <div style={{ fontSize:13, fontWeight:700, color:item.done ? "#fff" : item.color, fontFamily:F.b }}>{item.label}</div>
           </button>
         ))}
+      </div>
+
+      {/* ── Word of the Day ─────────────────────────────────────────── */}
+      <div
+        onClick={()=>setWordExpanded(e=>!e)}
+        style={{
+          background:`linear-gradient(135deg,${todaysWord.color}22,${todaysWord.color}11)`,
+          border:`1.5px solid ${todaysWord.color}55`,
+          borderRadius:20, padding:"16px 18px", marginBottom:14, cursor:"pointer",
+        }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: wordExpanded ? 10 : 0 }}>
+          <span style={{ fontSize:28 }}>{todaysWord.emoji}</span>
+          <div style={{ flex:1 }}>
+            <p style={{ fontFamily:F.b, fontWeight:700, fontSize:11, color:todaysWord.color,
+              letterSpacing:1.2, textTransform:"uppercase", margin:"0 0 1px" }}>
+              Feeling of the Day
+            </p>
+            <p style={{ fontFamily:F.h, fontWeight:800, fontSize:20, color:C.text, margin:0 }}>
+              {todaysWord.word}
+            </p>
+          </div>
+          <span style={{ fontSize:14, color:todaysWord.color }}>{wordExpanded ? "▲" : "▼"}</span>
+        </div>
+        {wordExpanded && (
+          <div style={{ animation:"fadeIn 0.25s ease" }}>
+            <p style={{ fontFamily:F.b, fontWeight:600, fontSize:14, color:C.text,
+              lineHeight:1.6, margin:"0 0 8px" }}>{todaysWord.def}</p>
+            <p style={{ fontFamily:F.b, fontWeight:500, fontSize:13, color:C.muted,
+              fontStyle:"italic", margin:0 }}>"{todaysWord.example}"</p>
+          </div>
+        )}
       </div>
 
       {/* Streak */}
