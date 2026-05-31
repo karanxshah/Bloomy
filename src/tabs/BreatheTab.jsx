@@ -111,10 +111,10 @@ export default function BreatheTab() {
           const newCount = (activeChild.breath_sessions || 0) + 1;
           const todayStr = new Date().toISOString().split("T")[0];
           const { error } = await supabase.from("children")
-            .update({ breath_sessions: newCount, last_breath_date: todayStr })
+            .update({ breath_sessions: newCount, last_breath_date: todayStr, last_activity_date: todayStr })
             .eq("id", activeChild.id);
           if (!error) {
-            const updatedChild = { ...activeChild, breath_sessions: newCount, last_breath_date: todayStr };
+            const updatedChild = { ...activeChild, breath_sessions: newCount, last_breath_date: todayStr, last_activity_date: todayStr };
             setActiveChild(updatedChild);
             setChildren(prev => prev.map(c => c.id === activeChild.id ? updatedChild : c));
             checkGrowthStageUp(moodLog, journals, updatedChild);

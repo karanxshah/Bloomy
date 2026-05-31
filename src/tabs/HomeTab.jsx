@@ -71,7 +71,7 @@ export default function HomeTab() {
 
   const C = theme;
   const todaysWord = getTodaysWord();
-  const activityTier = getActivityTier(moodLog);
+  const activityTier = getActivityTier(moodLog, activeChild);
   const [wordExpanded, setWordExpanded] = useState(false);
 
   return (

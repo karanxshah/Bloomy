@@ -2,18 +2,31 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { GrowthMascot, GardenScene, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
 
 /* ── Activity-based expression tier ─────────────────────────────────
-   Replaces the old energy bar. Driven by days active in the last 7.
+   Driven by days with ANY activity in the last 7 days.
+   Uses moodLog dates (logged per activity day) as the primary signal.
+   Falls back to last_activity_date for same-day freshness.
    0 = thriving (5-7 days) → happy
    1 = good     (3-4 days) → content
    2 = low      (1-2 days) → tired
    3 = missing  (0 days)   → sad                                     */
-export const getActivityTier = (moodLog) => {
-  if (!moodLog || moodLog.length === 0) return 3;
+export const getActivityTier = (moodLog, activeChild) => {
+  const todayStr = new Date().toISOString().split("T")[0];
   const sevenAgo = new Date();
   sevenAgo.setDate(sevenAgo.getDate() - 7);
-  const activeDays = new Set(
-    moodLog.filter(e => new Date(e.date) >= sevenAgo).map(e => e.date)
-  ).size;
+
+  // Count unique active days from mood log
+  const activeDaysSet = new Set(
+    (moodLog||[]).filter(e => new Date(e.date) >= sevenAgo).map(e => e.date)
+  );
+
+  // If child was active today (via journal/breathe/gratitude) but hasn't logged mood,
+  // last_activity_date ensures today still counts
+  if (activeChild?.last_activity_date) {
+    const lad = activeChild.last_activity_date;
+    if (new Date(lad) >= sevenAgo) activeDaysSet.add(lad);
+  }
+
+  const activeDays = activeDaysSet.size;
   if (activeDays >= 5) return 0;
   if (activeDays >= 3) return 1;
   if (activeDays >= 1) return 2;
@@ -501,14 +514,11 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
     }, 1500);
   };
 
-  /* Activity vibe for watering tab */
-  const recentDates = [...new Set((moodLog||[]).map(e=>e.date))];
-  const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate()-7);
-  const activeDays = recentDates.filter(d=>new Date(d)>=sevenAgo).length;
-  const vibe = activeDays>=5 ? { label:"Thriving 🌟", color:"#43A047" }
-             : activeDays>=3 ? { label:"Doing well 🌿", color:"#4DB6AC" }
-             : activeDays>=1 ? { label:"Could use love 💜", color:"#CE93D8" }
-             :                 { label:"Missing you 🥺",   color:"#EF5350" };
+  /* Activity vibe — reuse the same tier as the mascot expression */
+  const vibe = activityTier===0 ? { label:"Thriving 🌟",       color:"#43A047" }
+             : activityTier===1 ? { label:"Doing well 🌿",     color:"#4DB6AC" }
+             : activityTier===2 ? { label:"Could use love 💜", color:"#CE93D8" }
+             :                    { label:"Missing you 🥺",    color:"#EF5350" };
 
 
   return (
@@ -879,7 +889,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
   const personality   = PERSONALITIES[cm.id]||PERSONALITIES.fox;
   const score         = growthScore || calcGrowthScore(activeChild, moodLog, journals);
   const stage         = getStage(score);
-  const activityTier  = getActivityTier(moodLog);
+  const activityTier  = getActivityTier(moodLog, activeChild);
   const lastEntry     = moodLog?.length>0 ? moodLog[moodLog.length-1] : null;
   const lastMood      = lastEntry?.mood||null;
   const lastMoodDate  = lastEntry?.date||null;

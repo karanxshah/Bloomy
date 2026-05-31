@@ -319,6 +319,11 @@ export default function BloomyApp() {
       showSeedPopup(1);
       completeMission("mood");
       checkGrowthStageUp(newLog, journals);
+      // Update last_activity_date so mascot expression reflects today's activity
+      const actDate = new Date().toISOString().split("T")[0];
+      supabase.from("children").update({last_activity_date:actDate}).eq("id",activeChild.id);
+      setActiveChild(ac=>ac?{...ac,last_activity_date:actDate}:ac);
+      setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:actDate}:c));
     } catch(e) {
       showToast("Couldn't save your mood. Please try again.");
     }
@@ -352,14 +357,17 @@ export default function BloomyApp() {
       const newJournals = [data, ...journals];
       setJournals(newJournals);
       setJournalSaved(true);
+      setJournalText("");
       playSound("chime", soundOn);
       haptic(10);
       showSeedPopup(2);
-      // Only earn berry once per day for journaling
-      const alreadyEarnedToday = journals.some(j => j.date === today());
-      if (!alreadyEarnedToday) earnBerry();
       completeMission("journal");
       checkGrowthStageUp(moodLog, newJournals);
+      // Update last_activity_date so mascot expression stays current
+      const todayStr = new Date().toISOString().split("T")[0];
+      supabase.from("children").update({last_activity_date:todayStr}).eq("id",activeChild.id);
+      setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
+      setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
     } catch(e) {
       showToast("Couldn't save your journal entry. Please try again.");
     }
@@ -380,11 +388,13 @@ export default function BloomyApp() {
       playSound("chime", soundOn);
       haptic(8);
       showSeedPopup(1);
-      // Only earn berry once per day for gratitude
-      const alreadyEarnedToday = gratitudes.some(g => g.date === today());
-      if (!alreadyEarnedToday) earnBerry();
       completeMission("gratitude");
       setTimeout(()=>setGratitudeSaved(false),1500);
+      // Update last_activity_date so mascot expression stays current
+      const todayStr = new Date().toISOString().split("T")[0];
+      supabase.from("children").update({last_activity_date:todayStr}).eq("id",activeChild.id);
+      setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
+      setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
     } catch(e) {
       showToast("Couldn't save your gratitude. Please try again.");
     }
