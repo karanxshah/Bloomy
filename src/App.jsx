@@ -32,7 +32,7 @@ import GratitudeTab from "./tabs/GratitudeTab.jsx";
 /* ── Feature components (unchanged files) ── */
 import ParentInsights from "./ParentInsights.jsx";
 import ChildOnboarding from "./ChildOnboarding.jsx";
-import BerryBasket, { BerrySVG, FloatingBerry } from "./BerryBasket.jsx";
+
 import {
   GrowthMascot, GardenScene, GrowthProgressBar, GrowthCelebration,
   SeedPopup, calcGrowthScore, getStage, STAGES,
@@ -146,11 +146,7 @@ export default function BloomyApp() {
   const [pendingBonusPopup, setPendingBonusPopup] = useState(false);
   const [streakShield, setStreakShield]       = useState(false);
 
-  /* ── Berries / energy ── */
-  const [berries, setBerries]       = useState(0);
-  const [energy, setEnergy]         = useState(100);
-  const [floatingBerry, setFloatingBerry] = useState(false);
-  const basketRef                   = useRef(null);
+  /* ── Berries / energy — removed, seeds are now the single currency ── */
 
   /* ── Toast ── */
   const [toast, setToast]           = useState({ visible:false, message:"", type:"error" });
@@ -209,39 +205,9 @@ export default function BloomyApp() {
   };
   useEffect(()=>{ if(session) loadChildren(session.user.id); },[session]);
 
-  /* ── Berry helpers ── */
-  const earnBerry = () => {
-    setFloatingBerry(false);
-    setTimeout(()=>setFloatingBerry(true), 30);
-    haptic(12);
-    const todayStr = new Date().toISOString().split("T")[0];
-    setBerries(prev=>{
-      const newCount = prev + 1;
-      if (activeChild) {
-        supabase.from("children")
-          .update({berries:newCount, last_activity_date:todayStr})
-          .eq("id",activeChild.id)
-          .then(({error})=>{ if(error) console.error("berry save:",error); });
-        setActiveChild(ac=>ac?{...ac,berries:newCount,last_activity_date:todayStr}:ac);
-        setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,berries:newCount,last_activity_date:todayStr}:c));
-      }
-      return newCount;
-    });
-  };
-
-  const feedMascot = async () => {
-    if (!activeChild||berries<=0||energy>=100) return;
-    const newBerries = berries - 1;
-    const newEnergy  = Math.min(100, energy + 25);
-    setBerries(newBerries); setEnergy(newEnergy);
-    const {error} = await supabase.from("children")
-      .update({berries:newBerries, energy:newEnergy})
-      .eq("id",activeChild.id);
-    if (!error) {
-      setActiveChild(prev=>prev?{...prev,berries:newBerries,energy:newEnergy}:prev);
-      setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,berries:newBerries,energy:newEnergy}:c));
-    }
-  };
+  /* earnBerry / feedMascot removed — seeds are now the single currency */
+  const earnBerry  = () => {}; // no-op kept so callsites don't crash during cleanup
+  const feedMascot = async () => {};
 
   /* ── Missions ── */
   const completeMission = (id) => {
@@ -443,22 +409,6 @@ export default function BloomyApp() {
     }
     setTodayMood(null); setPendingBonusPopup(false);
 
-    /* Energy depletion */
-    const lastActivity = child.last_activity_date || "";
-    const todayStr = new Date().toISOString().split("T")[0];
-    let currentEnergy;
-    if (!lastActivity) {
-      currentEnergy = child.energy > 0 ? child.energy : 60;
-      if (!child.energy) supabase.from("children").update({energy:60}).eq("id",child.id);
-    } else if (lastActivity === todayStr) {
-      currentEnergy = child.energy ?? 100;
-    } else {
-      const daysMissed = Math.floor((new Date(todayStr)-new Date(lastActivity))/(1000*60*60*24));
-      currentEnergy = Math.max(0, (child.energy??100)-(daysMissed*15));
-      supabase.from("children").update({energy:currentEnergy}).eq("id",child.id);
-    }
-    setBerries(child.berries||0);
-    setEnergy(currentEnergy);
     setSeenTooltips(child.seen_tooltips||{});
     if (!child.seen_tooltips?.intro) setShowChildIntro(true);
 
@@ -588,7 +538,7 @@ export default function BloomyApp() {
     gratitudeText, setGratitudeText,
     gratitudeSaved, setGratitudeSaved,
     seenTooltips, setSeenTooltips,
-    berries, energy,
+    // berries & energy removed
     darkMode, soundOn,
     dailyMissions, streakShield,
     cm, currentStage, growthScore, streak,
@@ -597,7 +547,7 @@ export default function BloomyApp() {
     setShowMascotRoom,
     logMood, saveMoodNote,
     saveJournal, saveGratitude,
-    earnBerry, feedMascot,
+    // earnBerry & feedMascot removed
     completeMission, checkGrowthStageUp,
     nextAffirm,
     showSeedPopup,
@@ -860,7 +810,9 @@ export default function BloomyApp() {
   /* ── Mascot room ── */
   if (showMascotRoom) return (
     <MascotRoom activeChild={activeChild} moodLog={moodLog} journals={journals}
-      energy={energy} berries={berries} onFeed={feedMascot} onClose={()=>setShowMascotRoom(false)}/>
+      gratitudes={gratitudes} growthScore={growthScore}
+      supabase={supabase} setActiveChild={setActiveChild} setChildren={setChildren}
+      onClose={()=>setShowMascotRoom(false)}/>
   );
 
   /* ── Child app shell ── */
@@ -906,7 +858,6 @@ export default function BloomyApp() {
         <Toast visible={toast.visible} message={toast.message} type={toast.type}/>
 
         <SeedPopup visible={seedPopup.visible} amount={seedPopup.amount} gold={seedPopup.gold}/>
-        <FloatingBerry visible={floatingBerry} targetRef={basketRef} onDone={()=>setFloatingBerry(false)}/>
         <NavBar/>
         {celebration!==null&&<GrowthCelebration mascotId={cm.id} newStage={celebration} childName={activeChild.name} onDismiss={()=>setCelebration(null)}/>}
 
@@ -927,9 +878,9 @@ export default function BloomyApp() {
             </button>
           )}
           <span style={{fontSize:13,fontWeight:700,color:theme.muted,fontFamily:F.b,
-            maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+            maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
             display:"inline-block"}}>{activeChild.name}</span>
-          <BerryBasket berries={berries} energy={energy} mascotName={cm.name} onFeed={feedMascot} onGoToRoom={()=>setShowMascotRoom(true)} basketRef={basketRef}/>
+          <div style={{width:60}}/>{/* spacer to keep name centered */}
         </div>
 
         {/* Tab content */}
