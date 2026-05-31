@@ -42,14 +42,14 @@ const TECHNIQUES = [
     ],
   },
   {
-    id: "star",
-    name: "Star Breathing",
-    emoji: "⭐",
-    desc: "Trace a star shape in your mind while you breathe.",
+    id: "triangle",
+    name: "Triangle Breathing",
+    emoji: "🔺",
+    desc: "Three equal sides — easy to remember, great for quick calm.",
     phases: [
-      { phase:"Breathe In",  duration:3, color:"#FFD54F" },
-      { phase:"Hold",        duration:1, color:"#FF8A65" },
-      { phase:"Breathe Out", duration:3, color:"#A5D6A7" },
+      { phase:"Breathe In",  duration:3, color:"#4FC3F7" },
+      { phase:"Hold",        duration:3, color:"#CE93D8" },
+      { phase:"Breathe Out", duration:3, color:"#81C784" },
     ],
   },
 ];

@@ -12,13 +12,21 @@ export default function GratitudeTab() {
 
   const C = theme;
   const [shaking, setShaking]       = useState(false);
-  const [floater, setFloater]       = useState(null); // text to float up
+  const [floater, setFloater]       = useState(null); // { text, color }
+
+  const JAR_COLORS = ["#FFD54F","#F06292","#CE93D8","#4DB6AC","#FF8A65","#4FC3F7","#A5D6A7","#FFD54F"];
+  const getGratColor = (g, i) => {
+    const key = g.id || g.text || i;
+    const hash = String(key).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+    return JAR_COLORS[hash % JAR_COLORS.length];
+  };
 
   const handleShake = () => {
     if (gratitudes.length === 0 || shaking) return;
-    const pick = gratitudes[Math.floor(Math.random() * gratitudes.length)];
+    const idx = Math.floor(Math.random() * gratitudes.length);
+    const pick = gratitudes[idx];
     setShaking(true);
-    setFloater(pick.text);
+    setFloater({ text: pick.text, color: getGratColor(pick, idx) });
     setTimeout(() => setShaking(false), 600);
     setTimeout(() => setFloater(null), 2200);
   };
@@ -50,13 +58,14 @@ export default function GratitudeTab() {
           <div style={{
             position:"absolute", left:"50%", top:"30%",
             transform:"translateX(-50%)",
-            background:C.purple, color:"#fff",
+            background: floater.color, color:"#fff",
             borderRadius:14, padding:"8px 16px",
             fontFamily:F.b, fontWeight:700, fontSize:13,
             pointerEvents:"none", zIndex:10, maxWidth:180, textAlign:"center",
             animation:"floatUp 2.2s ease forwards",
+            boxShadow:`0 4px 16px ${floater.color}55`,
           }}>
-            {floater.length > 40 ? floater.slice(0,40)+"…" : floater}
+            {floater.text.length > 40 ? floater.text.slice(0,40)+"…" : floater.text}
           </div>
         )}
         <svg viewBox="0 0 260 280" width="220" height="240"
@@ -83,15 +92,13 @@ export default function GratitudeTab() {
             </text>
           ) : (
             gratitudes.slice(0,8).map((g,i)=>{
-              const jarColors=["#FFD54F","#F06292","#CE93D8","#4DB6AC","#FF8A65","#4FC3F7","#A5D6A7","#FFD54F"];
-              const key = g.id || g.text || i;
-              const hash = String(key).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+              const color = getGratColor(g, i);
               const xPos = 70+(i%3)*50+(i%2)*8;
               const yPos = 130+Math.floor(i/3)*40+(i%2)*12;
               const rot = (i%2===0?-1:1)*(i*3%8+2);
               return (
                 <g key={g.id||i} transform={`translate(${xPos},${yPos}) rotate(${rot})`}>
-                  <rect x="-28" y="-10" width="56" height="22" rx="4" fill={jarColors[hash%jarColors.length]} opacity="0.95"/>
+                  <rect x="-28" y="-10" width="56" height="22" rx="4" fill={color} opacity="0.95"/>
                   <text x="0" y="6" textAnchor="middle" fontFamily={F.b} fontSize="9" fontWeight="700" fill="#fff">
                     {g.text.length>10?g.text.slice(0,10)+"…":g.text}
                   </text>

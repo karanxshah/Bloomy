@@ -258,27 +258,33 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0, energyTier = 0 }) =>
     bunny: (
       <svg width={w} height={h} viewBox={`0 0 ${VW} ${VH}`}>
         <Glow/>
-        {/* shift whole character down 18px so ears clear the top */}
-        <g transform="translate(0,18)">
-          {/* ears (behind head) */}
-          <ellipse cx="76" cy="34" rx="15" ry="40" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(-8 76 34)"/>
-          <ellipse cx="124" cy="34" rx="15" ry="40" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(8 124 34)"/>
-          <ellipse cx="76" cy="36" rx="7" ry="28" fill={P.inner} transform="rotate(-8 76 36)"/>
-          <ellipse cx="124" cy="36" rx="7" ry="28" fill={P.inner} transform="rotate(8 124 36)"/>
-          {/* tail */}
-          <circle cx="150" cy="206" r="16" fill="#fff" stroke={P.line} strokeWidth={SW}/>
-          <Limbs/>
-          <Body/>
-          {/* head */}
-          <ellipse cx="100" cy="92" rx="56" ry="52" fill={P.body} stroke={P.line} strokeWidth={SW}/>
-          <ellipse cx="100" cy="100" rx="34" ry="30" fill={P.belly} opacity="0.6"/>
-          <Cheeks lx={64} rx={136} ly={106}/>
-          <Eyes lx={78} rx={122} ey={86} sr={15} behind={P.body}/>
-          <ellipse cx="100" cy="110" rx="7" ry="5" fill={P.nose}/>
-          <Mouth cx={100} cy={124}/>
-          <Scarf/>
-          <FlowerCrown/>
-        </g>
+        {/* ears sit high — taller than other mascots so we position everything
+            to give room at top (ears) and bottom (feet) within the 256 viewbox */}
+        {/* ears (behind head) */}
+        <ellipse cx="76" cy="46" rx="15" ry="38" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(-8 76 46)"/>
+        <ellipse cx="124" cy="46" rx="15" ry="38" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(8 124 46)"/>
+        <ellipse cx="76" cy="48" rx="7" ry="26" fill={P.inner} transform="rotate(-8 76 48)"/>
+        <ellipse cx="124" cy="48" rx="7" ry="26" fill={P.inner} transform="rotate(8 124 48)"/>
+        {/* tail */}
+        <circle cx="150" cy="200" r="14" fill="#fff" stroke={P.line} strokeWidth={SW}/>
+        {/* arms */}
+        <ellipse cx="46" cy="172" rx="14" ry="24" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(-16 46 172)"/>
+        <ellipse cx="154" cy="172" rx="14" ry="24" fill={P.body} stroke={P.line} strokeWidth={SW} transform="rotate(16 154 172)"/>
+        {/* feet */}
+        <ellipse cx="74" cy="234" rx="21" ry="12" fill={P.foot} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="126" cy="234" rx="21" ry="12" fill={P.foot} stroke={P.line} strokeWidth={SW}/>
+        {/* body */}
+        <ellipse cx="100" cy="190" rx="54" ry="50" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="196" rx="34" ry="38" fill={P.belly}/>
+        {/* head */}
+        <ellipse cx="100" cy="100" rx="54" ry="50" fill={P.body} stroke={P.line} strokeWidth={SW}/>
+        <ellipse cx="100" cy="108" rx="32" ry="28" fill={P.belly} opacity="0.6"/>
+        <Cheeks lx={64} rx={136} ly={114}/>
+        <Eyes lx={78} rx={122} ey={94} sr={15} behind={P.body}/>
+        <ellipse cx="100" cy="118" rx="7" ry="5" fill={P.nose}/>
+        <Mouth cx={100} cy={132}/>
+        <Scarf/>
+        <FlowerCrown/>
       </svg>
     ),
 

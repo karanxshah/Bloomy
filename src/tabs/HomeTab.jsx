@@ -268,33 +268,44 @@ export default function HomeTab() {
         ))}
       </div>
 
-      {/* ── Word of the Day ─────────────────────────────────────────── */}
+      {/* ── Feeling of the Day ──────────────────────────────────────── */}
       <div
         onClick={()=>setWordExpanded(e=>!e)}
         style={{
-          background:`linear-gradient(135deg,${todaysWord.color}22,${todaysWord.color}11)`,
-          border:`1.5px solid ${todaysWord.color}55`,
+          background: C.card,
+          border:`1.5px solid ${C.purple}33`,
           borderRadius:20, padding:"16px 18px", marginBottom:14, cursor:"pointer",
+          boxShadow:`0 2px 18px ${C.purple}12`,
         }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: wordExpanded ? 10 : 0 }}>
-          <span style={{ fontSize:28 }}>{todaysWord.emoji}</span>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{
+            width:48, height:48, borderRadius:14, flexShrink:0,
+            background:`linear-gradient(135deg,${C.purple},#C084FC)`,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:24,
+          }}>
+            {todaysWord.emoji}
+          </div>
           <div style={{ flex:1 }}>
-            <p style={{ fontFamily:F.b, fontWeight:700, fontSize:11, color:todaysWord.color,
-              letterSpacing:1.2, textTransform:"uppercase", margin:"0 0 1px" }}>
+            <p style={{ fontFamily:F.b, fontWeight:700, fontSize:11, color:C.purple,
+              letterSpacing:1.2, textTransform:"uppercase", margin:"0 0 2px" }}>
               Feeling of the Day
             </p>
             <p style={{ fontFamily:F.h, fontWeight:800, fontSize:20, color:C.text, margin:0 }}>
               {todaysWord.word}
             </p>
           </div>
-          <span style={{ fontSize:14, color:todaysWord.color }}>{wordExpanded ? "▲" : "▼"}</span>
+          <span style={{ fontSize:13, color:C.muted }}>{wordExpanded ? "▲" : "▼"}</span>
         </div>
         {wordExpanded && (
-          <div style={{ animation:"fadeIn 0.25s ease" }}>
+          <div style={{ marginTop:14, animation:"fadeIn 0.25s ease" }}>
+            <div style={{ height:1, background:C.border, marginBottom:12 }}/>
             <p style={{ fontFamily:F.b, fontWeight:600, fontSize:14, color:C.text,
-              lineHeight:1.6, margin:"0 0 8px" }}>{todaysWord.def}</p>
-            <p style={{ fontFamily:F.b, fontWeight:500, fontSize:13, color:C.muted,
-              fontStyle:"italic", margin:0 }}>"{todaysWord.example}"</p>
+              lineHeight:1.65, margin:"0 0 10px" }}>{todaysWord.def}</p>
+            <div style={{ background:`${C.purple}12`, borderRadius:12, padding:"10px 14px" }}>
+              <p style={{ fontFamily:F.b, fontWeight:500, fontSize:13, color:C.muted,
+                fontStyle:"italic", margin:0, lineHeight:1.5 }}>"{todaysWord.example}"</p>
+            </div>
           </div>
         )}
       </div>
