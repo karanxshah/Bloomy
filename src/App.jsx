@@ -353,7 +353,14 @@ export default function BloomyApp() {
       const {data,error} = await supabase.from("journal_entries")
         .insert({child_id:activeChild.id, text:journalText, prompt:JOURNAL_PROMPTS[promptIdx], date:today()})
         .select().single();
-      if (error) throw error;
+      if (error) {
+        console.error("saveJournal error:", error);
+        throw error;
+      }
+      if (!data) {
+        console.error("saveJournal: no data returned");
+        throw new Error("No data returned");
+      }
       const newJournals = [data, ...journals];
       setJournals(newJournals);
       setJournalSaved(true);
@@ -363,12 +370,12 @@ export default function BloomyApp() {
       showSeedPopup(2);
       completeMission("journal");
       checkGrowthStageUp(moodLog, newJournals);
-      // Update last_activity_date so mascot expression stays current
       const todayStr = new Date().toISOString().split("T")[0];
       supabase.from("children").update({last_activity_date:todayStr}).eq("id",activeChild.id);
       setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
       setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
     } catch(e) {
+      console.error("saveJournal caught:", e);
       showToast("Couldn't save your journal entry. Please try again.");
     }
     setSaveLoading(false);
@@ -381,7 +388,14 @@ export default function BloomyApp() {
       const {data,error} = await supabase.from("gratitudes")
         .insert({child_id:activeChild.id, text:gratitudeText.trim(), date:today()})
         .select().single();
-      if (error) throw error;
+      if (error) {
+        console.error("saveGratitude error:", error);
+        throw error;
+      }
+      if (!data) {
+        console.error("saveGratitude: no data returned");
+        throw new Error("No data returned");
+      }
       setGratitudes(prev=>[data,...prev]);
       setGratitudeText("");
       setGratitudeSaved(true);
@@ -390,12 +404,12 @@ export default function BloomyApp() {
       showSeedPopup(1);
       completeMission("gratitude");
       setTimeout(()=>setGratitudeSaved(false),1500);
-      // Update last_activity_date so mascot expression stays current
       const todayStr = new Date().toISOString().split("T")[0];
       supabase.from("children").update({last_activity_date:todayStr}).eq("id",activeChild.id);
       setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
       setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
     } catch(e) {
+      console.error("saveGratitude caught:", e);
       showToast("Couldn't save your gratitude. Please try again.");
     }
   };
@@ -421,6 +435,8 @@ export default function BloomyApp() {
 
     setSeenTooltips(child.seen_tooltips||{});
     if (!child.seen_tooltips?.intro) setShowChildIntro(true);
+
+    const todayStr = new Date().toISOString().split("T")[0];
 
     /* Load all child data */
     const [moodRes,journalRes,gratitudeRes] = await Promise.all([
