@@ -66,10 +66,93 @@ const SPEECH = {
 
 /* ══════════════════════════════════════════════
    FULL BODY MASCOT ILLUSTRATIONS
+   Uses the same Eyes + Mouth expression system
+   as GrowthMascot so faces stay consistent.
 ══════════════════════════════════════════════ */
-export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
+export const FullBodyMascot = ({ id, size = 220, stage = 0, energyTier = 0 }) => {
   const w = size;
   const h = size * 1.4;
+
+  /* ── Expression helpers (scaled to full-body proportions) ── */
+
+  /* Eyes: lx/rx = eye centre x, ey = eye centre y, sr = sclera radius,
+     behind = fill colour used for eyelid masking, iris/irisR for owls.
+     All coords in the 0→w / 0→h space of each mascot SVG.            */
+  const Eyes = ({ lx, rx, ey, sr, behind, iris, irisR, owl }) => {
+    const pcol = iris || "#1a1a2e";
+    const pr   = iris ? irisR : sr * 0.5;
+    const hl   = pr * 0.42 + 0.5;
+    const browW = owl ? sr * 0.7 : sr * 1.1;
+    const browTop = ey - sr - w * 0.01;
+
+    if (energyTier === 0) {
+      return (
+        <g>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={lx} cy={ey + sr * 0.08} r={pr} fill={pcol}/>
+          <circle cx={rx} cy={ey + sr * 0.08} r={pr} fill={pcol}/>
+          <circle cx={lx + pr * 0.45} cy={ey - pr * 0.5} r={hl + 0.5} fill="#fff"/>
+          <circle cx={rx + pr * 0.45} cy={ey - pr * 0.5} r={hl + 0.5} fill="#fff"/>
+        </g>
+      );
+    }
+    if (energyTier === 1) {
+      return (
+        <g>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={lx} cy={ey + sr * 0.08} r={pr} fill={pcol}/>
+          <circle cx={rx} cy={ey + sr * 0.08} r={pr} fill={pcol}/>
+          <circle cx={lx + pr * 0.45} cy={ey - pr * 0.5} r={hl} fill="#fff"/>
+          <circle cx={rx + pr * 0.45} cy={ey - pr * 0.5} r={hl} fill="#fff"/>
+        </g>
+      );
+    }
+    if (energyTier === 2) {
+      const lidDrop = owl ? sr * 0.55 : sr * 0.38;
+      return (
+        <g>
+          <circle cx={lx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={rx} cy={ey} r={sr} fill="#fff"/>
+          <circle cx={lx} cy={ey + sr * 0.4} r={pr * (owl ? 0.85 : 1)} fill={pcol}/>
+          <circle cx={rx} cy={ey + sr * 0.4} r={pr * (owl ? 0.85 : 1)} fill={pcol}/>
+          <path d={`M ${lx-sr-1} ${ey+lidDrop} A ${sr+1} ${sr+1} 0 0 1 ${lx+sr+1} ${ey+lidDrop} L ${lx+sr+1} ${ey-sr-2} L ${lx-sr-1} ${ey-sr-2} Z`} fill={behind}/>
+          <path d={`M ${rx-sr-1} ${ey+lidDrop} A ${sr+1} ${sr+1} 0 0 1 ${rx+sr+1} ${ey+lidDrop} L ${rx+sr+1} ${ey-sr-2} L ${rx-sr-1} ${ey-sr-2} Z`} fill={behind}/>
+          <path d={`M ${lx-sr} ${ey+lidDrop} A ${sr} ${sr} 0 0 1 ${lx+sr} ${ey+lidDrop}`} stroke="#333" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
+          <path d={`M ${rx-sr} ${ey+lidDrop} A ${sr} ${sr} 0 0 1 ${rx+sr} ${ey+lidDrop}`} stroke="#333" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
+        </g>
+      );
+    }
+    // tier 3 — sad: smaller eyes, worried brows, tear
+    const esr = owl ? sr * 0.62 : sr * 0.82;
+    const epr = owl ? pr * 0.7  : pr * 0.92;
+    return (
+      <g>
+        <circle cx={lx} cy={ey + sr * 0.15} r={esr} fill="#fff"/>
+        <circle cx={rx} cy={ey + sr * 0.15} r={esr} fill="#fff"/>
+        <circle cx={lx} cy={ey + sr * 0.15 + esr * 0.5} r={epr} fill={pcol}/>
+        <circle cx={rx} cy={ey + sr * 0.15 + esr * 0.5} r={epr} fill={pcol}/>
+        <path d={`M ${lx-browW} ${browTop} Q ${lx} ${browTop - sr*0.4} ${lx+browW} ${browTop - sr*0.55}`} stroke="#333" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+        <path d={`M ${rx+browW} ${browTop} Q ${rx} ${browTop - sr*0.4} ${rx-browW} ${browTop - sr*0.55}`} stroke="#333" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+        <path d={`M ${rx} ${ey+esr+sr*0.2} q ${-sr*0.25} ${sr*0.4} 0 ${sr*0.65} q ${sr*0.25} ${-sr*0.28} 0 ${-sr*0.65} Z`} fill="#4FC3F7"/>
+      </g>
+    );
+  };
+
+  /* Mouth — same logic as GrowthMascot, scaled to body proportions */
+  const Mouth = ({ cx, cy, color = "#333" }) => {
+    const r = w * 0.07;
+    if (energyTier === 0) {
+      return <path d={`M ${cx-r} ${cy - r*0.25} Q ${cx} ${cy + r*0.8} ${cx+r} ${cy - r*0.25}`} stroke={color} strokeWidth="2.5" fill="none" strokeLinecap="round"/>;
+    } else if (energyTier === 1) {
+      return <path d={`M ${cx-r} ${cy - r*0.1} Q ${cx} ${cy + r*0.4} ${cx+r} ${cy - r*0.1}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+    } else if (energyTier === 2) {
+      return <path d={`M ${cx-r} ${cy + r*0.05} Q ${cx} ${cy - r*0.2} ${cx+r} ${cy + r*0.05}`} stroke={color} strokeWidth="2.2" fill="none" strokeLinecap="round"/>;
+    } else {
+      return <path d={`M ${cx-r} ${cy + r*0.25} Q ${cx} ${cy - r*0.85} ${cx+r} ${cy + r*0.25}`} stroke={color} strokeWidth="2.5" fill="none" strokeLinecap="round"/>;
+    }
+  };
 
   /* Stage accessories */
   const Scarf = ({ y = 95 }) => (
@@ -143,20 +226,14 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
         <polygon points={`${w*0.7},${h*0.18} ${w*0.8},${h*0.04} ${w*0.62},${h*0.16}`} fill="#FF7043"/>
         {/* Head */}
         <ellipse cx={w/2} cy={h*0.28} rx={w*0.26} ry={h*0.2} fill="#FF8A65"/>
-        {/* Face */}
+        {/* Muzzle */}
         <ellipse cx={w/2} cy={h*0.32} rx={w*0.16} ry={h*0.13} fill="#FFCCBC"/>
-        <circle cx={w*0.42} cy={h*0.25} r={w*0.05} fill="#fff"/>
-        <circle cx={w*0.58} cy={h*0.25} r={w*0.05} fill="#fff"/>
-        <circle cx={w*0.43} cy={h*0.255} r={w*0.025} fill="#1a1a2e"/>
-        <circle cx={w*0.59} cy={h*0.255} r={w*0.025} fill="#1a1a2e"/>
-        <circle cx={w*0.44} cy={h*0.248} r={w*0.01} fill="#fff"/>
-        <circle cx={w*0.6}  cy={h*0.248} r={w*0.01} fill="#fff"/>
-        <ellipse cx={w/2} cy={h*0.33} rx={w*0.055} ry={h*0.035} fill="#EF5350"/>
-        {stage>=1
-          ? <path d={`M ${w*0.43} ${h*0.365} Q ${w*0.5} ${h*0.4} ${w*0.57} ${h*0.365}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.355} Q ${w*0.5} ${h*0.385} ${w*0.56} ${h*0.355}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        {/* Eyes */}
+        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.255} sr={w*0.055} behind="#FF8A65"/>
+        {/* Nose */}
+        <ellipse cx={w/2} cy={h*0.33} rx={w*0.055} ry={h*0.033} fill="#EF5350"/>
+        {/* Mouth */}
+        <Mouth cx={w/2} cy={h*0.372}/>
         {stage>=1 && <Scarf y={h*0.43}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.1}/>}
       </svg>
@@ -191,19 +268,14 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
           fill="#FCE4EC" transform={`rotate(15 ${w*0.77} ${h*0.6})`}/>
         {/* Head */}
         <ellipse cx={w/2} cy={h*0.3} rx={w*0.24} ry={h*0.19} fill="#FCE4EC"/>
+        {/* Muzzle */}
         <ellipse cx={w/2} cy={h*0.34} rx={w*0.15} ry={h*0.12} fill="#F8BBD0"/>
-        <circle cx={w*0.42} cy={h*0.27} r={w*0.05} fill="#fff"/>
-        <circle cx={w*0.58} cy={h*0.27} r={w*0.05} fill="#fff"/>
-        <circle cx={w*0.43} cy={h*0.275} r={w*0.025} fill="#1a1a2e"/>
-        <circle cx={w*0.59} cy={h*0.275} r={w*0.025} fill="#1a1a2e"/>
-        <circle cx={w*0.44} cy={h*0.268} r={w*0.01} fill="#fff"/>
-        <circle cx={w*0.6}  cy={h*0.268} r={w*0.01} fill="#fff"/>
-        <ellipse cx={w/2} cy={h*0.345} rx={w*0.045} ry={h*0.028} fill="#F48FB1"/>
-        {stage>=1
-          ? <path d={`M ${w*0.44} ${h*0.375} Q ${w*0.5} ${h*0.408} ${w*0.56} ${h*0.375}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.365} Q ${w*0.5} ${h*0.395} ${w*0.56} ${h*0.365}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        {/* Eyes */}
+        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.275} sr={w*0.053} behind="#FCE4EC"/>
+        {/* Nose */}
+        <ellipse cx={w/2} cy={h*0.345} rx={w*0.045} ry={h*0.026} fill="#F48FB1"/>
+        {/* Mouth */}
+        <Mouth cx={w/2} cy={h*0.382}/>
         {stage>=1 && <Scarf y={h*0.44}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.08}/>}
         </g>
@@ -235,19 +307,14 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
           fill="#8D6E63" transform={`rotate(18 ${w*0.79} ${h*0.62})`}/>
         {/* Head */}
         <ellipse cx={w/2} cy={h*0.29} rx={w*0.27} ry={h*0.21} fill="#8D6E63"/>
+        {/* Muzzle */}
         <ellipse cx={w/2} cy={h*0.34} rx={w*0.16} ry={h*0.12} fill="#BCAAA4"/>
-        <circle cx={w*0.41} cy={h*0.26} r={w*0.055} fill="#fff"/>
-        <circle cx={w*0.59} cy={h*0.26} r={w*0.055} fill="#fff"/>
-        <circle cx={w*0.42} cy={h*0.265} r={w*0.028} fill="#1a1a2e"/>
-        <circle cx={w*0.60} cy={h*0.265} r={w*0.028} fill="#1a1a2e"/>
-        <circle cx={w*0.43} cy={h*0.258} r={w*0.011} fill="#fff"/>
-        <circle cx={w*0.61} cy={h*0.258} r={w*0.011} fill="#fff"/>
-        <ellipse cx={w/2} cy={h*0.34} rx={w*0.055} ry={h*0.036} fill="#795548"/>
-        {stage>=1
-          ? <path d={`M ${w*0.43} ${h*0.375} Q ${w*0.5} ${h*0.41} ${w*0.57} ${h*0.375}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.365} Q ${w*0.5} ${h*0.395} ${w*0.56} ${h*0.365}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        {/* Eyes */}
+        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.262} sr={w*0.057} behind="#8D6E63"/>
+        {/* Nose */}
+        <ellipse cx={w/2} cy={h*0.34} rx={w*0.055} ry={h*0.034} fill="#795548"/>
+        {/* Mouth */}
+        <Mouth cx={w/2} cy={h*0.378}/>
         {stage>=1 && <Scarf y={h*0.45}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
       </svg>
@@ -275,14 +342,9 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
         <ellipse cx={w/2} cy={h*0.3} rx={w*0.25} ry={h*0.2} fill="#7E57C2"/>
         <ellipse cx={w/2} cy={h*0.32} rx={w*0.18} ry={h*0.16} fill="#B39DDB"/>
         {/* Eyes */}
-        <circle cx={w*0.41} cy={h*0.28} r={w*0.08} fill="#fff"/>
-        <circle cx={w*0.59} cy={h*0.28} r={w*0.08} fill="#fff"/>
-        <circle cx={w*0.41} cy={h*0.282} r={w*0.048} fill="#4527A0"/>
-        <circle cx={w*0.59} cy={h*0.282} r={w*0.048} fill="#4527A0"/>
-        <circle cx={w*0.425} cy={h*0.272} r={w*0.018} fill="#fff"/>
-        <circle cx={w*0.605} cy={h*0.272} r={w*0.018} fill="#fff"/>
+        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.283} sr={w*0.083} behind="#7E57C2" iris="#4527A0" irisR={w*0.046} owl/>
         {/* Beak */}
-        <polygon points={`${w*0.46},${h*0.34} ${w*0.5},${h*0.355} ${w*0.54},${h*0.34}`}
+        <polygon points={`${w*0.46},${h*0.35} ${w*0.5},${h*0.365} ${w*0.54},${h*0.35}`}
           fill="#FFA726"/>
         {stage>=1 && <Scarf y={h*0.44}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.1}/>}
@@ -316,28 +378,23 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
           fill="#26A69A"/>
         {/* Head */}
         <ellipse cx={w/2} cy={h*0.29} rx={w*0.25} ry={h*0.2} fill="#4DB6AC"/>
+        {/* Muzzle */}
         <ellipse cx={w/2} cy={h*0.33} rx={w*0.15} ry={h*0.12} fill="#B2DFDB"/>
-        <circle cx={w*0.42} cy={h*0.265} r={w*0.052} fill="#fff"/>
-        <circle cx={w*0.58} cy={h*0.265} r={w*0.052} fill="#fff"/>
-        <circle cx={w*0.43} cy={h*0.27} r={w*0.026} fill="#1a1a2e"/>
-        <circle cx={w*0.59} cy={h*0.27} r={w*0.026} fill="#1a1a2e"/>
-        <circle cx={w*0.44} cy={h*0.263} r={w*0.01} fill="#fff"/>
-        <circle cx={w*0.6}  cy={h*0.263} r={w*0.01} fill="#fff"/>
-        <ellipse cx={w/2} cy={h*0.335} rx={w*0.045} ry={h*0.028} fill="#FF8A80"/>
+        {/* Eyes */}
+        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.263} sr={w*0.054} behind="#4DB6AC"/>
+        {/* Nose */}
+        <ellipse cx={w/2} cy={h*0.335} rx={w*0.045} ry={h*0.026} fill="#FF8A80"/>
         {/* Whiskers */}
-        <line x1={w*0.25} y1={h*0.32} x2={w*0.44} y2={h*0.335}
+        <line x1={w*0.25} y1={h*0.322} x2={w*0.43} y2={h*0.334}
           stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        <line x1={w*0.25} y1={h*0.34} x2={w*0.44} y2={h*0.34}
+        <line x1={w*0.25} y1={h*0.342} x2={w*0.43} y2={h*0.342}
           stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        <line x1={w*0.75} y1={h*0.32} x2={w*0.56} y2={h*0.335}
+        <line x1={w*0.75} y1={h*0.322} x2={w*0.57} y2={h*0.334}
           stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        <line x1={w*0.75} y1={h*0.34} x2={w*0.56} y2={h*0.34}
+        <line x1={w*0.75} y1={h*0.342} x2={w*0.57} y2={h*0.342}
           stroke="#26A69A" strokeWidth="1.5" opacity="0.7"/>
-        {stage>=1
-          ? <path d={`M ${w*0.43} ${h*0.365} Q ${w*0.5} ${h*0.398} ${w*0.57} ${h*0.365}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.355} Q ${w*0.5} ${h*0.385} ${w*0.56} ${h*0.355}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        {/* Mouth */}
+        <Mouth cx={w/2} cy={h*0.371}/>
         {stage>=1 && <Scarf y={h*0.44}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
       </svg>
@@ -370,19 +427,14 @@ export const FullBodyMascot = ({ id, size = 220, stage = 0 }) => {
           fill="#FFB74D" transform={`rotate(18 ${w*0.79} ${h*0.62})`}/>
         {/* Head */}
         <ellipse cx={w/2} cy={h*0.29} rx={w*0.26} ry={h*0.21} fill="#FFB74D"/>
+        {/* Muzzle */}
         <ellipse cx={w/2} cy={h*0.34} rx={w*0.17} ry={h*0.13} fill="#FFE0B2"/>
-        <circle cx={w*0.41} cy={h*0.255} r={w*0.055} fill="#fff"/>
-        <circle cx={w*0.59} cy={h*0.255} r={w*0.055} fill="#fff"/>
-        <circle cx={w*0.42} cy={h*0.26} r={w*0.028} fill="#1a1a2e"/>
-        <circle cx={w*0.60} cy={h*0.26} r={w*0.028} fill="#1a1a2e"/>
-        <circle cx={w*0.43} cy={h*0.253} r={w*0.011} fill="#fff"/>
-        <circle cx={w*0.61} cy={h*0.253} r={w*0.011} fill="#fff"/>
-        <ellipse cx={w/2} cy={h*0.34} rx={w*0.06} ry={h*0.04} fill="#FF7043"/>
-        {stage>=1
-          ? <path d={`M ${w*0.43} ${h*0.375} Q ${w*0.5} ${h*0.41} ${w*0.57} ${h*0.375}`}
-              stroke="#333" strokeWidth="2.2" fill="none" strokeLinecap="round"/>
-          : <path d={`M ${w*0.44} ${h*0.365} Q ${w*0.5} ${h*0.395} ${w*0.56} ${h*0.365}`}
-              stroke="#555" strokeWidth="1.8" fill="none" strokeLinecap="round"/>}
+        {/* Eyes */}
+        <Eyes lx={w*0.41} rx={w*0.59} ey={h*0.258} sr={w*0.056} behind="#FFB74D"/>
+        {/* Nose */}
+        <ellipse cx={w/2} cy={h*0.34} rx={w*0.06} ry={h*0.038} fill="#FF7043"/>
+        {/* Mouth */}
+        <Mouth cx={w/2} cy={h*0.381}/>
         {stage>=1 && <Scarf y={h*0.45}/>}
         {(stage===2||stage===3) && <FlowerCrown y={h*0.09}/>}
       </svg>
@@ -474,7 +526,6 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
   /* ── Watering state ── */
   const [watering, setWatering]   = useState(false);
   const [drops, setDrops]         = useState([]);
-  const [mascotBounce, setMascotBounce] = useState(false);
   const [msg, setMsg]             = useState(null);
 
   /* ── Shop state ── */
@@ -492,7 +543,7 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
     if (watering) return;
     setWatering(true);
 
-    // Spawn drops over the mascot
+    // Spawn drops
     const newDrops = Array.from({ length: 6 }, (_, i) => ({
       id: Date.now() + i,
       x: 28 + i * 8,
@@ -500,10 +551,6 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
     }));
     setTimeout(() => setDrops(newDrops), 100);
     setTimeout(() => setDrops([]), 900);
-
-    // Mascot bounce
-    setTimeout(() => setMascotBounce(true), 500);
-    setTimeout(() => setMascotBounce(false), 1100);
 
     // Message
     setTimeout(() => {
@@ -517,28 +564,9 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
     }, 1500);
   };
 
-  /* Activity vibe for watering tab */
-  const recentDates = [...new Set((moodLog||[]).map(e=>e.date))];
-  const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate()-7);
-  const activeDays = recentDates.filter(d=>new Date(d)>=sevenAgo).length;
-  const vibe = activeDays>=5 ? { label:"Thriving 🌟", color:"#43A047" }
-             : activeDays>=3 ? { label:"Doing well 🌿", color:"#4DB6AC" }
-             : activeDays>=1 ? { label:"Could use love 💜", color:"#CE93D8" }
-             :                 { label:"Missing you 🥺",   color:"#EF5350" };
-
-  const tabBase = {
-    flex:1, borderRadius:20, padding:"18px 12px", cursor:"pointer",
-    border:`1.5px solid ${C.border}`, background:"#fff",
-    display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-    gap:8, textAlign:"center", transition:"transform 0.15s",
-    boxShadow:"0 2px 18px rgba(124,77,255,0.08)", position:"relative", overflow:"hidden",
-    minHeight:160,
-  };
-
   return (
     <>
       <style>{`
-        @keyframes canSweep { from{opacity:0} to{opacity:1} }
         @keyframes dropFall {
           0%   { opacity:1; transform:translateY(0) scaleY(1); }
           80%  { opacity:0.7; transform:translateY(28px) scaleY(1.2); }
@@ -555,89 +583,98 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
           80%{opacity:1;}
           100%{opacity:0;}
         }
+        @keyframes canTilt {
+          0%,100%{transform:rotate(0deg)}
+          40%{transform:rotate(-22deg) translateY(-4px)}
+          70%{transform:rotate(-18deg) translateY(-2px)}
+        }
       `}</style>
 
       <div style={{display:"flex", gap:12, marginBottom:14}}>
 
-        {/* ── Watering Can Tab ── */}
+        {/* ── Watering Can Card ── */}
         <button
           onClick={handleWater}
-          style={{...tabBase, background: watering ? "#E8F5E9" : "#fff",
-            borderColor: watering ? "#81C784" : C.border }}
+          style={{
+            flex:1, borderRadius:22, padding:"20px 12px",
+            cursor:"pointer", border:`1.5px solid ${watering ? "#81C784" : C.border}`,
+            background: watering ? "#F1F8F1" : "#fff",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:10, textAlign:"center",
+            transition:"all 0.15s", boxShadow:"0 2px 18px rgba(124,77,255,0.08)",
+            position:"relative", overflow:"hidden", minHeight:150,
+          }}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
 
-          {/* Animation stage — mascot reacts, drops fall */}
-          <div style={{position:"relative", width:"100%", height:90, overflow:"hidden"}}>
-
-            {/* Mascot */}
-            <div style={{
-              position:"absolute", bottom:0, left:"50%", transform:"translateX(-50%)",
-              animation: mascotBounce ? "mascotPop 0.6s ease" : "none",
-            }}>
-              <FullBodyMascot id={mascotId} size={70} stage={stageId}/>
-            </div>
-
-            {/* Water drops */}
+          {/* Water drops animation layer */}
+          <div style={{position:"absolute", top:0, left:0, right:0, bottom:0, pointerEvents:"none"}}>
             {drops.map(d=>(
               <div key={d.id} style={{
-                position:"absolute", bottom:20, left: d.x+"%",
+                position:"absolute", top:"30%", left: d.x+"%",
                 animation:`dropFall 0.55s ease ${d.delay}ms forwards`,
-                pointerEvents:"none",
               }}>
-                <svg width="8" height="14" viewBox="0 0 8 14">
+                <svg width="7" height="12" viewBox="0 0 8 14">
                   <path d="M4 0 Q8 6 4 13 Q0 6 4 0Z" fill="#4FC3F7" opacity="0.85"/>
                 </svg>
               </div>
             ))}
-
-            {/* Floating message */}
-            {msg && (
-              <div style={{
-                position:"absolute", top:4, left:"50%", transform:"translateX(-50%)",
-                background:C.purple, color:"#fff", borderRadius:50,
-                padding:"4px 12px", whiteSpace:"nowrap",
-                fontFamily:F.b, fontWeight:700, fontSize:12,
-                animation:"msgPop 1.4s ease forwards", pointerEvents:"none",
-                zIndex:10,
-              }}>{msg}</div>
-            )}
           </div>
 
-          {/* Watering can image — static, no sweep animation */}
-          <WateringCanSVG size={40}/>
+          {/* Floating message */}
+          {msg && (
+            <div style={{
+              position:"absolute", top:10, left:"50%", transform:"translateX(-50%)",
+              background:C.purple, color:"#fff", borderRadius:50,
+              padding:"4px 14px", whiteSpace:"nowrap",
+              fontFamily:F.b, fontWeight:700, fontSize:12,
+              animation:"msgPop 1.4s ease forwards", pointerEvents:"none",
+              zIndex:10,
+            }}>{msg}</div>
+          )}
 
-          {/* Status pill */}
-          <div style={{display:"flex",alignItems:"center",gap:5,
-            background:`${vibe.color}18`,borderRadius:50,padding:"3px 10px"}}>
-            <div style={{width:7,height:7,borderRadius:"50%",background:vibe.color}}/>
-            <span style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:vibe.color}}>
-              {vibe.label}
-            </span>
+          {/* Watering can — main visual */}
+          <div style={{
+            animation: watering ? "canTilt 0.6s ease" : "none",
+            transformOrigin:"bottom center",
+          }}>
+            <WateringCanSVG size={58} watering={watering}/>
           </div>
-          <p style={{fontFamily:F.h,fontWeight:800,fontSize:14,color:C.text,margin:0}}>
+
+          <p style={{fontFamily:F.h, fontWeight:800, fontSize:14,
+            color:C.text, margin:0}}>
             Water {mascotName}
           </p>
         </button>
 
-        {/* ── Shop Tab ── */}
+        {/* ── Mascot Shop Card ── */}
         <button
           onClick={()=>setShowShop(true)}
-          style={{...tabBase}}
+          style={{
+            flex:1, borderRadius:22, padding:"20px 12px",
+            cursor:"pointer", border:`1.5px solid ${C.border}`,
+            background:"#fff",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", gap:10, textAlign:"center",
+            transition:"all 0.15s", boxShadow:"0 2px 18px rgba(124,77,255,0.08)",
+            position:"relative", overflow:"hidden", minHeight:150,
+          }}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
 
-          {/* Mascot face + shopping bag overlay */}
-          <div style={{position:"relative", display:"inline-block", marginBottom:4}}>
-            <FullBodyMascot id={mascotId} size={80} stage={stageId}/>
+          {/* Mascot face + shopping bag badge */}
+          <div style={{position:"relative", display:"inline-block"}}>
+            <GrowthMascot id={mascotId} size={62} stage={stageId}/>
+            {/* Shopping bag badge */}
             <div style={{
-              position:"absolute", bottom:-4, right:-8,
+              position:"absolute", bottom:-6, right:-10,
               background:`linear-gradient(135deg,${C.purple},#9C6FFF)`,
               borderRadius:"50%", width:28, height:28,
               display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow:"0 2px 8px rgba(124,77,255,0.4)",
+              boxShadow:"0 3px 10px rgba(124,77,255,0.4)",
+              border:"2px solid #fff",
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                 stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
                 <line x1="3" y1="6" x2="21" y2="6"/>
@@ -646,14 +683,8 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score,
             </div>
           </div>
 
-          <div style={{display:"flex",alignItems:"center",gap:5,
-            background:`${C.purple}15`,borderRadius:50,padding:"3px 10px"}}>
-            <span style={{fontSize:12}}>🌱</span>
-            <span style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:C.purple}}>
-              {score} seeds
-            </span>
-          </div>
-          <p style={{fontFamily:F.h,fontWeight:800,fontSize:14,color:C.text,margin:0}}>
+          <p style={{fontFamily:F.h, fontWeight:800, fontSize:14,
+            color:C.text, margin:0}}>
             Mascot Shop
           </p>
         </button>
@@ -881,6 +912,13 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
   const lastMoodDate  = lastEntry?.date||null;
   const mascotState   = getMascotState(lastMoodDate, lastMood);
   const daysAway      = daysSince(lastMoodDate);
+
+  /* Map mascotState → energyTier for the full-body mascot expressions */
+  const energyTier = mascotState === "happy" || mascotState === "away" ? 0
+    : mascotState === "worried" ? 1
+    : mascotState === "sad" || mascotState === "angry" ? 2
+    : mascotState === "droopy" ? 3
+    : 0;
   const joinedDate    = activeChild.created_at?.split("T")[0]||null;
   const daysTogether  = joinedDate
     ? Math.max(0,Math.floor((new Date(todayStr())-new Date(joinedDate))/(1000*60*60*24)))
@@ -1054,7 +1092,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
                 filter:`drop-shadow(0 16px 32px ${cm.color}77)`,
                 position:"relative",
               }}>
-              <FullBodyMascot id={cm.id} size={210} stage={stage.id}/>
+              <FullBodyMascot id={cm.id} size={210} stage={stage.id} energyTier={energyTier}/>
               {sparkles.map(sp=>(
                 <Sparkle key={sp.id} x={sp.x} y={sp.y} color={sp.color} delay={sp.delay}/>
               ))}
