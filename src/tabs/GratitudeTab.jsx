@@ -12,7 +12,7 @@ export default function GratitudeTab() {
 
   const C = theme;
   const [shaking, setShaking]       = useState(false);
-  const [floater, setFloater]       = useState(null); // { text, color }
+  const [floater, setFloater]       = useState(null); // { text, color, id }
 
   const JAR_COLORS = ["#FFD54F","#F06292","#CE93D8","#4DB6AC","#FF8A65","#4FC3F7","#A5D6A7","#FFD54F"];
   const getGratColor = (g, i) => {
@@ -26,9 +26,10 @@ export default function GratitudeTab() {
     const idx = Math.floor(Math.random() * gratitudes.length);
     const pick = gratitudes[idx];
     setShaking(true);
-    setFloater({ text: pick.text, color: getGratColor(pick, idx) });
+    // Unique id per shake so React always mounts a fresh element → animation always fires
+    setFloater({ text: pick.text, color: getGratColor(pick, idx), id: Date.now() });
     setTimeout(() => setShaking(false), 600);
-    setTimeout(() => setFloater(null), 2200);
+    setTimeout(() => setFloater(null), 2400);
   };
 
   return (
@@ -55,16 +56,19 @@ export default function GratitudeTab() {
           }
         `}</style>
         {floater && (
-          <div style={{
-            position:"absolute", left:"50%", top:"30%",
-            transform:"translateX(-50%)",
-            background: floater.color, color:"#fff",
-            borderRadius:14, padding:"8px 16px",
-            fontFamily:F.b, fontWeight:700, fontSize:13,
-            pointerEvents:"none", zIndex:10, maxWidth:180, textAlign:"center",
-            animation:"floatUp 2.2s ease forwards",
-            boxShadow:`0 4px 16px ${floater.color}55`,
-          }}>
+          <div
+            key={floater.id}
+            style={{
+              position:"absolute", left:"50%", top:"30%",
+              transform:"translateX(-50%)",
+              background: floater.color, color:"#fff",
+              borderRadius:14, padding:"8px 16px",
+              fontFamily:F.b, fontWeight:700, fontSize:13,
+              pointerEvents:"none", zIndex:10, maxWidth:180, textAlign:"center",
+              animation:"floatUp 2.4s ease forwards",
+              boxShadow:`0 4px 16px ${floater.color}55`,
+              whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
+            }}>
             {floater.text.length > 40 ? floater.text.slice(0,40)+"…" : floater.text}
           </div>
         )}
