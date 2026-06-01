@@ -662,6 +662,7 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
       )}
     </>
   );
+};
 
 /* ════════════════════════════════
    GARDEN SHOP PANEL
@@ -725,7 +726,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
   const ownedIds       = Object.keys(unlocks);
   const spentSeeds     = Object.values(unlocks).reduce((a,v)=>a+(v?.cost||0), 0);
   const availableSeeds = Math.max(0, growthScore - spentSeeds);
-  const stageId        = Math.min(6, [0,15,35,70,120,180,260].findLastIndex(m => growthScore >= m));
+  const stageId        = Math.min(6, [0,15,35,70,120,180,260].reduce((best, min, i) => growthScore >= min ? i : best, 0));
 
   const [panelTab,   setPanelTab]   = useState("shop");
   const [selectedId, setSelectedId] = useState(null);
