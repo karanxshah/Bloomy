@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { GrowthMascot, GardenScene, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
+import { GrowthMascot, GardenScene, GardenItemSVG, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
 
 /* ── Activity-based expression tier ─────────────────────────────────
    Driven by days with ANY activity in the last 7 days.
@@ -677,46 +677,64 @@ const CATEGORY_LABELS = {
   special: "⭐ Special",
 };
 
-/* Mini garden preview strip showing owned items as emoji */
+/* Mini SVG garden preview — matches real scene aesthetic */
 const GardenPreview = ({ ownedIds, stageId }) => {
-  const stageBgs = ["#E8F5E9","#E0F2F1","#EDE7F6","#FFF3E0","#FFF9C4","#FCE4EC","#FFFDE7"];
-  const bg = stageBgs[stageId] || stageBgs[0];
-  const items = GARDEN_ITEMS.filter(i => ownedIds.includes(i.id));
-
-  const positions = items.map((item) => {
-    const hash = item.id.split("").reduce((a,c)=>a+c.charCodeAt(0),0);
-    const col  = hash % 7;
-    const row  = Math.floor((hash * 13) % 3);
-    return { left:`${5 + col * 13}%`, bottom:`${8 + row * 24}%` };
-  });
+  const grassColors = [
+    ["#66BB6A","#43A047"],["#43A047","#388E3C"],["#388E3C","#2E7D32"],
+    ["#689F38","#558B2F"],["#388E3C","#2E7D32"],["#388E3C","#2E7D32"],["#43A047","#388E3C"],
+  ][stageId] || ["#66BB6A","#43A047"];
+  const skyColors = [
+    ["#DCF5E0","#B9F0C2"],["#D0F5F9","#A0E8F0"],["#E8E0FF","#C4B0F5"],
+    ["#FFE8CC","#FFD4A8"],["#FFFACC","#FFED9A"],["#FFD6E8","#FFB0D0"],["#FFF5B0","#FFE066"],
+  ];
+  const [skyBot, skyTop] = skyColors[stageId] || skyColors[0];
+  const PW = 320; const PH = 100;
+  const groundY = PH * 0.6;
+  const POSITIONS = [0.08,0.18,0.78,0.88,0.12,0.82,0.24,0.72,0.30];
+  const ITEM_SIZES_MAP = {
+    g_cherry:"xl",g_treehouse:"xl",g_windmill:"xl",g_fountain:"xl",
+    g_bamboo:"lg",g_sunflower:"lg",g_rainbow:"lg",
+    g_rose:"md",g_tulip:"md",g_cactus:"md",g_fern:"md",g_birdbath:"md",g_beehive:"md",g_gnome:"md",
+    g_daisy:"sm",g_bluebell:"sm",g_mushroom:"sm",g_ladybug:"sm",g_butterfly:"sm",g_fireflies:"sm",
+  };
+  const ITEM_SCALES_MAP = { xl:0.36, lg:0.30, md:0.26, sm:0.22 };
+  const displayIds = ownedIds.slice(0,9);
 
   return (
-    <div style={{
-      background: bg,
-      borderRadius:16, height:88, position:"relative",
-      overflow:"hidden", border:"1.5px solid rgba(0,0,0,0.06)", marginBottom:14,
-    }}>
-      <div style={{position:"absolute",inset:0,
-        background:"linear-gradient(to bottom,rgba(135,206,235,0.3) 0%,transparent 55%)"}}/>
-      <div style={{position:"absolute",bottom:0,left:0,right:0,height:24,
-        background:"linear-gradient(to top,#6DB96D,#81C784)",borderRadius:"0 0 14px 14px"}}/>
-      {items.length === 0 ? (
-        <div style={{position:"absolute",inset:0,display:"flex",
-          alignItems:"center",justifyContent:"center"}}>
-          <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:12,
-            color:"#9B8DB5",margin:0}}>Your garden is waiting… 🌱</p>
-        </div>
-      ) : (
-        positions.map((pos, i) => (
-          <div key={items[i].id} style={{
-            position:"absolute", left:pos.left, bottom:pos.bottom,
-            fontSize: items[i].size==="xl" ? 22 : items[i].size==="lg" ? 18 : items[i].size==="sm" ? 13 : 16,
-            lineHeight:1, filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.12))",
-          }}>
-            {items[i].emoji}
-          </div>
-        ))
-      )}
+    <div style={{borderRadius:14,overflow:"hidden",height:PH,marginBottom:14,
+      border:"1.5px solid rgba(0,0,0,0.06)"}}>
+      <svg viewBox={`0 0 ${PW} ${PH}`} width="100%" height={PH} style={{display:"block"}}>
+        <defs>
+          <linearGradient id="pvSky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={skyTop}/><stop offset="100%" stopColor={skyBot}/>
+          </linearGradient>
+          <linearGradient id="pvGnd" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={grassColors[0]}/><stop offset="100%" stopColor={grassColors[1]}/>
+          </linearGradient>
+        </defs>
+        <rect width={PW} height={PH} fill="url(#pvSky)"/>
+        <path d={`M0,${groundY} C${PW*0.3},${groundY-5} ${PW*0.7},${groundY+4} ${PW},${groundY} L${PW},${PH} L0,${PH} Z`}
+          fill="url(#pvGnd)"/>
+        {displayIds.length === 0 ? (
+          <text x={PW/2} y={PH*0.45} textAnchor="middle"
+            fontFamily="'Poppins',sans-serif" fontSize="11" fill="#9B8DB5">
+            Spend seeds to plant your first item!
+          </text>
+        ) : (
+          displayIds.map((id, i) => {
+            const sz = ITEM_SIZES_MAP[id] || "md";
+            const scale = ITEM_SCALES_MAP[sz];
+            const cx = PW * POSITIONS[i % POSITIONS.length];
+            return <GardenItemSVG key={id} id={id} cx={cx} groundY={groundY}
+              scale={scale} w={PW} h={PH} idx={i}/>;
+          })
+        )}
+        {Array.from({length:12},(_,i)=>({x:(i/11)*PW,bh:PH*0.07+Math.sin(i*1.4)*PH*0.03})).map((b,i)=>(
+          <path key={i}
+            d={`M${b.x},${groundY+PH*0.12} C${b.x-3},${groundY+PH*0.12-b.bh*0.6} ${b.x+2},${groundY+PH*0.12-b.bh*0.85} ${b.x+2},${groundY+PH*0.12-b.bh}`}
+            stroke={grassColors[0]} strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.85"/>
+        ))}
+      </svg>
     </div>
   );
 };
@@ -783,12 +801,16 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
             <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
           </div>
         )}
-        <div style={{fontSize:26,marginBottom:6,filter:`drop-shadow(0 2px 3px ${item.color}55)`}}>
-          {item.emoji}
+        {/* SVG thumbnail */}
+        <div style={{height:58,display:"flex",alignItems:"flex-end",justifyContent:"center",
+          marginBottom:4,overflow:"hidden"}}>
+          <svg viewBox="0 0 60 58" width={60} height={58} style={{overflow:"visible"}}>
+            <GardenItemSVG id={item.id} cx={30} groundY={52} scale={0.38} w={60} h={58} idx={0}/>
+          </svg>
         </div>
         <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
           color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
-        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:10,
+        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:9,
           color:C.muted,margin:"0 0 6px",lineHeight:1.3}}>{item.desc}</p>
         {isSuccess ? (
           <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.mint,margin:0}}>
@@ -817,8 +839,12 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
         alignItems:"center",justifyContent:"center"}}>
         <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
       </div>
-      <div style={{fontSize:26,marginBottom:6,filter:`drop-shadow(0 2px 3px ${item.color}55)`}}>
-        {item.emoji}
+      {/* SVG thumbnail */}
+      <div style={{height:58,display:"flex",alignItems:"flex-end",justifyContent:"center",
+        marginBottom:4,overflow:"hidden"}}>
+        <svg viewBox="0 0 60 58" width={60} height={58} style={{overflow:"visible"}}>
+          <GardenItemSVG id={item.id} cx={30} groundY={52} scale={0.38} w={60} h={58} idx={0}/>
+        </svg>
       </div>
       <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
         color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
@@ -985,9 +1011,12 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
               This will be permanently planted in your garden 🌱
             </p>
             <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <div style={{background:`${selected.color}18`,borderRadius:14,width:52,height:52,
-                flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>
-                {selected.emoji}
+              <div style={{background:`${selected.color}18`,borderRadius:14,width:56,height:56,
+                flexShrink:0,display:"flex",alignItems:"flex-end",justifyContent:"center",
+                overflow:"hidden"}}>
+                <svg viewBox="0 0 56 56" width={56} height={56} style={{overflow:"visible"}}>
+                  <GardenItemSVG id={selected.id} cx={28} groundY={50} scale={0.36} w={56} h={56} idx={0}/>
+                </svg>
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:16,
@@ -1207,6 +1236,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
             size={500}
             dark={false}
             showMascot={false}
+            gardenItems={Object.keys(activeChild.seen_tooltips?.shop_unlocks || {})}
           />
           {/* Fade to app bg at bottom so cards transition cleanly */}
           <div style={{
