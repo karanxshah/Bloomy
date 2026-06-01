@@ -577,28 +577,30 @@ const WateringOverlay = ({ active }) => {
     Slide animation: translate X from +600 → 0 → +600 (slides in from right).
   */
 
-  // Nozzle tip scene position (after can rotation maths)
-  const NX = 212, NY = 268;
-  // Ground splash centre
-  const SX = 178, SY = 322;
+  // Nozzle tip scene position — computed for scale(0.62) body at (390,100)
+  // Unscaled nozzle at local (208,185) relative to body (370,160) → offset (-162,+25)
+  // After scale(0.62): offset = (-162*0.62, +25*0.62) = (-100, +15)
+  // After rotate(-30) and translate to (390,100): approx (258, 200)
+  const NX = 258, NY = 200;
+  // Ground splash — jets land about 120px further down-left from nozzle
+  const SX = 175, SY = 295;
 
-  // 14 water jets fanning out from nozzle, matching reference image spray arc
-  // Jets go down-left in a fan from about 190°–260° (measured from rightward = 0°)
+  // Jets fanning from nozzle — scaled to match 62% can size
   const jets = [
-    { dx:-110, dy: 60 },
-    { dx:-95,  dy: 75 },
-    { dx:-80,  dy: 88 },
-    { dx:-64,  dy: 98 },
-    { dx:-48,  dy:106 },
-    { dx:-30,  dy:110 },
-    { dx:-14,  dy:112 },
-    { dx:-125, dy: 44 },
-    { dx:-138, dy: 28 },
-    { dx:-148, dy: 10 },
-    { dx:-72,  dy: 96 },
-    { dx:-55,  dy:104 },
-    { dx:-20,  dy:110 },
-    { dx:-38,  dy:108 },
+    { dx:-68, dy: 37 },
+    { dx:-59, dy: 46 },
+    { dx:-50, dy: 55 },
+    { dx:-40, dy: 61 },
+    { dx:-30, dy: 66 },
+    { dx:-19, dy: 69 },
+    { dx: -9, dy: 69 },
+    { dx:-78, dy: 27 },
+    { dx:-86, dy: 17 },
+    { dx:-92, dy:  6 },
+    { dx:-45, dy: 60 },
+    { dx:-34, dy: 65 },
+    { dx:-13, dy: 68 },
+    { dx:-24, dy: 67 },
   ];
 
   return (
@@ -631,7 +633,7 @@ const WateringOverlay = ({ active }) => {
           <g>
             <animateTransform
               attributeName="transform" type="translate"
-              values="600,0; 0,0; 0,0; 600,0"
+              values="550,0; 0,0; 0,0; 550,0"
               keyTimes="0; 0.20; 0.78; 1"
               dur="3.0s" calcMode="spline"
               keySplines="0.25 0.1 0.25 1; 0 0 1 1; 0.25 0.1 0.25 1"
@@ -689,7 +691,7 @@ const WateringOverlay = ({ active }) => {
                 We use a nested <g transform> for the rotation only —
                 this is static (not animated), so it's reliable.
             */}
-            <g transform="translate(370,160) rotate(-30) translate(-370,-160)">
+            <g transform="translate(390,100) scale(0.62) rotate(-30) translate(-370,-160)">
 
               {/* ── BODY — large rounded oval, like teapot ── */}
               <ellipse cx="370" cy="160" rx="88" ry="76"
@@ -864,7 +866,7 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
 
 
           {/* Watering can — round oval body matching reference image */}
-          <svg width="72" height="62" viewBox="80 60 340 270" fill="none">
+          <svg width="76" height="58" viewBox="110 65 420 235" fill="none">
             <defs>
               <linearGradient id="btnCan" x1="0" y1="0" x2="0.2" y2="1">
                 <stop offset="0%"  stopColor="rgba(255,255,255,0.96)"/>
