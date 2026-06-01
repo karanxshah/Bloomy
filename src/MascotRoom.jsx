@@ -664,12 +664,12 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
   const spentSeeds     = Object.values(unlocks).reduce((a,v)=>a+(v?.cost||0), 0);
   const availableSeeds = Math.max(0, growthScore - spentSeeds);
 
-  /* ── UI state ── */
-  const [panelTab,    setPanelTab]    = useState("shop");   // "shop" | "items"
-  const [selectedId,  setSelectedId]  = useState(null);     // item selected for purchase
-  const [buying,      setBuying]      = useState(false);    // purchase in-flight
-  const [successId,   setSuccessId]   = useState(null);     // brief success flash
-  const [equipping,   setEquipping]   = useState(null);     // equip in-flight id
+  const [panelTab,       setPanelTab]      = useState("shop");   // "shop" | "items"
+  const [selectedId,     setSelectedId]    = useState(null);     // item selected for purchase (shop)
+  const [selectedEquipId,setSelectedEquipId] = useState(null);   // item selected to equip (my items)
+  const [buying,         setBuying]        = useState(false);    // purchase in-flight
+  const [successId,      setSuccessId]     = useState(null);     // brief success flash
+  const [equipping,      setEquipping]     = useState(false);    // equip in-flight
 
   const ownedItems = SHOP_ITEMS.filter(i => !!unlocks[i.id]);
   const shopItems  = SHOP_ITEMS.filter(i => !unlocks[i.id]);
@@ -696,23 +696,25 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
     setSelectedId(null);
   };
 
-  /* ── Equip: swap an already-owned item ── */
-  const handleEquip = async (item) => {
-    if (equipping) return;
+  /* ── Equip: swap an already-owned item, called from confirm bar ── */
+  const handleEquip = async () => {
+    const item = SHOP_ITEMS.find(i => i.id === selectedEquipId);
+    if (!item || equipping) return;
     const alreadyEquipped = item.type==="bg" ? equippedBg===item.value : equippedJar===item.value;
-    if (alreadyEquipped) return;
-    setEquipping(item.id);
-    const updates     = {};
+    if (alreadyEquipped) { setSelectedEquipId(null); return; }
+    setEquipping(true);
     const newTooltips = { ...(activeChild.seen_tooltips||{}) };
+    const updates     = { seen_tooltips: newTooltips };
     if (item.type === "bg")  updates.mascot_bg    = item.value;
     if (item.type === "jar") newTooltips.jar_color = item.value;
-    updates.seen_tooltips = newTooltips;
     const { error } = await supabase.from("children").update(updates).eq("id", activeChild.id);
     if (!error) {
-      setActiveChild(prev => ({ ...prev, ...updates }));
-      setChildren(cs => cs.map(c => c.id===activeChild.id ? {...c,...updates} : c));
+      const merged = { ...activeChild, ...updates, seen_tooltips: newTooltips };
+      setActiveChild(merged);
+      setChildren(cs => cs.map(c => c.id===activeChild.id ? merged : c));
     }
-    setEquipping(null);
+    setEquipping(false);
+    setSelectedEquipId(null);
   };
 
   /* ── Shared item card renderer ── */
@@ -801,28 +803,40 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
     );
   };
 
-  /* ── My Items card (equip only) ── */
+  /* ── My Items card — tap to select, confirm bar does the equip ── */
   const OwnedItemCard = ({ item }) => {
-    const isEquipped  = item.type==="bg" ? equippedBg===item.value : equippedJar===item.value;
-    const isEquipping = equipping === item.id;
+    const isEquipped   = item.type==="bg" ? equippedBg===item.value : equippedJar===item.value;
+    const isSelected   = selectedEquipId === item.id;
     return (
       <button
-        onClick={()=>handleEquip(item)}
+        onClick={()=> setSelectedEquipId(prev => prev===item.id ? null : item.id)}
         style={{
-          background: isEquipped ? `${C.mint}12` : "#fff",
-          border:`2px solid ${isEquipped ? C.mint : C.border}`,
+          background: isSelected
+            ? `${C.purple}14`
+            : isEquipped ? `${C.mint}12` : "#fff",
+          border:`2px solid ${isSelected ? C.purple : isEquipped ? C.mint : C.border}`,
           borderRadius:16, padding:"14px 10px",
-          cursor: isEquipped ? "default" : "pointer",
+          cursor:"pointer",
           textAlign:"center", transition:"all 0.18s",
           position:"relative",
-          boxShadow: isEquipped ? `0 2px 10px ${C.mint}30` : "none",
+          boxShadow: isSelected ? `0 4px 14px ${C.purple}28` : isEquipped ? `0 2px 10px ${C.mint}30` : "none",
+          transform: isSelected ? "scale(1.02)" : "scale(1)",
         }}
       >
-        {isEquipped && (
+        {/* Equipped badge */}
+        {isEquipped && !isSelected && (
           <div style={{position:"absolute",top:6,right:6,
             background:C.mint,borderRadius:"50%",width:17,height:17,
             display:"flex",alignItems:"center",justifyContent:"center"}}>
             <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
+          </div>
+        )}
+        {/* Selected ring */}
+        {isSelected && (
+          <div style={{position:"absolute",top:6,right:6,
+            background:C.purple,borderRadius:"50%",width:17,height:17,
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <span style={{color:"#fff",fontSize:9,fontWeight:900}}>→</span>
           </div>
         )}
         <div style={{fontSize:24,marginBottom:5}}>{item.emoji}</div>
@@ -831,8 +845,8 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
         <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:10,
           color:C.muted,margin:"0 0 6px",lineHeight:1.3}}>{item.desc}</p>
         <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,margin:0,
-          color:isEquipped ? C.mint : C.purple}}>
-          {isEquipping ? "✨" : isEquipped ? "Equipped" : "Tap to equip"}
+          color: isSelected ? C.purple : isEquipped ? C.mint : C.muted}}>
+          {isEquipped ? "Equipped ✓" : isSelected ? "Selected" : "Tap to select"}
         </p>
       </button>
     );
@@ -840,19 +854,21 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
 
   return (
     <div
-      style={{position:"fixed",inset:0,zIndex:9990,background:"rgba(0,0,0,0.45)",
-        display:"flex",alignItems:"flex-end",justifyContent:"center"}}
+      style={{position:"fixed",inset:0,zIndex:9990,background:"rgba(0,0,0,0.5)",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        padding:"16px"}}
       onClick={onClose}
     >
       <div
         onClick={e=>e.stopPropagation()}
-        style={{background:"#fff",borderRadius:"24px 24px 0 0",
-          width:"100%",maxWidth:480,maxHeight:"82vh",
+        style={{background:"#fff",borderRadius:28,
+          width:"100%",maxWidth:460,
+          maxHeight:"calc(100vh - 48px)",
           display:"flex",flexDirection:"column",
-          boxShadow:"0 -8px 40px rgba(124,77,255,0.18)",
-          animation:"slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)"}}
+          boxShadow:"0 24px 64px rgba(0,0,0,0.22)",
+          animation:"shopScaleIn 0.28s cubic-bezier(0.34,1.4,0.64,1)"}}
       >
-        <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
+        <style>{`@keyframes shopScaleIn{from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}`}</style>
 
         {/* ── Header ── */}
         <div style={{padding:"22px 20px 0",flexShrink:0}}>
@@ -886,7 +902,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
             ].map(t=>(
               <button
                 key={t.id}
-                onClick={()=>{ setPanelTab(t.id); setSelectedId(null); }}
+                onClick={()=>{ setPanelTab(t.id); setSelectedId(null); setSelectedEquipId(null); }}
                 style={{
                   flex:1, border:"none", borderRadius:11, padding:"9px 6px",
                   cursor:"pointer", transition:"all 0.2s",
@@ -1013,12 +1029,12 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
         {/* ── Sticky confirm bar — shown when an item is selected in shop ── */}
         {panelTab === "shop" && selected && (
           <div style={{
-            position:"sticky", bottom:0,
-            background:"#fff",
             borderTop:`1.5px solid ${C.border}`,
-            padding:"14px 20px 28px",
+            padding:"14px 20px 20px",
             flexShrink:0,
-            boxShadow:"0 -4px 20px rgba(0,0,0,0.07)",
+            background:"#fff",
+            borderRadius:"0 0 28px 28px",
+            boxShadow:"0 -4px 20px rgba(0,0,0,0.06)",
           }}>
             <div style={{display:"flex",alignItems:"center",gap:14}}>
               <div style={{
@@ -1065,6 +1081,73 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
             </div>
           </div>
         )}
+
+        {/* ── Sticky equip bar — shown when an item is selected in My Items ── */}
+        {panelTab === "items" && selectedEquipId && (() => {
+          const equipItem = SHOP_ITEMS.find(i => i.id === selectedEquipId);
+          if (!equipItem) return null;
+          const alreadyOn = equipItem.type==="bg" ? equippedBg===equipItem.value : equippedJar===equipItem.value;
+          return (
+            <div style={{
+              borderTop:`1.5px solid ${C.border}`,
+              padding:"14px 20px 20px",
+              flexShrink:0,
+              background:"#fff",
+              borderRadius:"0 0 28px 28px",
+              boxShadow:"0 -4px 20px rgba(0,0,0,0.06)",
+            }}>
+              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                <div style={{
+                  background:`${C.purple}10`,
+                  borderRadius:14,width:52,height:52,flexShrink:0,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:26,
+                }}>
+                  {equipItem.emoji}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:16,
+                    color:C.text,margin:0,lineHeight:1.2}}>{equipItem.label}</p>
+                  <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:12,
+                    color:C.muted,margin:"2px 0 0"}}>
+                    {alreadyOn ? "Already equipped!" : equipItem.desc}
+                  </p>
+                </div>
+                <button
+                  onClick={handleEquip}
+                  disabled={equipping || alreadyOn}
+                  style={{
+                    background: alreadyOn
+                      ? `${C.mint}99`
+                      : equipping
+                      ? `${C.purple}88`
+                      : `linear-gradient(135deg,${C.mint},#26C6A0)`,
+                    border:"none",borderRadius:14,
+                    padding:"12px 18px",cursor: alreadyOn ? "default" : "pointer",
+                    display:"flex",alignItems:"center",gap:7,
+                    boxShadow: alreadyOn ? "none" : `0 4px 16px ${C.mint}55`,
+                    transition:"all 0.15s",flexShrink:0,
+                    opacity: alreadyOn ? 0.7 : 1,
+                  }}
+                >
+                  {equipping ? (
+                    <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:13,color:"#fff"}}>
+                      ✨ Equipping…
+                    </span>
+                  ) : alreadyOn ? (
+                    <span style={{fontFamily:"'Baloo 2',cursive",fontWeight:900,fontSize:14,color:"#fff"}}>
+                      Equipped ✓
+                    </span>
+                  ) : (
+                    <span style={{fontFamily:"'Baloo 2',cursive",fontWeight:900,fontSize:14,color:"#fff"}}>
+                      Equip Now ✓
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
