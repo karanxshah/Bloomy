@@ -1327,8 +1327,21 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
       {/* ══ HERO SECTION — garden is the background, scrolls with content ══ */}
       <div style={{position:"relative", overflow:"hidden", paddingBottom:32}}>
 
+        {/* Purchased room background — renders behind garden when set */}
+        {activeChild.mascot_bg && activeChild.mascot_bg.startsWith("linear-gradient") && (
+          <div style={{
+            position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:0,
+            background: activeChild.mascot_bg,
+            transition:"background 0.6s ease",
+          }}/>
+        )}
+
         {/* Garden fills the hero section as background */}
-        <div style={{position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:0}}>
+        <div style={{
+          position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:1,
+          opacity: activeChild.mascot_bg && activeChild.mascot_bg.startsWith("linear-gradient") ? 0.35 : 1,
+          transition:"opacity 0.6s ease",
+        }}>
           <GardenScene
             stage={stage.id}
             mascotId={null}
@@ -1361,7 +1374,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
           Back
         </button>
 
-        <div style={{position:"relative", zIndex:1}}>
+        <div style={{position:"relative", zIndex:2}}>
 
           {/* Header */}
           <div style={{
@@ -1435,7 +1448,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
             </div>
           </div>
 
-        </div>{/* end zIndex:1 */}
+        </div>{/* end zIndex:2 */}
       </div>{/* end hero section */}
 
       {/* ── Cards section — normal background, scrolls below hero ── */}

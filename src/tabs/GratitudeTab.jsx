@@ -7,10 +7,12 @@ import { today } from "../constants.js";
 export default function GratitudeTab() {
   const {
     theme, gratitudeText, setGratitudeText, gratitudeSaved, setGratitudeSaved,
-    gratitudes, saveGratitude, darkMode,
+    gratitudes, saveGratitude, darkMode, activeChild,
   } = useApp();
 
   const C = theme;
+  /* ── Jar colour — live from shop purchase, falls back to mint ── */
+  const jarColor = activeChild?.seen_tooltips?.jar_color || "#4DB6AC";
   const [shaking, setShaking]       = useState(false);
   const [floater, setFloater]       = useState(null); // { text, color, id }
 
@@ -84,12 +86,12 @@ export default function GratitudeTab() {
           <title>Gratitude jar</title>
           <ellipse cx="130" cy="268" rx="70" ry="8" fill="rgba(0,0,0,0.08)"/>
           <path d="M 60 100 Q 55 100 52 105 L 40 240 Q 38 260 60 265 L 200 265 Q 222 260 220 240 L 208 105 Q 205 100 200 100 Z"
-            fill={darkMode?"#2a1f4a":"#E8F5E9"} stroke="#4DB6AC" strokeWidth="3"/>
+            fill={darkMode?"#2a1f4a":"#E8F5E9"} stroke={jarColor} strokeWidth="3"/>
           <path d="M 75 115 Q 72 130 74 155" stroke="rgba(255,255,255,0.5)" strokeWidth="4" fill="none" strokeLinecap="round"/>
-          <rect x="75" y="80" width="110" height="24" rx="6" fill={darkMode?"#2a1f4a":"#C8E6C9"} stroke="#4DB6AC" strokeWidth="3"/>
-          <rect x="65" y="58" width="130" height="28" rx="8" fill="#4DB6AC"/>
-          <rect x="80" y="44" width="100" height="20" rx="6" fill="#26A69A"/>
-          <rect x="112" y="34" width="36" height="14" rx="7" fill="#00897B"/>
+          <rect x="75" y="80" width="110" height="24" rx="6" fill={darkMode?"#2a1f4a":"#E8F5E9"} stroke={jarColor} strokeWidth="3"/>
+          <rect x="65" y="58" width="130" height="28" rx="8" fill={jarColor}/>
+          <rect x="80" y="44" width="100" height="20" rx="6" fill={jarColor+"CC"}/>
+          <rect x="112" y="34" width="36" height="14" rx="7" fill={jarColor+"99"}/>
           {gratitudes.length===0 ? (
             <text x="130" y="190" textAnchor="middle" fontFamily={F.b} fontSize="12" fill="#9B8DB5">
               Add your first gratitude!
