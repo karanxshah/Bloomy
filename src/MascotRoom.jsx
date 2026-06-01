@@ -44,15 +44,29 @@ const FontLoader = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=Poppins:wght@400;500;600;700&display=swap');
     @keyframes floatMascot { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-18px) rotate(1deg)} }
-    @keyframes bounce      { 0%,100%{transform:scale(1) translateY(0)} 30%{transform:scale(1.15) translateY(-20px)} 60%{transform:scale(0.95) translateY(0)} }
-    @keyframes wiggle      { 0%,100%{transform:rotate(0deg)} 25%{transform:rotate(-14deg)} 75%{transform:rotate(14deg)} }
+    @keyframes bounce      { 0%{transform:scale(1) translateY(0)} 20%{transform:scale(1.18) translateY(-28px)} 50%{transform:scale(0.92) translateY(4px)} 70%{transform:scale(1.06) translateY(-8px)} 100%{transform:scale(1) translateY(0)} }
+    @keyframes wiggle      { 0%,100%{transform:rotate(0deg) scale(1)} 20%{transform:rotate(-16deg) scale(1.05)} 40%{transform:rotate(16deg) scale(1.05)} 60%{transform:rotate(-10deg)} 80%{transform:rotate(8deg)} }
+    @keyframes spin        { 0%{transform:rotate(0deg) scale(1)} 40%{transform:rotate(200deg) scale(1.15)} 80%{transform:rotate(345deg) scale(0.95)} 100%{transform:rotate(360deg) scale(1)} }
+    @keyframes cheer       { 0%{transform:translateY(0) scale(1)} 25%{transform:translateY(-30px) scale(1.2)} 50%{transform:translateY(-10px) scale(1.1)} 75%{transform:translateY(-22px) scale(1.15)} 100%{transform:translateY(0) scale(1)} }
+    @keyframes dance       { 0%,100%{transform:rotate(-4deg) scale(1)} 25%{transform:rotate(6deg) scale(1.08) translateY(-12px)} 50%{transform:rotate(-6deg) scale(1.05) translateY(-6px)} 75%{transform:rotate(5deg) scale(1.1) translateY(-18px)} }
+    @keyframes heartPop    { 0%{transform:translateY(0) scale(0)} 30%{transform:translateY(-20px) scale(1.3)} 100%{transform:translateY(-80px) scale(0);opacity:0} }
+    @keyframes superBounce { 0%{transform:scale(1) translateY(0)} 15%{transform:scale(1.25) translateY(-42px)} 35%{transform:scale(0.88) translateY(6px)} 55%{transform:scale(1.12) translateY(-18px)} 75%{transform:scale(0.95) translateY(2px)} 100%{transform:scale(1) translateY(0)} }
+    @keyframes shimmy      { 0%,100%{transform:translateX(0) rotate(0deg)} 20%{transform:translateX(-14px) rotate(-8deg)} 40%{transform:translateX(14px) rotate(8deg)} 60%{transform:translateX(-10px) rotate(-5deg)} 80%{transform:translateX(10px) rotate(5deg)} }
     @keyframes sparkleIn   { 0%{opacity:0;transform:scale(0) rotate(0deg)} 60%{opacity:1;transform:scale(1.3) rotate(180deg)} 100%{opacity:0;transform:scale(0) rotate(360deg)} }
+    @keyframes heartFloat  { 0%{opacity:1;transform:scale(0.5) translateY(0)} 50%{opacity:0.9;transform:scale(1.1) translateY(-40px)} 100%{opacity:0;transform:scale(0.7) translateY(-90px)} }
+    @keyframes starBurst   { 0%{opacity:0;transform:scale(0)} 40%{opacity:1;transform:scale(1.5)} 100%{opacity:0;transform:scale(0.2) translateY(-60px)} }
     @keyframes fadeInUp    { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
     @keyframes scaleIn     { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
     @keyframes bubblePop   { 0%{opacity:0;transform:scale(0.7) translateY(8px)} 70%{transform:scale(1.05)} 100%{opacity:1;transform:scale(1) translateY(0)} }
     @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:0.4} }
     @keyframes droop       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
     @keyframes groundShadow { 0%,100%{transform:scaleX(1);opacity:0.18} 50%{transform:scaleX(0.7);opacity:0.08} }
+    @keyframes shopGlow    { 0%,100%{box-shadow:0 8px 28px rgba(124,77,255,0.45),0 2px 8px rgba(124,77,255,0.2)} 50%{box-shadow:0 12px 36px rgba(124,77,255,0.65),0 4px 16px rgba(240,98,146,0.3)} }
+    @keyframes canSlideIn  { 0%{transform:translateX(140%) rotate(0deg);opacity:0} 30%{opacity:1} 55%{transform:translateX(0%) rotate(0deg)} 70%{transform:translateX(0%) rotate(-38deg)} 85%{transform:translateX(0%) rotate(-38deg)} 100%{transform:translateX(140%) rotate(0deg);opacity:0} }
+    @keyframes waterStream { 0%{opacity:0;height:0} 20%{opacity:1;height:0} 55%{opacity:1;height:100%} 85%{opacity:1;height:100%} 100%{opacity:0;height:100%} }
+    @keyframes dropSplash  { 0%{opacity:0;transform:translateY(-8px) scaleY(0.5)} 20%{opacity:1;transform:translateY(0) scaleY(1)} 70%{opacity:0.8;transform:translateY(60px) scale(1.1)} 100%{opacity:0;transform:translateY(80px) scaleY(0.3)} }
+    @keyframes splashRing  { 0%{transform:scale(0);opacity:0.8} 100%{transform:scale(2.5);opacity:0} }
+    @keyframes grassGlow   { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.25) saturate(1.4)} }
   `}</style>
 );
 
@@ -537,12 +551,159 @@ const GARDEN_ITEMS = [
   { id:"g_mushroom5",  stageUnlock:6, type:"plant",   label:"World Tree",       cost:68, color:"#43A047", size:"xl", desc:"The tree that holds the whole world" },
 ];
 
+/* ══════════════════════════════════════════════
+   WATERING CAN OVERLAY — renders over the garden hero
+   A detailed SVG watering can slides in from the right,
+   tilts over the garden, pours a stream of water drops,
+   then slides back out. Duration ~2.8s total.
+══════════════════════════════════════════════ */
+const WateringOverlay = ({ active, mascotColor }) => {
+  if (!active) return null;
+
+  // Water drop positions — staggered cascade from spout
+  const DROPS = Array.from({length:10}, (_, i) => ({
+    id: i,
+    x: 52 + i * 3.5,       // slight spread
+    delay: `${0.65 + i * 0.06}s`,
+    dur: `${0.5 + (i % 3) * 0.08}s`,
+  }));
+
+  // Ground splash rings at landing zone
+  const SPLASHES = [
+    { x:48, delay:"0.9s" },
+    { x:62, delay:"1.05s" },
+    { x:55, delay:"1.2s" },
+  ];
+
+  return (
+    <div style={{
+      position:"absolute", inset:0, zIndex:4,
+      pointerEvents:"none",
+      overflow:"hidden",
+    }}>
+      {/* The watering can — slides in from right, tilts, pours, exits */}
+      <div style={{
+        position:"absolute",
+        right:"8%",
+        top:"18%",
+        width:160, height:160,
+        animation:"canSlideIn 2.8s cubic-bezier(0.4,0,0.2,1) forwards",
+        transformOrigin:"60% 60%",
+      }}>
+        <svg viewBox="0 0 160 160" width={160} height={160} style={{overflow:"visible"}}>
+          <defs>
+            <linearGradient id="canBody" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#4FC3F7"/>
+              <stop offset="100%" stopColor="#0288D1"/>
+            </linearGradient>
+            <linearGradient id="canShine" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.55)"/>
+              <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
+            </linearGradient>
+          </defs>
+
+          {/* Can body */}
+          <ellipse cx="72" cy="70" rx="42" ry="36" fill="url(#canBody)" stroke="#0277BD" strokeWidth="2.5"/>
+          {/* Body shine */}
+          <ellipse cx="62" cy="56" rx="22" ry="14" fill="url(#canShine)" opacity="0.7"/>
+
+          {/* Spout — angles down-left */}
+          <path d="M 32 74 Q 12 76 4 96 Q 0 106 8 108"
+            stroke="#0277BD" strokeWidth="9" strokeLinecap="round" fill="none"/>
+          <path d="M 32 74 Q 12 76 4 96 Q 0 106 8 108"
+            stroke="#4FC3F7" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
+          {/* Spout tip / rose head */}
+          <ellipse cx="8" cy="108" rx="9" ry="6" fill="#0277BD" transform="rotate(-20 8 108)"/>
+          {/* Holes in rose */}
+          {[[-3,-1],[0,-3],[3,-1],[0,2],[-5,2],[5,1]].map(([dx,dy],i)=>(
+            <circle key={i} cx={8+dx} cy={108+dy} r="1.2" fill="#4FC3F7" opacity="0.8"/>
+          ))}
+
+          {/* Handle — arcs over the top */}
+          <path d="M 50 38 Q 72 10 94 38"
+            stroke="#0277BD" strokeWidth="9" strokeLinecap="round" fill="none"/>
+          <path d="M 50 38 Q 72 10 94 38"
+            stroke="#4FC3F7" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
+
+          {/* Lid */}
+          <ellipse cx="72" cy="36" rx="30" ry="8" fill="#0288D1" stroke="#0277BD" strokeWidth="2"/>
+          <ellipse cx="72" cy="33" rx="20" ry="5" fill="#4FC3F7" opacity="0.6"/>
+
+          {/* Flower sticker on body */}
+          {[0,60,120,180,240,300].map((a,i)=>{
+            const r = a*Math.PI/180;
+            return <ellipse key={i}
+              cx={72+Math.cos(r)*9} cy={74+Math.sin(r)*9}
+              rx={5.5} ry={3.5}
+              fill={["#FFD54F","#F48FB1","#CE93D8","#81C784","#FF7043","#B3E5FC"][i]}
+              opacity="0.85"
+              transform={`rotate(${a} ${72+Math.cos(r)*9} ${74+Math.sin(r)*9})`}/>;
+          })}
+          <circle cx="72" cy="74" r="5" fill="#FFD54F"/>
+          <circle cx="72" cy="74" r="2.5" fill="#F9A825"/>
+        </svg>
+
+        {/* Water stream — clips to animate height growing from spout */}
+        <div style={{
+          position:"absolute",
+          left:2, top:102,
+          width:52, height:90,
+          overflow:"hidden",
+          transformOrigin:"top center",
+          transform:"rotate(20deg)",
+        }}>
+          <div style={{
+            width:"100%",
+            background:"linear-gradient(to bottom, rgba(79,195,247,0.85), rgba(2,136,209,0.4))",
+            borderRadius:8,
+            animation:`waterStream 2.8s ease forwards`,
+          }}/>
+        </div>
+      </div>
+
+      {/* Water drops falling and splashing at ground level */}
+      <div style={{position:"absolute", left:"12%", bottom:"22%", width:120, height:110}}>
+        <svg viewBox="0 0 120 110" width={120} height={110} style={{overflow:"visible"}}>
+
+          {/* Falling drops */}
+          {DROPS.map(d=>(
+            <g key={d.id}>
+              <path d={`M${d.x},0 Q${d.x+4},5 ${d.x},12 Q${d.x-4},5 ${d.x},0Z`}
+                fill="#4FC3F7" opacity="0.85"
+                style={{animation:`dropSplash ${d.dur} ${d.delay} ease-in forwards`}}/>
+            </g>
+          ))}
+
+          {/* Ground splash rings */}
+          {SPLASHES.map((s,i)=>(
+            <ellipse key={i} cx={s.x} cy={95} rx="10" ry="4"
+              fill="none" stroke="#4FC3F7" strokeWidth="2" opacity="0.7"
+              style={{animation:`splashRing 0.5s ${s.delay} ease-out forwards`}}/>
+          ))}
+
+          {/* Puddle glow on ground */}
+          <ellipse cx="55" cy="98" rx="38" ry="8"
+            fill="#B3E5FC" opacity="0"
+            style={{animation:`splashRing 0.8s 0.9s ease-out forwards`}}/>
+        </svg>
+      </div>
+
+      {/* Green glow pulse on the grass as it gets watered */}
+      <div style={{
+        position:"absolute", bottom:0, left:0, right:0, height:"28%",
+        background:"linear-gradient(to top, rgba(102,187,106,0.3), transparent)",
+        animation:"grassGlow 2.8s ease forwards",
+        pointerEvents:"none",
+      }}/>
+    </div>
+  );
+};
+
 /* ── Action Tabs — watering can + shop, side by side ── */
 const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTier=0,
-  activeChild, growthScore, supabase, setActiveChild, setChildren }) => {
+  activeChild, growthScore, supabase, setActiveChild, setChildren, onWater, mascotColor }) => {
 
   const [watering, setWatering]   = useState(false);
-  const [drops, setDrops]         = useState([]);
   const [msg, setMsg]             = useState(null);
   const [showShop, setShowShop]   = useState(false);
 
@@ -557,20 +718,16 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
   const handleWater = () => {
     if (watering) return;
     setWatering(true);
-    const newDrops = Array.from({ length: 6 }, (_, i) => ({
-      id: Date.now() + i,
-      x: 28 + i * 8,
-      delay: i * 80,
-    }));
-    setTimeout(() => setDrops(newDrops), 100);
-    setTimeout(() => setDrops([]), 900);
+    // Trigger the full garden watering scene
+    onWater && onWater();
+    // Show a message after a short delay
     setTimeout(() => {
       setMsg(WATER_MESSAGES[Math.floor(Math.random() * WATER_MESSAGES.length)]);
-    }, 600);
+    }, 800);
     setTimeout(() => {
       setWatering(false);
       setTimeout(() => setMsg(null), 1200);
-    }, 1500);
+    }, 2900);
   };
 
   const vibe = activityTier===0 ? { label:"Thriving 🌟" }
@@ -581,11 +738,6 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
   return (
     <>
       <style>{`
-        @keyframes dropFall {
-          0%   { opacity:1; transform:translateY(0) scaleY(1); }
-          80%  { opacity:0.7; transform:translateY(28px) scaleY(1.2); }
-          100% { opacity:0; transform:translateY(38px) scaleY(0.5); }
-        }
         @keyframes msgPop {
           0%{opacity:0;transform:translateY(6px) scale(0.9)}
           20%{opacity:1;transform:translateY(0) scale(1)}
@@ -600,32 +752,31 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
         <button
           onClick={handleWater}
           style={{
-            flex:1, borderRadius:20, padding:"22px 12px", cursor:"pointer",
-            border:"none", textAlign:"center", transition:"transform 0.15s",
+            flex:1, borderRadius:20, padding:"22px 12px", cursor: watering ? "default" : "pointer",
+            border:"none", textAlign:"center", transition:"all 0.3s",
             background: watering
-              ? "linear-gradient(135deg,#29B6F6,#0288D1)"
+              ? "linear-gradient(135deg,#29B6F6,#0277BD)"
               : "linear-gradient(135deg,#4FC3F7,#039BE5)",
             boxShadow: watering
-              ? "0 6px 20px rgba(2,136,209,0.5)"
+              ? "0 6px 24px rgba(2,119,189,0.6), inset 0 1px 0 rgba(255,255,255,0.2)"
               : "0 4px 16px rgba(79,195,247,0.4)",
             minHeight:150, display:"flex", flexDirection:"column",
             alignItems:"center", justifyContent:"center", gap:10,
             position:"relative", overflow:"hidden",
           }}
-          onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
+          onMouseDown={e=>{ if(!watering) e.currentTarget.style.transform="scale(0.97)"; }}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
 
-          {drops.map(d=>(
-            <div key={d.id} style={{
-              position:"absolute", top:"30%", left: d.x+"%",
-              animation:`dropFall 0.55s ease ${d.delay}ms forwards`,
+          {/* Shimmer when active */}
+          {watering && (
+            <div style={{
+              position:"absolute", inset:0,
+              background:"linear-gradient(135deg,rgba(255,255,255,0.15) 0%,transparent 60%)",
+              animation:"pulse 1s ease-in-out infinite",
               pointerEvents:"none",
-            }}>
-              <svg width="8" height="14" viewBox="0 0 8 14">
-                <path d="M4 0 Q8 6 4 13 Q0 6 4 0Z" fill="rgba(255,255,255,0.7)"/>
-              </svg>
-            </div>
-          ))}
+            }}/>
+          )}
+
           {msg && (
             <div style={{
               position:"absolute", top:10, left:"50%", transform:"translateX(-50%)",
@@ -636,19 +787,34 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
               backdropFilter:"blur(4px)",
             }}>{msg}</div>
           )}
-          <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
-            <ellipse cx="22" cy="36" rx="16" ry="12" fill="rgba(255,255,255,0.92)" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
-            <path d="M 6 36 Q 4 52 10 54 L 34 54 Q 40 52 38 36" fill="rgba(255,255,255,0.75)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8"/>
-            <path d="M 38 32 Q 52 26 58 22" stroke="rgba(255,255,255,0.9)" strokeWidth="3.5" strokeLinecap="round"/>
-            <circle cx="58" cy="21" r="4" fill="#B3E5FC" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5"/>
-            <path d="M 22 24 Q 16 10 22 4" stroke="rgba(255,255,255,0.85)" strokeWidth="3" strokeLinecap="round"/>
-            <ellipse cx="22" cy="4" rx="5" ry="3" fill="rgba(255,255,255,0.8)"/>
-            <circle cx="54" cy="26" r="1.5" fill="#B3E5FC" opacity="0.9"/>
-            <circle cx="57" cy="24" r="1.5" fill="#B3E5FC" opacity="0.9"/>
-            <circle cx="60" cy="23" r="1.5" fill="#B3E5FC" opacity="0.9"/>
+
+          {/* Watering can icon */}
+          <svg width="56" height="56" viewBox="0 0 80 80" fill="none">
+            {/* Can body */}
+            <ellipse cx="36" cy="46" rx="22" ry="18" fill="rgba(255,255,255,0.92)" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
+            {/* Body bottom */}
+            <path d="M 14 46 Q 12 64 17 66 L 55 66 Q 60 64 58 46" fill="rgba(255,255,255,0.78)" stroke="rgba(255,255,255,0.5)" strokeWidth="1.8"/>
+            {/* Spout */}
+            <path d="M 16 50 Q 4 52 2 64" stroke="rgba(255,255,255,0.95)" strokeWidth="5" strokeLinecap="round" fill="none"/>
+            {/* Rose head */}
+            <ellipse cx="3" cy="65" rx="6" ry="4" fill="rgba(179,229,252,0.9)" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" transform="rotate(-10 3 65)"/>
+            {/* Rose holes */}
+            {[[-2,0],[1,-2],[3,1],[-1,2],[2,-1]].map(([dx,dy],i)=>(
+              <circle key={i} cx={3+dx} cy={65+dy} r="0.9" fill="rgba(2,136,209,0.7)"/>
+            ))}
+            {/* Handle */}
+            <path d="M 26 28 Q 36 14 48 28" stroke="rgba(255,255,255,0.95)" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
+            {/* Lid */}
+            <ellipse cx="36" cy="29" rx="18" ry="5" fill="rgba(255,255,255,0.7)" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
+            {/* Water drop accent */}
+            <path d="M 58 32 Q 68 26 74 22" stroke="rgba(255,255,255,0.9)" strokeWidth="3" strokeLinecap="round"/>
+            <circle cx="74" cy="21" r="3.5" fill="#B3E5FC" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2"/>
+            <circle cx="68" cy="26" r="2" fill="#B3E5FC" opacity="0.8"/>
+            <circle cx="62" cy="29" r="1.5" fill="#B3E5FC" opacity="0.7"/>
           </svg>
+
           <p style={{fontFamily:F.h, fontWeight:800, fontSize:14, color:"#fff", margin:0}}>
-            Water {mascotName}
+            {watering ? "Watering… 💧" : `Water Garden`}
           </p>
           <div style={{display:"flex", alignItems:"center", gap:5,
             background:"rgba(255,255,255,0.2)", borderRadius:50, padding:"3px 10px"}}>
@@ -659,53 +825,94 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
           </div>
         </button>
 
-        {/* ── Shop Tab ── */}
+        {/* ── Garden Shop Tab ── */}
         <button
           onClick={()=>setShowShop(true)}
           style={{
             flex:1, borderRadius:20, padding:"22px 12px", cursor:"pointer",
-            border:`1.5px solid ${C.border}`, background:"#fff",
-            display:"flex", flexDirection:"column", alignItems:"center",
-            justifyContent:"center", gap:10, textAlign:"center",
-            transition:"transform 0.15s", minHeight:150,
-            boxShadow:"0 2px 18px rgba(124,77,255,0.08)",
+            border:"none", textAlign:"center", transition:"transform 0.15s",
+            background:"linear-gradient(135deg,#7C4DFF 0%,#B04DFF 50%,#F06292 100%)",
+            boxShadow:"0 8px 28px rgba(124,77,255,0.45),0 2px 8px rgba(124,77,255,0.2)",
+            animation:"shopGlow 3s ease-in-out infinite",
+            minHeight:150, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", gap:8,
+            position:"relative", overflow:"hidden",
           }}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-          <div style={{position:"relative", display:"inline-block"}}>
-            {({
-              fox:   <svg width="60" height="60" viewBox="0 0 80 80"><ellipse cx="40" cy="46" rx="28" ry="24" fill="#FF8A65"/><polygon points="13,18 26,44 38,24" fill="#FF7043"/><polygon points="67,18 54,44 42,24" fill="#FF7043"/><ellipse cx="40" cy="50" rx="16" ry="11" fill="#FFCCBC"/><circle cx="30" cy="41" r="5" fill="#fff"/><circle cx="50" cy="41" r="5" fill="#fff"/><circle cx="31" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="42" r="2.5" fill="#1a1a2e"/><circle cx="32" cy="40.5" r="1.2" fill="#fff"/><circle cx="52" cy="40.5" r="1.2" fill="#fff"/></svg>,
-              bunny: <svg width="60" height="60" viewBox="0 0 80 80"><ellipse cx="27" cy="20" rx="7" ry="17" fill="#F8BBD0"/><ellipse cx="53" cy="20" rx="7" ry="17" fill="#F8BBD0"/><ellipse cx="40" cy="50" rx="26" ry="22" fill="#FCE4EC"/><circle cx="30" cy="46" r="5" fill="#fff"/><circle cx="50" cy="46" r="5" fill="#fff"/><circle cx="31" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="51" cy="47" r="2.5" fill="#1a1a2e"/><circle cx="32" cy="45.5" r="1.2" fill="#fff"/><circle cx="52" cy="45.5" r="1.2" fill="#fff"/></svg>,
-              bear:  <svg width="60" height="60" viewBox="0 0 80 80"><circle cx="20" cy="25" r="13" fill="#A1887F"/><circle cx="60" cy="25" r="13" fill="#A1887F"/><ellipse cx="40" cy="50" rx="27" ry="23" fill="#8D6E63"/><circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/><circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="31" cy="44.5" r="1.3" fill="#fff"/><circle cx="53" cy="44.5" r="1.3" fill="#fff"/></svg>,
-              owl:   <svg width="60" height="60" viewBox="0 0 80 80"><ellipse cx="40" cy="48" rx="26" ry="26" fill="#7E57C2"/><ellipse cx="22" cy="24" rx="7" ry="9" fill="#7E57C2"/><ellipse cx="58" cy="24" rx="7" ry="9" fill="#7E57C2"/><circle cx="29" cy="43" r="9" fill="#D1C4E9"/><circle cx="51" cy="43" r="9" fill="#D1C4E9"/><circle cx="29" cy="44" r="5" fill="#4527A0"/><circle cx="51" cy="44" r="5" fill="#4527A0"/><circle cx="30" cy="42.5" r="2" fill="#fff"/><circle cx="52" cy="42.5" r="2" fill="#fff"/></svg>,
-              cat:   <svg width="60" height="60" viewBox="0 0 80 80"><polygon points="17,30 12,10 30,26" fill="#26A69A"/><polygon points="63,30 68,10 50,26" fill="#26A69A"/><ellipse cx="40" cy="50" rx="26" ry="23" fill="#4DB6AC"/><circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/><circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="31" cy="44.5" r="1.3" fill="#fff"/><circle cx="53" cy="44.5" r="1.3" fill="#fff"/></svg>,
-              dog:   <svg width="60" height="60" viewBox="0 0 80 80"><ellipse cx="16" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(-20 16 36)"/><ellipse cx="64" cy="36" rx="9" ry="16" fill="#FFA726" transform="rotate(20 64 36)"/><ellipse cx="40" cy="50" rx="27" ry="23" fill="#FFB74D"/><circle cx="29" cy="45" r="5.5" fill="#fff"/><circle cx="51" cy="45" r="5.5" fill="#fff"/><circle cx="30" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="52" cy="46" r="2.8" fill="#1a1a2e"/><circle cx="31" cy="44.5" r="1.3" fill="#fff"/><circle cx="53" cy="44.5" r="1.3" fill="#fff"/></svg>,
-            })[mascotId] || null}
-            <div style={{
-              position:"absolute", bottom:-4, right:-8,
-              background:`linear-gradient(135deg,${C.purple},#9C6FFF)`,
-              borderRadius:"50%", width:26, height:26,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow:"0 2px 8px rgba(124,77,255,0.45)",
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <path d="M16 10a4 4 0 01-8 0"/>
-              </svg>
-            </div>
+
+          {/* Shimmer overlay */}
+          <div style={{
+            position:"absolute",inset:0,
+            background:"linear-gradient(135deg,rgba(255,255,255,0.12) 0%,transparent 50%,rgba(255,255,255,0.06) 100%)",
+            pointerEvents:"none",
+          }}/>
+
+          {/* Decorative mini plants in corners */}
+          <div style={{position:"absolute",top:10,left:10,opacity:0.35,fontSize:18,lineHeight:1}}>🌸</div>
+          <div style={{position:"absolute",top:12,right:12,opacity:0.3,fontSize:14,lineHeight:1}}>✨</div>
+          <div style={{position:"absolute",bottom:14,left:12,opacity:0.28,fontSize:13,lineHeight:1}}>🌿</div>
+          <div style={{position:"absolute",bottom:12,right:10,opacity:0.3,fontSize:15,lineHeight:1}}>🌻</div>
+
+          {/* Shop bag SVG icon */}
+          <div style={{
+            background:"rgba(255,255,255,0.2)",
+            borderRadius:18, padding:10,
+            backdropFilter:"blur(4px)",
+            border:"1.5px solid rgba(255,255,255,0.3)",
+          }}>
+            <svg width="36" height="36" viewBox="0 0 64 64" fill="none">
+              {/* Bag body */}
+              <path d="M 10 24 Q 8 56 12 58 L 52 58 Q 56 56 54 24 Z"
+                fill="rgba(255,255,255,0.92)"/>
+              {/* Bag handle */}
+              <path d="M 22 24 Q 22 10 32 10 Q 42 10 42 24"
+                stroke="rgba(255,255,255,0.95)" strokeWidth="4.5"
+                strokeLinecap="round" fill="none"/>
+              {/* Flower inside bag */}
+              {[0,60,120,180,240,300].map((a,i)=>{
+                const r=a*Math.PI/180;
+                return <ellipse key={i}
+                  cx={32+Math.cos(r)*7} cy={41+Math.sin(r)*7}
+                  rx={4.5} ry={3}
+                  fill={["#FFD54F","#F06292","#CE93D8","#4FC3F7","#81C784","#FF7043"][i]}
+                  opacity="0.9"
+                  transform={`rotate(${a} ${32+Math.cos(r)*7} ${41+Math.sin(r)*7})`}/>;
+              })}
+              <circle cx={32} cy={41} r={4} fill="#FFD54F"/>
+              <circle cx={32} cy={41} r={2} fill="#F9A825"/>
+              {/* Sparkle dots on bag */}
+              <circle cx="18" cy="34" r="2.5" fill="rgba(255,255,255,0.7)"/>
+              <circle cx="46" cy="50" r="2" fill="rgba(255,255,255,0.6)"/>
+            </svg>
           </div>
-          <div style={{display:"flex", alignItems:"center", gap:5,
-            background:`${C.purple}15`, borderRadius:50, padding:"3px 10px"}}>
+
+          {/* Title */}
+          <p style={{fontFamily:F.h, fontWeight:900, fontSize:15, color:"#fff", margin:0,
+            textShadow:"0 1px 6px rgba(0,0,0,0.2)"}}>
+            Garden Shop
+          </p>
+
+          {/* Seed count pill */}
+          <div style={{
+            display:"flex", alignItems:"center", gap:5,
+            background:"rgba(255,255,255,0.22)", borderRadius:50,
+            padding:"4px 12px", border:"1px solid rgba(255,255,255,0.35)",
+            backdropFilter:"blur(4px)",
+          }}>
             <span style={{fontSize:12}}>🌱</span>
-            <span style={{fontFamily:F.b, fontWeight:700, fontSize:11, color:C.purple}}>
+            <span style={{fontFamily:F.b, fontWeight:800, fontSize:12, color:"#fff"}}>
               {score} seeds
             </span>
           </div>
-          <p style={{fontFamily:F.h, fontWeight:800, fontSize:14, color:C.text, margin:0}}>
-            Garden Shop
-          </p>
+
+          {/* Unlocked items count */}
+          {Object.keys(activeChild.seen_tooltips?.shop_unlocks||{}).length > 0 && (
+            <p style={{fontFamily:F.b,fontWeight:600,fontSize:11,
+              color:"rgba(255,255,255,0.8)",margin:0}}>
+              {Object.keys(activeChild.seen_tooltips.shop_unlocks).length} planted 🌿
+            </p>
+          )}
         </button>
       </div>
 
@@ -886,9 +1093,9 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
             <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
           </div>
         )}
-        <div style={{height:54,display:"flex",alignItems:"flex-end",justifyContent:"center",marginBottom:4,overflow:"hidden"}}>
-          <svg viewBox="0 0 60 56" width={60} height={56} style={{overflow:"visible"}}>
-            <GardenItemSVG id={item.id} cx={30} groundY={50} scale={0.38} w={60} h={56} idx={0}/>
+        <div style={{height:72,display:"flex",alignItems:"flex-end",justifyContent:"center",marginBottom:4,overflow:"hidden"}}>
+          <svg viewBox="0 0 80 76" width={80} height={76} style={{overflow:"visible"}}>
+            <GardenItemSVG id={item.id} cx={40} groundY={64} scale={0.52} w={80} h={76} idx={0}/>
           </svg>
         </div>
         <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
@@ -919,9 +1126,9 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
         borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
       </div>
-      <div style={{height:54,display:"flex",alignItems:"flex-end",justifyContent:"center",marginBottom:4,overflow:"hidden"}}>
-        <svg viewBox="0 0 60 56" width={60} height={56} style={{overflow:"visible"}}>
-          <GardenItemSVG id={item.id} cx={30} groundY={50} scale={0.38} w={60} h={56} idx={0}/>
+      <div style={{height:72,display:"flex",alignItems:"flex-end",justifyContent:"center",marginBottom:4,overflow:"hidden"}}>
+        <svg viewBox="0 0 80 76" width={80} height={76} style={{overflow:"visible"}}>
+          <GardenItemSVG id={item.id} cx={40} groundY={64} scale={0.52} w={80} h={76} idx={0}/>
         </svg>
       </div>
       <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
@@ -1179,10 +1386,10 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
               This will be permanently planted in your garden 🌱
             </p>
             <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <div style={{background:`${selected.color}18`,borderRadius:14,width:56,height:56,
+              <div style={{background:`${selected.color}18`,borderRadius:14,width:64,height:64,
                 flexShrink:0,display:"flex",alignItems:"flex-end",justifyContent:"center",overflow:"hidden"}}>
-                <svg viewBox="0 0 56 56" width={56} height={56} style={{overflow:"visible"}}>
-                  <GardenItemSVG id={selected.id} cx={28} groundY={50} scale={0.36} w={56} h={56} idx={0}/>
+                <svg viewBox="0 0 64 64" width={64} height={64} style={{overflow:"visible"}}>
+                  <GardenItemSVG id={selected.id} cx={32} groundY={56} scale={0.44} w={64} h={64} idx={0}/>
                 </svg>
               </div>
               <div style={{flex:1,minWidth:0}}>
@@ -1310,6 +1517,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
   const [tapCount,setTapCount]       = useState(0);
   const [showStats,setShowStats]     = useState(false);
   const [showEvolution,setShowEvolution] = useState(false);
+  const [wateringScene,setWateringScene] = useState(false); // controls garden watering overlay
   const tapT   = useRef(null);
   const animT  = useRef(null);
   const sparkT = useRef(null);
@@ -1334,35 +1542,102 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
 
   const dismissSpeech = useCallback(()=>setSpeech(null),[]);
 
-  const handleTap = () => {
-    const n = tapCount+1;
-    setTapCount(n);
-    const anims=["bounce","wiggle","bounce","wiggle","bounce"];
-    setTapAnim(anims[n%anims.length]);
+  /* ── Tap milestone animation system ── */
+  const [hearts, setHearts]       = useState([]);
+  const [starBursts, setStarBursts] = useState([]);
+  const [tapLabel, setTapLabel]   = useState(null);
+  const heartsT = useRef(null);
+  const starsT  = useRef(null);
+  const labelT  = useRef(null);
+
+  useEffect(()=>()=>{
+    clearTimeout(tapT.current);
     clearTimeout(animT.current);
-    animT.current = setTimeout(()=>setTapAnim("float"),520);
-    const sp = Array.from({length:8},(_,i)=>({
+    clearTimeout(sparkT.current);
+    clearTimeout(heartsT.current);
+    clearTimeout(starsT.current);
+    clearTimeout(labelT.current);
+  },[]);
+
+  const showHearts = (count=5) => {
+    const h = Array.from({length:count},(_,i)=>({
       id:Date.now()+i,
-      x:30+Math.random()*140,
-      y:10+Math.random()*160,
-      color:[C.purple,C.pink,C.yellow,C.mint,C.sky,C.coral,"#fff","#FFD54F"][i],
-      delay:i*0.05,
+      x:60+Math.random()*90,
+      delay:i*0.12,
+      color:["#F48FB1","#EC407A","#FF7043","#CE93D8","#FFD54F"][i%5],
+    }));
+    setHearts(h);
+    clearTimeout(heartsT.current);
+    heartsT.current = setTimeout(()=>setHearts([]),1400);
+  };
+
+  const showStars = (count=6) => {
+    const s = Array.from({length:count},(_,i)=>({
+      id:Date.now()+i+100,
+      x:20+Math.random()*160,
+      y:20+Math.random()*120,
+      delay:i*0.08,
+      color:["#FFD54F","#7C4DFF","#F06292","#4FC3F7","#66BB6A","#FF7043"][i%6],
+    }));
+    setStarBursts(s);
+    clearTimeout(starsT.current);
+    starsT.current = setTimeout(()=>setStarBursts([]),1200);
+  };
+
+  const showTapLabel = (text) => {
+    setTapLabel(text);
+    clearTimeout(labelT.current);
+    labelT.current = setTimeout(()=>setTapLabel(null),1200);
+  };
+
+  const handleTap = () => {
+    // Cycle resets after 8 so it stays fun without going too far
+    const cycle = (tapCount % 8) + 1;
+    setTapCount(tapCount + 1);
+
+    /* One animation per tap in the cycle */
+    const CYCLE_ANIMS = ["bounce","wiggle","spin","bounce","cheer","wiggle","spin","superBounce"];
+    const anim = CYCLE_ANIMS[cycle - 1];
+    setTapAnim(anim);
+    clearTimeout(animT.current);
+    const dur = anim === "superBounce" ? 900 : anim === "cheer" ? 700 : 580;
+    animT.current = setTimeout(() => setTapAnim("float"), dur);
+
+    /* Sparkles — scale with tap number in cycle */
+    const sparkCount = cycle >= 8 ? 14 : cycle >= 5 ? 10 : 7;
+    const sp = Array.from({length: sparkCount}, (_, i) => ({
+      id: Date.now() + i,
+      x: 20 + Math.random() * 160,
+      y: 10 + Math.random() * 180,
+      color: [C.purple,C.pink,C.yellow,C.mint,C.sky,C.coral,"#fff","#FFD54F","#CE93D8","#FF7043"][i % 10],
+      delay: i * 0.04,
     }));
     setSparkles(sp);
     clearTimeout(sparkT.current);
-    sparkT.current = setTimeout(()=>setSparkles([]),1000);
+    sparkT.current = setTimeout(() => setSparkles([]), 1100);
+
+    /* Per-tap extras */
+    if (cycle === 1) { showTapLabel(`Hi! 👋`); }
+    if (cycle === 2) { showHearts(4); }
+    if (cycle === 3) { showStars(5); showTapLabel("Wheee! 😄"); }
+    if (cycle === 5) { showHearts(6); showStars(5); showTapLabel("You're the best! ⭐"); }
+    if (cycle === 7) { showStars(6); }
+    if (cycle === 8) { showHearts(8); showStars(8); showTapLabel("LEGENDARY! 👑✨"); }
+
+    /* Speech */
     clearTimeout(tapT.current);
-    tapT.current = setTimeout(()=>{
-      if (n===3)            setSpeech(SPEECH.funny3);
-      else if (n===6)       setSpeech(SPEECH.funny6);
-      else if (lastMood==="Sad")     setSpeech(randomFrom(SPEECH.sad));
-      else if (lastMood==="Worried") setSpeech(randomFrom(SPEECH.worried));
-      else if (lastMood==="Angry")   setSpeech(randomFrom(SPEECH.angry));
-      else setSpeech(randomFrom([...SPEECH.happy,...SPEECH.general]));
-    },120);
+    tapT.current = setTimeout(() => {
+      if      (cycle === 3) setSpeech(SPEECH.funny3);
+      else if (cycle === 6) setSpeech(SPEECH.funny6);
+      else if (cycle === 8) setSpeech("You're my absolute favourite person! 👑💜");
+      else if (lastMood === "Sad")     setSpeech(randomFrom(SPEECH.sad));
+      else if (lastMood === "Worried") setSpeech(randomFrom(SPEECH.worried));
+      else if (lastMood === "Angry")   setSpeech(randomFrom(SPEECH.angry));
+      else setSpeech(randomFrom([...SPEECH.happy, ...SPEECH.general]));
+    }, 120);
   };
 
-  /* ── Bg by state ── */
+  /* ── Bg and animation by state ── */
   const bgGrad = {
     happy:   `linear-gradient(170deg,${cm.color}55 0%,${C.pink}22 60%,${C.bg} 100%)`,
     droopy:  `linear-gradient(170deg,#B0BEC544 0%,#CFD8DC22 60%,${C.bg} 100%)`,
@@ -1373,11 +1648,16 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
   }[mascotState]||`linear-gradient(170deg,${cm.color}55 0%,${C.pink}22 60%,${C.bg} 100%)`;
 
   const mascotAnim = {
-    float:"floatMascot 3s ease-in-out infinite",
-    bounce:"bounce 0.5s ease forwards",
-    wiggle:"wiggle 0.4s ease forwards",
-    droop:"droop 2.5s ease-in-out infinite",
-  }[mascotState==="droopy"?"droop":tapAnim];
+    float:       "floatMascot 3s ease-in-out infinite",
+    bounce:      "bounce 0.55s cubic-bezier(0.34,1.4,0.64,1) forwards",
+    wiggle:      "wiggle 0.5s ease forwards",
+    spin:        "spin 0.65s ease forwards",
+    cheer:       "cheer 0.7s ease forwards",
+    dance:       "dance 0.9s ease-in-out forwards",
+    superBounce: "superBounce 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards",
+    shimmy:      "shimmy 0.6s ease forwards",
+    droop:       "droop 2.5s ease-in-out infinite",
+  }[mascotState==="droopy" ? "droop" : tapAnim] || "floatMascot 3s ease-in-out infinite";
 
   /* ── This renders as a standard page, no fixed overlay ── */
   return (
@@ -1410,6 +1690,9 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
             background:`linear-gradient(to bottom, transparent, ${C.bg} 100%)`,
           }}/>
         </div>
+
+        {/* Watering can overlay — plays over garden when watering */}
+        <WateringOverlay active={wateringScene} mascotColor={cm.color}/>
 
         {/* Content sits above the garden */}
         {/* Fixed back button — always visible even when scrolled */}
@@ -1472,9 +1755,46 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
                 position:"relative",
               }}>
               <FullBodyMascot id={cm.id} size={210} stage={stage.id} energyTier={activityTier}/>
+              {/* Regular sparkles */}
               {sparkles.map(sp=>(
                 <Sparkle key={sp.id} x={sp.x} y={sp.y} color={sp.color} delay={sp.delay}/>
               ))}
+              {/* Heart particles */}
+              {hearts.map(h=>(
+                <div key={h.id} style={{
+                  position:"absolute", left:h.x, top:60,
+                  animation:`heartFloat 1.3s ${h.delay}s ease-out forwards`,
+                  pointerEvents:"none", fontSize:20, lineHeight:1,
+                  filter:`drop-shadow(0 2px 4px ${h.color}88)`,
+                }}>💜</div>
+              ))}
+              {/* Star bursts */}
+              {starBursts.map(s=>(
+                <div key={s.id} style={{
+                  position:"absolute", left:s.x, top:s.y,
+                  animation:`starBurst 1.1s ${s.delay}s ease-out forwards`,
+                  pointerEvents:"none",
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"
+                      fill={s.color} opacity="0.9"/>
+                  </svg>
+                </div>
+              ))}
+              {/* Milestone tap label */}
+              {tapLabel && (
+                <div style={{
+                  position:"absolute", left:"50%", top:-24,
+                  transform:"translateX(-50%)",
+                  background:"rgba(255,255,255,0.95)",
+                  borderRadius:50, padding:"5px 14px",
+                  fontFamily:F.h, fontWeight:900, fontSize:14,
+                  color:C.purple, whiteSpace:"nowrap",
+                  boxShadow:`0 4px 16px ${C.purple}44`,
+                  animation:"bubblePop 0.3s ease forwards",
+                  pointerEvents:"none",
+                }}>{tapLabel}</div>
+              )}
             </div>
 
             <div style={{
@@ -1564,6 +1884,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
           mascotId={cm.id}
           stageId={stage.id}
           mascotName={cm.name}
+          mascotColor={cm.color}
           moodLog={moodLog}
           score={score}
           activityTier={activityTier}
@@ -1572,6 +1893,14 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
           supabase={supabase}
           setActiveChild={setActiveChild}
           setChildren={setChildren}
+          onWater={()=>{
+            if (wateringScene) return;
+            setWateringScene(true);
+            // Mascot does a happy cheer while being watered
+            setTapAnim("cheer");
+            setTimeout(()=>setTapAnim("float"), 700);
+            setTimeout(()=>setWateringScene(false), 2900);
+          }}
         />
 
         {/* Personality */}
