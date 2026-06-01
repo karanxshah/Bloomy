@@ -93,7 +93,7 @@ export default function HomeTab() {
         >
           <div style={{
             width:180, height:180, borderRadius:"50%",
-            background:`radial-gradient(circle at 40% 35%, ${currentStage.bg}, ${cm.bg||currentStage.bg})`,
+            background:`radial-gradient(circle at 40% 35%, ${currentStage.bg}, ${currentStage.bg}cc)`,
             display:"flex", alignItems:"center", justifyContent:"center",
             margin:"0 auto",
             boxShadow:`0 8px 32px ${cm.color}55, 0 2px 12px rgba(0,0,0,0.08)`,
@@ -119,7 +119,7 @@ export default function HomeTab() {
           }}>
             <span style={{ fontSize:14 }}>🌱</span>
             <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:"#fff", margin:0 }}>
-              {currentStage.name} · {growthScore} seeds · Tap to visit
+              {currentStage.name} · {growthScore} seeds · Visit garden
             </p>
           </div>
         </button>

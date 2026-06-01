@@ -75,7 +75,7 @@ const SLIDES = (mascot, childName) => {
       bg1:"#FFD54F", bg2:"#FFF9C4", accent:"#F9A825",
       title: "Missions & shop 🛍️",
       tag: `${name} cheers you on every day!`,
-      body: <p style={base}>Complete your <Hi color="#F9A825">2 daily missions</Hi> for bonus seeds ⭐ Then spend them in the <Hi color="#F9A825">Mascot Shop</Hi> to unlock new room backgrounds and jar colours — swap them any time!</p>,
+      body: <p style={base}>Complete your <Hi color="#F9A825">2 daily missions</Hi> for bonus seeds ⭐ Then spend them in the <Hi color="#F9A825">Garden Shop</Hi> to plant flowers, trees, and magical decorations in your very own garden!</p>,
     },
     {
       bg1: mascot.color+"55", bg2: mascot.bg, accent: mascot.color,

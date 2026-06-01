@@ -11,8 +11,8 @@ export default function GratitudeTab() {
   } = useApp();
 
   const C = theme;
-  /* ── Jar colour — live from shop purchase, falls back to mint ── */
-  const jarColor = activeChild?.seen_tooltips?.jar_color || "#4DB6AC";
+  /* ── Jar colour — default teal ── */
+  const jarColor = "#4DB6AC";
   const [shaking, setShaking]       = useState(false);
   const [floater, setFloater]       = useState(null); // { text, color, id }
 

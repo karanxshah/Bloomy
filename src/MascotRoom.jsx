@@ -450,18 +450,32 @@ const WateringCanSVG = ({ size=48, watering=false }) => (
   </svg>
 );
 
-/* ── Shop items ── */
-const SHOP_ITEMS = [
-  /* Room backgrounds */
-  { id:"bg_sunset",    type:"bg",  label:"Sunset Garden",  cost:15, value:"linear-gradient(160deg,#FFB347,#FF6B9D,#C77DFF)", emoji:"🌅", desc:"Warm pinks and purples" },
-  { id:"bg_ocean",     type:"bg",  label:"Ocean Breeze",   cost:20, value:"linear-gradient(160deg,#00B4DB,#0083B0,#48C9B0)", emoji:"🌊", desc:"Cool blues and teals" },
-  { id:"bg_midnight",  type:"bg",  label:"Midnight Stars", cost:30, value:"linear-gradient(160deg,#1a1a2e,#16213e,#533483)", emoji:"🌙", desc:"Deep space vibes" },
-  { id:"bg_meadow",    type:"bg",  label:"Sunny Meadow",   cost:25, value:"linear-gradient(160deg,#56ab2f,#a8e063,#FFD54F)", emoji:"🌻", desc:"Fresh greens and gold" },
-  /* Jar colours */
-  { id:"jar_gold",     type:"jar", label:"Golden Jar",     cost:10, value:"#FFD700", emoji:"✨", desc:"Shiny and golden" },
-  { id:"jar_rose",     type:"jar", label:"Rose Jar",       cost:10, value:"#F06292", emoji:"🌸", desc:"Pretty pink petals" },
-  { id:"jar_midnight", type:"jar", label:"Midnight Jar",   cost:15, value:"#7C4DFF", emoji:"💜", desc:"Deep purple glow" },
-  { id:"jar_mint",     type:"jar", label:"Mint Jar",       cost:15, value:"#4DB6AC", emoji:"🌿", desc:"Fresh mint green" },
+/* ── Garden items — plants and decorations the child places in their garden ── */
+const GARDEN_ITEMS = [
+  /* Flowers */
+  { id:"g_sunflower",  type:"flower",  label:"Sunflower",        cost:8,  emoji:"🌻", desc:"A big cheerful sunflower",       color:"#FFD54F", size:"lg" },
+  { id:"g_rose",       type:"flower",  label:"Red Rose",         cost:8,  emoji:"🌹", desc:"A classic ruby-red rose",        color:"#E53935", size:"md" },
+  { id:"g_tulip",      type:"flower",  label:"Purple Tulip",     cost:10, emoji:"🌷", desc:"A tall elegant tulip",           color:"#CE93D8", size:"md" },
+  { id:"g_daisy",      type:"flower",  label:"Daisy Patch",      cost:10, emoji:"🌼", desc:"Three daisies side by side",     color:"#FFF9C4", size:"sm" },
+  { id:"g_bluebell",   type:"flower",  label:"Bluebells",        cost:12, emoji:"💙", desc:"Delicate nodding bluebells",     color:"#4FC3F7", size:"sm" },
+  { id:"g_cherry",     type:"tree",    label:"Cherry Blossom",   cost:20, emoji:"🌸", desc:"A beautiful flowering tree",     color:"#F8BBD0", size:"xl" },
+  /* Trees & plants */
+  { id:"g_cactus",     type:"plant",   label:"Friendly Cactus",  cost:12, emoji:"🌵", desc:"A cute little cactus",           color:"#66BB6A", size:"md" },
+  { id:"g_bamboo",     type:"plant",   label:"Bamboo Stalks",    cost:15, emoji:"🎋", desc:"Tall swaying bamboo",            color:"#43A047", size:"lg" },
+  { id:"g_mushroom",   type:"plant",   label:"Magic Mushrooms",  cost:12, emoji:"🍄", desc:"Red-cap mushroom friends",       color:"#EF5350", size:"sm" },
+  { id:"g_fern",       type:"plant",   label:"Curly Fern",       cost:10, emoji:"🌿", desc:"A lush green fern",              color:"#388E3C", size:"md" },
+  /* Decorations */
+  { id:"g_butterfly",  type:"deco",    label:"Butterfly",        cost:15, emoji:"🦋", desc:"A colourful visiting butterfly",  color:"#CE93D8", size:"sm" },
+  { id:"g_ladybug",    type:"deco",    label:"Ladybug",          cost:12, emoji:"🐞", desc:"A lucky little ladybug",         color:"#E53935", size:"sm" },
+  { id:"g_beehive",    type:"deco",    label:"Beehive",          cost:18, emoji:"🐝", desc:"A busy golden beehive",          color:"#FFD54F", size:"md" },
+  { id:"g_birdbath",   type:"deco",    label:"Bird Bath",        cost:20, emoji:"🐦", desc:"Birds love to splash here!",     color:"#4FC3F7", size:"md" },
+  { id:"g_rainbow",    type:"deco",    label:"Mini Rainbow",     cost:25, emoji:"🌈", desc:"A little arc of colour",         color:"#FF7043", size:"lg" },
+  { id:"g_gnome",      type:"deco",    label:"Garden Gnome",     cost:20, emoji:"🧙", desc:"A cheerful garden keeper",       color:"#FF7043", size:"md" },
+  /* Special */
+  { id:"g_fountain",   type:"special", label:"Wishing Fountain", cost:30, emoji:"⛲", desc:"A magical wishing fountain",     color:"#4FC3F7", size:"xl" },
+  { id:"g_windmill",   type:"special", label:"Windmill",         cost:35, emoji:"🌀", desc:"A spinning pastel windmill",     color:"#CE93D8", size:"xl" },
+  { id:"g_treehouse",  type:"special", label:"Tree House",       cost:40, emoji:"🏡", desc:"A cosy home in the treetops",    color:"#8D6E63", size:"xl" },
+  { id:"g_fireflies",  type:"special", label:"Firefly Jar",      cost:30, emoji:"✨", desc:"Tiny glowing lights at dusk",    color:"#FFD54F", size:"sm" },
 ];
 
 /* ── Action Tabs — watering can + shop, side by side ── */
@@ -631,7 +645,7 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
             </span>
           </div>
           <p style={{fontFamily:F.h, fontWeight:800, fontSize:14, color:C.text, margin:0}}>
-            Mascot Shop
+            Garden Shop
           </p>
         </button>
       </div>
@@ -648,244 +662,205 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
       )}
     </>
   );
-};
 
 /* ════════════════════════════════
-   SHOP PANEL
-   Two tabs: "Shop" (browse & buy) and "My Items" (equip owned)
-   Buy flow: select item → confirm button appears → tap to purchase
+   GARDEN SHOP PANEL
+   Two tabs: "Shop" (browse & buy plants/deco) and "My Garden" (see what's planted)
+   Items are permanently planted — no equip/unequip, just collect & grow.
 ════════════════════════════════ */
-const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChildren, onClose }) => {
-  /* ── Derived state ── */
-  const unlocks     = activeChild.seen_tooltips?.shop_unlocks || {};
-  const equippedBg  = activeChild.mascot_bg || "";
-  const equippedJar = activeChild.seen_tooltips?.jar_color || "#4DB6AC";
+const CATEGORY_LABELS = {
+  flower:  "🌸 Flowers",
+  tree:    "🌳 Trees",
+  plant:   "🌿 Plants",
+  deco:    "🎀 Decorations",
+  special: "⭐ Special",
+};
 
+/* Mini garden preview strip showing owned items as emoji */
+const GardenPreview = ({ ownedIds, stageId }) => {
+  const stageBgs = ["#E8F5E9","#E0F2F1","#EDE7F6","#FFF3E0","#FFF9C4","#FCE4EC","#FFFDE7"];
+  const bg = stageBgs[stageId] || stageBgs[0];
+  const items = GARDEN_ITEMS.filter(i => ownedIds.includes(i.id));
+
+  const positions = items.map((item) => {
+    const hash = item.id.split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+    const col  = hash % 7;
+    const row  = Math.floor((hash * 13) % 3);
+    return { left:`${5 + col * 13}%`, bottom:`${8 + row * 24}%` };
+  });
+
+  return (
+    <div style={{
+      background: bg,
+      borderRadius:16, height:88, position:"relative",
+      overflow:"hidden", border:"1.5px solid rgba(0,0,0,0.06)", marginBottom:14,
+    }}>
+      <div style={{position:"absolute",inset:0,
+        background:"linear-gradient(to bottom,rgba(135,206,235,0.3) 0%,transparent 55%)"}}/>
+      <div style={{position:"absolute",bottom:0,left:0,right:0,height:24,
+        background:"linear-gradient(to top,#6DB96D,#81C784)",borderRadius:"0 0 14px 14px"}}/>
+      {items.length === 0 ? (
+        <div style={{position:"absolute",inset:0,display:"flex",
+          alignItems:"center",justifyContent:"center"}}>
+          <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:12,
+            color:"#9B8DB5",margin:0}}>Your garden is waiting… 🌱</p>
+        </div>
+      ) : (
+        positions.map((pos, i) => (
+          <div key={items[i].id} style={{
+            position:"absolute", left:pos.left, bottom:pos.bottom,
+            fontSize: items[i].size==="xl" ? 22 : items[i].size==="lg" ? 18 : items[i].size==="sm" ? 13 : 16,
+            lineHeight:1, filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.12))",
+          }}>
+            {items[i].emoji}
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
+
+const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChildren, onClose }) => {
+  const unlocks        = activeChild.seen_tooltips?.shop_unlocks || {};
+  const ownedIds       = Object.keys(unlocks);
   const spentSeeds     = Object.values(unlocks).reduce((a,v)=>a+(v?.cost||0), 0);
   const availableSeeds = Math.max(0, growthScore - spentSeeds);
+  const stageId        = Math.min(6, [0,15,35,70,120,180,260].findLastIndex(m => growthScore >= m));
 
-  const [panelTab,       setPanelTab]      = useState("shop");   // "shop" | "items"
-  const [selectedId,     setSelectedId]    = useState(null);     // item selected for purchase (shop)
-  const [selectedEquipId,setSelectedEquipId] = useState(null);   // item selected to equip (my items)
-  const [buying,         setBuying]        = useState(false);    // purchase in-flight
-  const [successId,      setSuccessId]     = useState(null);     // brief success flash
-  const [equipping,      setEquipping]     = useState(false);    // equip in-flight
+  const [panelTab,   setPanelTab]   = useState("shop");
+  const [selectedId, setSelectedId] = useState(null);
+  const [buying,     setBuying]     = useState(false);
+  const [successId,  setSuccessId]  = useState(null);
 
-  const ownedItems = SHOP_ITEMS.filter(i => !!unlocks[i.id]);
-  const shopItems  = SHOP_ITEMS.filter(i => !unlocks[i.id]);
-  const selected   = SHOP_ITEMS.find(i => i.id === selectedId) || null;
+  const ownedItems = GARDEN_ITEMS.filter(i => ownedIds.includes(i.id));
+  const shopItems  = GARDEN_ITEMS.filter(i => !ownedIds.includes(i.id));
+  const selected   = GARDEN_ITEMS.find(i => i.id === selectedId) || null;
 
-  /* ── Buy: called only from the confirm button ── */
   const handleBuy = async () => {
     if (!selected || availableSeeds < selected.cost || buying) return;
     setBuying(true);
     const newUnlocks  = { ...unlocks, [selected.id]: { cost: selected.cost, at: Date.now() } };
     const newTooltips = { ...(activeChild.seen_tooltips||{}), shop_unlocks: newUnlocks };
     const updates     = { seen_tooltips: newTooltips };
-    // Auto-equip on purchase
-    if (selected.type === "bg")  updates.mascot_bg      = selected.value;
-    if (selected.type === "jar") newTooltips.jar_color  = selected.value;
     const { error } = await supabase.from("children").update(updates).eq("id", activeChild.id);
     if (!error) {
-      setActiveChild(prev => ({ ...prev, ...updates, seen_tooltips: newTooltips }));
-      setChildren(cs => cs.map(c => c.id===activeChild.id ? {...c,...updates,seen_tooltips:newTooltips} : c));
+      setActiveChild(prev => ({ ...prev, seen_tooltips: newTooltips }));
+      setChildren(cs => cs.map(c => c.id===activeChild.id ? {...c, seen_tooltips: newTooltips} : c));
       setSuccessId(selected.id);
-      setTimeout(() => setSuccessId(null), 2200);
+      setTimeout(() => setSuccessId(null), 2400);
     }
     setBuying(false);
     setSelectedId(null);
   };
 
-  /* ── Equip: swap an already-owned item, called from confirm bar ── */
-  const handleEquip = async () => {
-    const item = SHOP_ITEMS.find(i => i.id === selectedEquipId);
-    if (!item || equipping) return;
-    const alreadyEquipped = item.type==="bg" ? equippedBg===item.value : equippedJar===item.value;
-    if (alreadyEquipped) { setSelectedEquipId(null); return; }
-    setEquipping(true);
-    const newTooltips = { ...(activeChild.seen_tooltips||{}) };
-    const updates     = { seen_tooltips: newTooltips };
-    if (item.type === "bg")  updates.mascot_bg    = item.value;
-    if (item.type === "jar") newTooltips.jar_color = item.value;
-    const { error } = await supabase.from("children").update(updates).eq("id", activeChild.id);
-    if (!error) {
-      const merged = { ...activeChild, ...updates, seen_tooltips: newTooltips };
-      setActiveChild(merged);
-      setChildren(cs => cs.map(c => c.id===activeChild.id ? merged : c));
-    }
-    setEquipping(false);
-    setSelectedEquipId(null);
-  };
+  const categories = ["flower","tree","plant","deco","special"];
 
-  /* ── Shared item card renderer ── */
   const ShopItemCard = ({ item }) => {
-    const owned       = !!unlocks[item.id];
-    const isEquipped  = item.type==="bg" ? equippedBg===item.value : equippedJar===item.value;
-    const isSelected  = selectedId === item.id;
-    const canAfford   = availableSeeds >= item.cost;
-    const isSuccess   = successId === item.id;
-    const isEquipping = equipping === item.id;
-
-    const handlePress = () => {
-      if (owned) return; // owned cards handled in My Items tab
-      if (!canAfford) return;
-      // Toggle selection
-      setSelectedId(prev => prev === item.id ? null : item.id);
-    };
-
+    const isSelected = selectedId === item.id;
+    const canAfford  = availableSeeds >= item.cost;
+    const isSuccess  = successId === item.id;
     return (
       <button
-        onClick={handlePress}
-        disabled={!canAfford && !owned}
+        onClick={() => { if (!canAfford) return; setSelectedId(p => p===item.id ? null : item.id); }}
+        disabled={!canAfford}
         style={{
-          background: isSelected
-            ? `${C.purple}14`
-            : isEquipped ? `${C.mint}12` : "#fff",
-          border:`2px solid ${
-            isSelected ? C.purple
-            : isEquipped ? C.mint
-            : canAfford ? C.border : "#e5e5e5"
-          }`,
-          borderRadius:16, padding:"14px 10px",
+          background: isSuccess ? "#E8F5E9" : isSelected ? `${C.purple}12` : "#fff",
+          border:`2px solid ${isSuccess ? C.mint : isSelected ? C.purple : canAfford ? C.border : "#e8e8e8"}`,
+          borderRadius:16, padding:"14px 8px",
           cursor: canAfford ? "pointer" : "default",
           textAlign:"center", transition:"all 0.18s",
           position:"relative",
-          opacity: !canAfford ? 0.5 : 1,
+          opacity: !canAfford ? 0.46 : 1,
           boxShadow: isSelected ? `0 4px 14px ${C.purple}28` : "none",
-          transform: isSelected ? "scale(1.02)" : "scale(1)",
+          transform: isSelected ? "scale(1.03)" : "scale(1)",
         }}
       >
-        {/* Equipped badge */}
-        {isEquipped && (
-          <div style={{position:"absolute",top:6,right:6,
-            background:C.mint,borderRadius:"50%",width:17,height:17,
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
+        {isSelected && (
+          <div style={{position:"absolute",top:6,right:6,background:C.purple,
+            borderRadius:"50%",width:17,height:17,display:"flex",
+            alignItems:"center",justifyContent:"center"}}>
             <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
           </div>
         )}
-        {/* Selected ring */}
-        {isSelected && (
-          <div style={{position:"absolute",top:6,right:6,
-            background:C.purple,borderRadius:"50%",width:17,height:17,
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{color:"#fff",fontSize:9,fontWeight:900}}>→</span>
-          </div>
-        )}
-
-        <div style={{fontSize:24,marginBottom:5}}>{item.emoji}</div>
-        <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:12,
+        <div style={{fontSize:26,marginBottom:6,filter:`drop-shadow(0 2px 3px ${item.color}55)`}}>
+          {item.emoji}
+        </div>
+        <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
           color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
         <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:10,
           color:C.muted,margin:"0 0 6px",lineHeight:1.3}}>{item.desc}</p>
-
         {isSuccess ? (
-          <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,
-            color:C.mint,margin:0}}>Unlocked! 🎉</p>
+          <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.mint,margin:0}}>
+            Planted! 🎉
+          </p>
         ) : (
           <div style={{display:"inline-flex",alignItems:"center",gap:3,
-            background:canAfford ? "#EDE7F6" : "#f5f5f5",
-            borderRadius:50,padding:"2px 8px"}}>
+            background:canAfford ? "#EDE7F6" : "#f3f3f3",borderRadius:50,padding:"2px 8px"}}>
             <span style={{fontSize:11}}>🌱</span>
             <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,
-              color:canAfford ? C.purple : C.muted}}>{item.cost}</span>
-          </div>
-        )}
-
-        {/* Loading overlay */}
-        {isEquipping && (
-          <div style={{position:"absolute",inset:0,borderRadius:14,
-            background:"rgba(255,255,255,0.8)",
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{fontSize:18}}>✨</span>
+              color:canAfford ? C.purple : "#bbb"}}>{item.cost}</span>
           </div>
         )}
       </button>
     );
   };
 
-  /* ── My Items card — tap to select, confirm bar does the equip ── */
-  const OwnedItemCard = ({ item }) => {
-    const isEquipped   = item.type==="bg" ? equippedBg===item.value : equippedJar===item.value;
-    const isSelected   = selectedEquipId === item.id;
-    return (
-      <button
-        onClick={()=> setSelectedEquipId(prev => prev===item.id ? null : item.id)}
-        style={{
-          background: isSelected
-            ? `${C.purple}14`
-            : isEquipped ? `${C.mint}12` : "#fff",
-          border:`2px solid ${isSelected ? C.purple : isEquipped ? C.mint : C.border}`,
-          borderRadius:16, padding:"14px 10px",
-          cursor:"pointer",
-          textAlign:"center", transition:"all 0.18s",
-          position:"relative",
-          boxShadow: isSelected ? `0 4px 14px ${C.purple}28` : isEquipped ? `0 2px 10px ${C.mint}30` : "none",
-          transform: isSelected ? "scale(1.02)" : "scale(1)",
-        }}
-      >
-        {/* Equipped badge */}
-        {isEquipped && !isSelected && (
-          <div style={{position:"absolute",top:6,right:6,
-            background:C.mint,borderRadius:"50%",width:17,height:17,
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
-          </div>
-        )}
-        {/* Selected ring */}
-        {isSelected && (
-          <div style={{position:"absolute",top:6,right:6,
-            background:C.purple,borderRadius:"50%",width:17,height:17,
-            display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <span style={{color:"#fff",fontSize:9,fontWeight:900}}>→</span>
-          </div>
-        )}
-        <div style={{fontSize:24,marginBottom:5}}>{item.emoji}</div>
-        <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:12,
-          color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
-        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:10,
-          color:C.muted,margin:"0 0 6px",lineHeight:1.3}}>{item.desc}</p>
-        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,margin:0,
-          color: isSelected ? C.purple : isEquipped ? C.mint : C.muted}}>
-          {isEquipped ? "Equipped ✓" : isSelected ? "Selected" : "Tap to select"}
-        </p>
-      </button>
-    );
-  };
+  const OwnedItemCard = ({ item }) => (
+    <div style={{
+      background:`${item.color}14`,
+      border:`2px solid ${item.color}44`,
+      borderRadius:16, padding:"14px 8px", textAlign:"center", position:"relative",
+    }}>
+      <div style={{position:"absolute",top:6,right:6,background:C.mint,
+        borderRadius:"50%",width:17,height:17,display:"flex",
+        alignItems:"center",justifyContent:"center"}}>
+        <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
+      </div>
+      <div style={{fontSize:26,marginBottom:6,filter:`drop-shadow(0 2px 3px ${item.color}55)`}}>
+        {item.emoji}
+      </div>
+      <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
+        color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
+      <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:10,
+        color:C.mint,margin:0}}>Planted ✓</p>
+    </div>
+  );
 
   return (
     <div
       style={{position:"fixed",inset:0,zIndex:9990,background:"rgba(0,0,0,0.5)",
-        display:"flex",alignItems:"center",justifyContent:"center",
-        padding:"16px"}}
+        display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}
       onClick={onClose}
     >
       <div
         onClick={e=>e.stopPropagation()}
-        style={{background:"#fff",borderRadius:28,
-          width:"100%",maxWidth:460,
-          maxHeight:"calc(100vh - 48px)",
-          display:"flex",flexDirection:"column",
+        style={{background:"#fff",borderRadius:28,width:"100%",maxWidth:460,
+          maxHeight:"calc(100vh - 48px)",display:"flex",flexDirection:"column",
           boxShadow:"0 24px 64px rgba(0,0,0,0.22)",
           animation:"shopScaleIn 0.28s cubic-bezier(0.34,1.4,0.64,1)"}}
       >
         <style>{`@keyframes shopScaleIn{from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}`}</style>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div style={{padding:"22px 20px 0",flexShrink:0}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
             <div>
               <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:900,fontSize:20,color:C.text,margin:0}}>
-                Mascot Shop 🛍️
+                Garden Shop 🪴
               </p>
               <div style={{display:"flex",alignItems:"center",gap:6,marginTop:2}}>
                 <span style={{fontSize:13}}>🌱</span>
                 <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:13,color:C.purple}}>
-                  {availableSeeds} seeds available
+                  {availableSeeds} seeds to spend
                 </span>
+                {ownedIds.length > 0 && (
+                  <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:12,color:C.muted}}>
+                    · {ownedIds.length} planted
+                  </span>
+                )}
               </div>
             </div>
-            <button
-              onClick={onClose}
+            <button onClick={onClose}
               style={{background:"#f5f5f5",border:"none",borderRadius:"50%",
                 width:34,height:34,cursor:"pointer",fontSize:17,
                 display:"flex",alignItems:"center",justifyContent:"center",
@@ -894,15 +869,17 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
             </button>
           </div>
 
-          {/* ── Tab switcher ── */}
+          {/* Live garden preview */}
+          <GardenPreview ownedIds={ownedIds} stageId={stageId}/>
+
+          {/* Tab switcher */}
           <div style={{display:"flex",background:"#F0EBF8",borderRadius:14,padding:3,marginBottom:16}}>
             {[
-              {id:"shop",  label:"🛒 Shop",     badge: shopItems.length > 0 ? shopItems.filter(i=>availableSeeds>=i.cost).length : null},
-              {id:"items", label:"🎒 My Items",  badge: ownedItems.length || null},
+              {id:"shop",   label:"🛒 Shop",     badge: shopItems.filter(i=>availableSeeds>=i.cost).length || null},
+              {id:"garden", label:"🌻 My Garden", badge: ownedItems.length || null},
             ].map(t=>(
-              <button
-                key={t.id}
-                onClick={()=>{ setPanelTab(t.id); setSelectedId(null); setSelectedEquipId(null); }}
+              <button key={t.id}
+                onClick={()=>{ setPanelTab(t.id); setSelectedId(null); }}
                 style={{
                   flex:1, border:"none", borderRadius:11, padding:"9px 6px",
                   cursor:"pointer", transition:"all 0.2s",
@@ -911,138 +888,104 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
                   fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:13,
                   color: panelTab===t.id ? C.purple : C.muted,
                   display:"flex",alignItems:"center",justifyContent:"center",gap:6,
-                }}
-              >
+                }}>
                 {t.label}
                 {t.badge != null && t.badge > 0 && (
-                  <span style={{
-                    background: panelTab===t.id ? C.purple : C.muted,
-                    color:"#fff", borderRadius:50, padding:"0 6px",
-                    fontSize:10, fontWeight:900, lineHeight:"16px",
-                  }}>{t.badge}</span>
+                  <span style={{background: panelTab===t.id ? C.purple : C.muted,
+                    color:"#fff",borderRadius:50,padding:"0 6px",
+                    fontSize:10,fontWeight:900,lineHeight:"16px"}}>{t.badge}</span>
                 )}
               </button>
             ))}
           </div>
         </div>
 
-        {/* ── Scrollable content ── */}
-        <div style={{flex:1,overflowY:"auto",padding:"0 20px 36px"}}>
+        {/* Scrollable content */}
+        <div style={{flex:1,overflowY:"auto",padding:"0 20px 110px"}}>
 
-          {/* ── SHOP TAB ── */}
           {panelTab === "shop" && (
             <>
               {shopItems.length === 0 ? (
-                <div style={{textAlign:"center",padding:"40px 20px"}}>
-                  <p style={{fontSize:40,marginBottom:12}}>🎉</p>
+                <div style={{textAlign:"center",padding:"32px 20px"}}>
+                  <p style={{fontSize:40,marginBottom:12}}>🌸</p>
                   <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:18,color:C.text,margin:"0 0 6px"}}>
-                    You own everything!
+                    Garden complete!
                   </p>
-                  <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:14,color:C.muted,margin:0}}>
-                    Switch items in the My Items tab.
+                  <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:14,color:C.muted,margin:0,lineHeight:1.6}}>
+                    You've collected every plant and decoration. Your garden is truly magical! 🌟
                   </p>
                 </div>
               ) : (
-                <>
-                  {/* Category: Backgrounds */}
-                  {shopItems.filter(i=>i.type==="bg").length > 0 && (
-                    <>
+                categories.map(cat => {
+                  const catItems = shopItems.filter(i => i.type === cat);
+                  if (catItems.length === 0) return null;
+                  return (
+                    <div key={cat}>
                       <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.muted,
-                        letterSpacing:1.2,textTransform:"uppercase",margin:"6px 0 10px"}}>
-                        Room Backgrounds
+                        letterSpacing:1.2,textTransform:"uppercase",margin:"4px 0 10px"}}>
+                        {CATEGORY_LABELS[cat]}
                       </p>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:18}}>
-                        {shopItems.filter(i=>i.type==="bg").map(item=>(
-                          <ShopItemCard key={item.id} item={item}/>
-                        ))}
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:18}}>
+                        {catItems.map(item => <ShopItemCard key={item.id} item={item}/>)}
                       </div>
-                    </>
-                  )}
-                  {/* Category: Jars */}
-                  {shopItems.filter(i=>i.type==="jar").length > 0 && (
-                    <>
-                      <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.muted,
-                        letterSpacing:1.2,textTransform:"uppercase",margin:"0 0 10px"}}>
-                        Gratitude Jar
-                      </p>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:18}}>
-                        {shopItems.filter(i=>i.type==="jar").map(item=>(
-                          <ShopItemCard key={item.id} item={item}/>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
+                    </div>
+                  );
+                })
               )}
             </>
           )}
 
-          {/* ── MY ITEMS TAB ── */}
-          {panelTab === "items" && (
+          {panelTab === "garden" && (
             <>
               {ownedItems.length === 0 ? (
-                <div style={{textAlign:"center",padding:"40px 20px"}}>
-                  <p style={{fontSize:36,marginBottom:12}}>🌱</p>
+                <div style={{textAlign:"center",padding:"32px 20px"}}>
+                  <p style={{fontSize:40,marginBottom:12}}>🌱</p>
                   <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:18,color:C.text,margin:"0 0 6px"}}>
-                    Nothing yet!
+                    Nothing planted yet!
                   </p>
                   <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:14,color:C.muted,margin:0,lineHeight:1.6}}>
-                    Buy items from the Shop tab and they'll appear here. You can swap them any time!
+                    Visit the Shop tab and spend your seeds to add plants and decorations to your garden!
                   </p>
                 </div>
               ) : (
                 <>
-                  {/* Backgrounds */}
-                  {ownedItems.filter(i=>i.type==="bg").length > 0 && (
-                    <>
-                      <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.muted,
-                        letterSpacing:1.2,textTransform:"uppercase",margin:"6px 0 10px"}}>
-                        Room Backgrounds
-                      </p>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:18}}>
-                        {ownedItems.filter(i=>i.type==="bg").map(item=>(
-                          <OwnedItemCard key={item.id} item={item}/>
-                        ))}
+                  <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:13,color:C.muted,
+                    margin:"0 0 14px",textAlign:"center",lineHeight:1.6}}>
+                    Everything here lives in your garden above! 🌿
+                  </p>
+                  {categories.map(cat => {
+                    const catItems = ownedItems.filter(i => i.type === cat);
+                    if (catItems.length === 0) return null;
+                    return (
+                      <div key={cat}>
+                        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.muted,
+                          letterSpacing:1.2,textTransform:"uppercase",margin:"4px 0 10px"}}>
+                          {CATEGORY_LABELS[cat]}
+                        </p>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:18}}>
+                          {catItems.map(item => <OwnedItemCard key={item.id} item={item}/>)}
+                        </div>
                       </div>
-                    </>
-                  )}
-                  {/* Jars */}
-                  {ownedItems.filter(i=>i.type==="jar").length > 0 && (
-                    <>
-                      <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.muted,
-                        letterSpacing:1.2,textTransform:"uppercase",margin:"0 0 10px"}}>
-                        Gratitude Jar
-                      </p>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:18}}>
-                        {ownedItems.filter(i=>i.type==="jar").map(item=>(
-                          <OwnedItemCard key={item.id} item={item}/>
-                        ))}
-                      </div>
-                    </>
-                  )}
+                    );
+                  })}
                 </>
               )}
             </>
           )}
         </div>
 
-        {/* ── Sticky confirm bar — shown when an item is selected in shop ── */}
+        {/* Sticky buy confirm bar */}
         {panelTab === "shop" && selected && (
-          <div style={{
-            borderTop:`1.5px solid ${C.border}`,
-            padding:"14px 20px 20px",
-            flexShrink:0,
-            background:"#fff",
-            borderRadius:"0 0 28px 28px",
-            boxShadow:"0 -4px 20px rgba(0,0,0,0.06)",
-          }}>
+          <div style={{borderTop:`1.5px solid ${C.border}`,
+            padding:"12px 20px 20px",flexShrink:0,background:"#fff",
+            borderRadius:"0 0 28px 28px",boxShadow:"0 -4px 20px rgba(0,0,0,0.06)"}}>
+            <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:11,
+              color:C.muted,margin:"0 0 10px",textAlign:"center"}}>
+              This will be permanently planted in your garden 🌱
+            </p>
             <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <div style={{
-                background:`${C.purple}10`,
-                borderRadius:14,width:52,height:52,flexShrink:0,
-                display:"flex",alignItems:"center",justifyContent:"center",
-                fontSize:26,
-              }}>
+              <div style={{background:`${selected.color}18`,borderRadius:14,width:52,height:52,
+                flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>
                 {selected.emoji}
               </div>
               <div style={{flex:1,minWidth:0}}>
@@ -1054,26 +997,19 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
               <button
                 onClick={handleBuy}
                 disabled={buying || availableSeeds < selected.cost}
-                style={{
-                  background: buying
-                    ? `${C.purple}99`
-                    : `linear-gradient(135deg,${C.purple},#9C6FFF)`,
-                  border:"none",borderRadius:14,
-                  padding:"12px 18px",cursor:"pointer",
+                style={{background: buying ? `${C.purple}88` : `linear-gradient(135deg,${C.purple},#9C6FFF)`,
+                  border:"none",borderRadius:14,padding:"12px 18px",cursor:"pointer",
                   display:"flex",alignItems:"center",gap:7,
-                  boxShadow:`0 4px 16px ${C.purple}40`,
-                  transition:"all 0.15s",flexShrink:0,
-                }}
-              >
+                  boxShadow:`0 4px 16px ${C.purple}40`,transition:"all 0.15s",flexShrink:0}}>
                 {buying ? (
                   <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:13,color:"#fff"}}>
-                    ✨ Buying…
+                    🌱 Planting…
                   </span>
                 ) : (
                   <>
                     <span style={{fontSize:13}}>🌱</span>
                     <span style={{fontFamily:"'Baloo 2',cursive",fontWeight:900,fontSize:14,color:"#fff"}}>
-                      Buy for {selected.cost}
+                      Plant for {selected.cost}
                     </span>
                   </>
                 )}
@@ -1081,73 +1017,6 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
             </div>
           </div>
         )}
-
-        {/* ── Sticky equip bar — shown when an item is selected in My Items ── */}
-        {panelTab === "items" && selectedEquipId && (() => {
-          const equipItem = SHOP_ITEMS.find(i => i.id === selectedEquipId);
-          if (!equipItem) return null;
-          const alreadyOn = equipItem.type==="bg" ? equippedBg===equipItem.value : equippedJar===equipItem.value;
-          return (
-            <div style={{
-              borderTop:`1.5px solid ${C.border}`,
-              padding:"14px 20px 20px",
-              flexShrink:0,
-              background:"#fff",
-              borderRadius:"0 0 28px 28px",
-              boxShadow:"0 -4px 20px rgba(0,0,0,0.06)",
-            }}>
-              <div style={{display:"flex",alignItems:"center",gap:14}}>
-                <div style={{
-                  background:`${C.purple}10`,
-                  borderRadius:14,width:52,height:52,flexShrink:0,
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  fontSize:26,
-                }}>
-                  {equipItem.emoji}
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:16,
-                    color:C.text,margin:0,lineHeight:1.2}}>{equipItem.label}</p>
-                  <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:12,
-                    color:C.muted,margin:"2px 0 0"}}>
-                    {alreadyOn ? "Already equipped!" : equipItem.desc}
-                  </p>
-                </div>
-                <button
-                  onClick={handleEquip}
-                  disabled={equipping || alreadyOn}
-                  style={{
-                    background: alreadyOn
-                      ? `${C.mint}99`
-                      : equipping
-                      ? `${C.purple}88`
-                      : `linear-gradient(135deg,${C.mint},#26C6A0)`,
-                    border:"none",borderRadius:14,
-                    padding:"12px 18px",cursor: alreadyOn ? "default" : "pointer",
-                    display:"flex",alignItems:"center",gap:7,
-                    boxShadow: alreadyOn ? "none" : `0 4px 16px ${C.mint}55`,
-                    transition:"all 0.15s",flexShrink:0,
-                    opacity: alreadyOn ? 0.7 : 1,
-                  }}
-                >
-                  {equipping ? (
-                    <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:13,color:"#fff"}}>
-                      ✨ Equipping…
-                    </span>
-                  ) : alreadyOn ? (
-                    <span style={{fontFamily:"'Baloo 2',cursive",fontWeight:900,fontSize:14,color:"#fff"}}>
-                      Equipped ✓
-                    </span>
-                  ) : (
-                    <span style={{fontFamily:"'Baloo 2',cursive",fontWeight:900,fontSize:14,color:"#fff"}}>
-                      Equip Now ✓
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-          );
-        })()}
       </div>
     </div>
   );
@@ -1327,20 +1196,9 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
       {/* ══ HERO SECTION — garden is the background, scrolls with content ══ */}
       <div style={{position:"relative", overflow:"hidden", paddingBottom:32}}>
 
-        {/* Purchased room background — renders behind garden when set */}
-        {activeChild.mascot_bg && activeChild.mascot_bg.startsWith("linear-gradient") && (
-          <div style={{
-            position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:0,
-            background: activeChild.mascot_bg,
-            transition:"background 0.6s ease",
-          }}/>
-        )}
-
         {/* Garden fills the hero section as background */}
         <div style={{
           position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:1,
-          opacity: activeChild.mascot_bg && activeChild.mascot_bg.startsWith("linear-gradient") ? 0.35 : 1,
-          transition:"opacity 0.6s ease",
         }}>
           <GardenScene
             stage={stage.id}
@@ -1384,7 +1242,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
             <div style={{width:80}}/>
             <h2 style={{fontFamily:F.h,fontSize:22,fontWeight:900,color:C.text,margin:0,
               textShadow:"0 2px 8px rgba(255,255,255,0.9)"}}>
-              {cm.name}'s Room
+              {cm.name}'s Garden
             </h2>
             <div style={{display:"flex",alignItems:"center",gap:4,
               background:"rgba(255,255,255,0.88)",borderRadius:50,
