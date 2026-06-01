@@ -1838,11 +1838,13 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
             </div>
           </div>
 
-          {/* ── MASCOT — floats over garden ── */}
+          {/* ── MASCOT — floats over garden, slides left when watering ── */}
           <div style={{
             display:"flex",flexDirection:"column",alignItems:"center",
             paddingTop:8,paddingBottom:0,
             minHeight:300,
+            transform: wateringScene ? "translateX(-30%)" : "translateX(0%)",
+            transition: "transform 0.55s cubic-bezier(0.4,0,0.2,1)",
           }}>
             {speech && (
               <div style={{marginBottom:8,width:"80%",display:"flex",justifyContent:"center"}}>
