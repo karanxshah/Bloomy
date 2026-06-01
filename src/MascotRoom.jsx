@@ -450,32 +450,91 @@ const WateringCanSVG = ({ size=48, watering=false }) => (
   </svg>
 );
 
-/* ── Garden items — plants and decorations the child places in their garden ── */
+/* ── Garden items — 10 per growth stage, unlocked progressively ── */
 const GARDEN_ITEMS = [
-  /* Flowers */
-  { id:"g_sunflower",  type:"flower",  label:"Sunflower",        cost:8,  emoji:"🌻", desc:"A big cheerful sunflower",       color:"#FFD54F", size:"lg" },
-  { id:"g_rose",       type:"flower",  label:"Red Rose",         cost:8,  emoji:"🌹", desc:"A classic ruby-red rose",        color:"#E53935", size:"md" },
-  { id:"g_tulip",      type:"flower",  label:"Purple Tulip",     cost:10, emoji:"🌷", desc:"A tall elegant tulip",           color:"#CE93D8", size:"md" },
-  { id:"g_daisy",      type:"flower",  label:"Daisy Patch",      cost:10, emoji:"🌼", desc:"Three daisies side by side",     color:"#FFF9C4", size:"sm" },
-  { id:"g_bluebell",   type:"flower",  label:"Bluebells",        cost:12, emoji:"💙", desc:"Delicate nodding bluebells",     color:"#4FC3F7", size:"sm" },
-  { id:"g_cherry",     type:"tree",    label:"Cherry Blossom",   cost:20, emoji:"🌸", desc:"A beautiful flowering tree",     color:"#F8BBD0", size:"xl" },
-  /* Trees & plants */
-  { id:"g_cactus",     type:"plant",   label:"Friendly Cactus",  cost:12, emoji:"🌵", desc:"A cute little cactus",           color:"#66BB6A", size:"md" },
-  { id:"g_bamboo",     type:"plant",   label:"Bamboo Stalks",    cost:15, emoji:"🎋", desc:"Tall swaying bamboo",            color:"#43A047", size:"lg" },
-  { id:"g_mushroom",   type:"plant",   label:"Magic Mushrooms",  cost:12, emoji:"🍄", desc:"Red-cap mushroom friends",       color:"#EF5350", size:"sm" },
-  { id:"g_fern",       type:"plant",   label:"Curly Fern",       cost:10, emoji:"🌿", desc:"A lush green fern",              color:"#388E3C", size:"md" },
-  /* Decorations */
-  { id:"g_butterfly",  type:"deco",    label:"Butterfly",        cost:15, emoji:"🦋", desc:"A colourful visiting butterfly",  color:"#CE93D8", size:"sm" },
-  { id:"g_ladybug",    type:"deco",    label:"Ladybug",          cost:12, emoji:"🐞", desc:"A lucky little ladybug",         color:"#E53935", size:"sm" },
-  { id:"g_beehive",    type:"deco",    label:"Beehive",          cost:18, emoji:"🐝", desc:"A busy golden beehive",          color:"#FFD54F", size:"md" },
-  { id:"g_birdbath",   type:"deco",    label:"Bird Bath",        cost:20, emoji:"🐦", desc:"Birds love to splash here!",     color:"#4FC3F7", size:"md" },
-  { id:"g_rainbow",    type:"deco",    label:"Mini Rainbow",     cost:25, emoji:"🌈", desc:"A little arc of colour",         color:"#FF7043", size:"lg" },
-  { id:"g_gnome",      type:"deco",    label:"Garden Gnome",     cost:20, emoji:"🧙", desc:"A cheerful garden keeper",       color:"#FF7043", size:"md" },
-  /* Special */
-  { id:"g_fountain",   type:"special", label:"Wishing Fountain", cost:30, emoji:"⛲", desc:"A magical wishing fountain",     color:"#4FC3F7", size:"xl" },
-  { id:"g_windmill",   type:"special", label:"Windmill",         cost:35, emoji:"🌀", desc:"A spinning pastel windmill",     color:"#CE93D8", size:"xl" },
-  { id:"g_treehouse",  type:"special", label:"Tree House",       cost:40, emoji:"🏡", desc:"A cosy home in the treetops",    color:"#8D6E63", size:"xl" },
-  { id:"g_fireflies",  type:"special", label:"Firefly Jar",      cost:30, emoji:"✨", desc:"Tiny glowing lights at dusk",    color:"#FFD54F", size:"sm" },
+  /* ── Stage 0 — Seedling (available from the start) ── */
+  { id:"g_daisy",      stageUnlock:0, type:"flower",  label:"Daisy Patch",      cost:8,  color:"#FFF9C4", size:"sm", desc:"Sweet little daisies" },
+  { id:"g_bluebell",   stageUnlock:0, type:"flower",  label:"Bluebells",        cost:8,  color:"#4FC3F7", size:"sm", desc:"Nodding blue bells" },
+  { id:"g_mushroom",   stageUnlock:0, type:"plant",   label:"Magic Mushrooms",  cost:10, color:"#EF5350", size:"sm", desc:"Red-cap mushroom friends" },
+  { id:"g_fern",       stageUnlock:0, type:"plant",   label:"Curly Fern",       cost:10, color:"#388E3C", size:"md", desc:"A lush green fern" },
+  { id:"g_ladybug",    stageUnlock:0, type:"deco",    label:"Ladybug",          cost:10, color:"#E53935", size:"sm", desc:"A lucky little ladybug" },
+  { id:"g_rose",       stageUnlock:0, type:"flower",  label:"Red Rose",         cost:12, color:"#E53935", size:"md", desc:"A classic ruby-red rose" },
+  { id:"g_tulip",      stageUnlock:0, type:"flower",  label:"Purple Tulip",     cost:12, color:"#CE93D8", size:"md", desc:"A tall elegant tulip" },
+  { id:"g_cactus",     stageUnlock:0, type:"plant",   label:"Friendly Cactus",  cost:12, color:"#66BB6A", size:"md", desc:"A cute little cactus" },
+  { id:"g_butterfly",  stageUnlock:0, type:"deco",    label:"Butterfly",        cost:15, color:"#CE93D8", size:"sm", desc:"A colourful butterfly" },
+  { id:"g_sunflower",  stageUnlock:0, type:"flower",  label:"Sunflower",        cost:15, color:"#FFD54F", size:"lg", desc:"A big cheerful sunflower" },
+
+  /* ── Stage 1 — Sprouting ── */
+  { id:"g_bluebell2",  stageUnlock:1, type:"flower",  label:"Pink Blossoms",    cost:14, color:"#F8BBD0", size:"sm", desc:"Soft pink blossom clusters" },
+  { id:"g_daisy2",     stageUnlock:1, type:"flower",  label:"Yellow Daisies",   cost:14, color:"#FFD54F", size:"sm", desc:"Cheerful yellow daisy patch" },
+  { id:"g_bamboo",     stageUnlock:1, type:"plant",   label:"Bamboo Stalks",    cost:16, color:"#43A047", size:"lg", desc:"Tall swaying bamboo" },
+  { id:"g_fern2",      stageUnlock:1, type:"plant",   label:"Bushy Fern",       cost:16, color:"#2E7D32", size:"md", desc:"A fuller, bushier fern" },
+  { id:"g_birdbath",   stageUnlock:1, type:"deco",    label:"Bird Bath",        cost:18, color:"#4FC3F7", size:"md", desc:"Birds love to splash here!" },
+  { id:"g_ladybug2",   stageUnlock:1, type:"deco",    label:"Snail",            cost:18, color:"#FF8A65", size:"sm", desc:"A slow and happy snail" },
+  { id:"g_beehive",    stageUnlock:1, type:"deco",    label:"Beehive",          cost:20, color:"#FFD54F", size:"md", desc:"A busy golden beehive" },
+  { id:"g_tulip2",     stageUnlock:1, type:"flower",  label:"Orange Tulip",     cost:20, color:"#FF7043", size:"md", desc:"A bright orange tulip" },
+  { id:"g_sunflower2", stageUnlock:1, type:"flower",  label:"Giant Sunflower",  cost:22, color:"#F9A825", size:"lg", desc:"An extra-tall sunflower" },
+  { id:"g_gnome",      stageUnlock:1, type:"deco",    label:"Garden Gnome",     cost:22, color:"#FF7043", size:"md", desc:"A cheerful garden keeper" },
+
+  /* ── Stage 2 — Blooming ── */
+  { id:"g_rose2",      stageUnlock:2, type:"flower",  label:"Pink Rose Bush",   cost:20, color:"#F06292", size:"md", desc:"A full pink rose bush" },
+  { id:"g_daisy3",     stageUnlock:2, type:"flower",  label:"Wild Flowers",     cost:20, color:"#CE93D8", size:"sm", desc:"A mix of wild meadow flowers" },
+  { id:"g_cherry",     stageUnlock:2, type:"tree",    label:"Cherry Blossom",   cost:24, color:"#F8BBD0", size:"xl", desc:"A beautiful flowering tree" },
+  { id:"g_bamboo2",    stageUnlock:2, type:"plant",   label:"Tall Bamboo",      cost:24, color:"#388E3C", size:"lg", desc:"A fuller bamboo grove" },
+  { id:"g_butterfly2", stageUnlock:2, type:"deco",    label:"Blue Butterfly",   cost:24, color:"#4FC3F7", size:"sm", desc:"A stunning blue butterfly" },
+  { id:"g_mushroom2",  stageUnlock:2, type:"plant",   label:"Fairy Ring",       cost:26, color:"#CE93D8", size:"sm", desc:"A magical ring of mushrooms" },
+  { id:"g_gnome2",     stageUnlock:2, type:"deco",    label:"Fairy Door",       cost:26, color:"#FF7043", size:"sm", desc:"A tiny magical fairy door" },
+  { id:"g_beehive2",   stageUnlock:2, type:"deco",    label:"Flower Arch",      cost:28, color:"#F48FB1", size:"lg", desc:"A pretty floral archway" },
+  { id:"g_rainbow",    stageUnlock:2, type:"deco",    label:"Mini Rainbow",     cost:28, color:"#FF7043", size:"lg", desc:"A little arc of colour" },
+  { id:"g_cactus2",    stageUnlock:2, type:"plant",   label:"Succulent Patch",  cost:30, color:"#81C784", size:"md", desc:"A cluster of cute succulents" },
+
+  /* ── Stage 3 — Flourishing ── */
+  { id:"g_cherry2",    stageUnlock:3, type:"tree",    label:"Apple Tree",       cost:28, color:"#EF5350", size:"xl", desc:"A tree full of red apples" },
+  { id:"g_rose3",      stageUnlock:3, type:"flower",  label:"Climbing Roses",   cost:28, color:"#EC407A", size:"lg", desc:"Roses climbing a trellis" },
+  { id:"g_fountain",   stageUnlock:3, type:"special", label:"Wishing Fountain", cost:30, color:"#4FC3F7", size:"xl", desc:"A magical wishing fountain" },
+  { id:"g_fern3",      stageUnlock:3, type:"plant",   label:"Willow Tree",      cost:30, color:"#66BB6A", size:"xl", desc:"A graceful weeping willow" },
+  { id:"g_birdbath2",  stageUnlock:3, type:"deco",    label:"Garden Swing",     cost:32, color:"#8D6E63", size:"md", desc:"A wooden garden swing" },
+  { id:"g_butterfly3", stageUnlock:3, type:"deco",    label:"Butterfly Garden", cost:32, color:"#F48FB1", size:"md", desc:"A trio of dancing butterflies" },
+  { id:"g_sunflower3", stageUnlock:3, type:"flower",  label:"Sunflower Field",  cost:34, color:"#FFD54F", size:"lg", desc:"A whole row of sunflowers" },
+  { id:"g_mushroom3",  stageUnlock:3, type:"plant",   label:"Giant Mushroom",   cost:34, color:"#7E57C2", size:"lg", desc:"A magical oversized mushroom" },
+  { id:"g_ladybug3",   stageUnlock:3, type:"deco",    label:"Frog on Lily",     cost:36, color:"#66BB6A", size:"sm", desc:"A happy frog on a lily pad" },
+  { id:"g_beehive3",   stageUnlock:3, type:"deco",    label:"Wind Chimes",      cost:36, color:"#4FC3F7", size:"sm", desc:"Musical garden wind chimes" },
+
+  /* ── Stage 4 — Thriving ── */
+  { id:"g_treehouse",  stageUnlock:4, type:"special", label:"Tree House",       cost:38, color:"#8D6E63", size:"xl", desc:"A cosy home in the treetops" },
+  { id:"g_cherry3",    stageUnlock:4, type:"tree",    label:"Maple Tree",       cost:38, color:"#FF7043", size:"xl", desc:"A tall autumn maple tree" },
+  { id:"g_windmill",   stageUnlock:4, type:"special", label:"Windmill",         cost:40, color:"#CE93D8", size:"xl", desc:"A spinning pastel windmill" },
+  { id:"g_rose4",      stageUnlock:4, type:"flower",  label:"Rainbow Roses",    cost:40, color:"#F06292", size:"lg", desc:"Roses in every colour" },
+  { id:"g_fountain2",  stageUnlock:4, type:"special", label:"Koi Pond",         cost:42, color:"#4FC3F7", size:"xl", desc:"A peaceful pond with koi fish" },
+  { id:"g_fireflies",  stageUnlock:4, type:"special", label:"Firefly Jar",      cost:42, color:"#FFD54F", size:"sm", desc:"Tiny glowing lights at dusk" },
+  { id:"g_butterfly4", stageUnlock:4, type:"deco",    label:"Butterfly Tower",  cost:44, color:"#7E57C2", size:"lg", desc:"A tall tower covered in butterflies" },
+  { id:"g_bamboo3",    stageUnlock:4, type:"plant",   label:"Bamboo Forest",    cost:44, color:"#2E7D32", size:"xl", desc:"A dense bamboo forest" },
+  { id:"g_gnome3",     stageUnlock:4, type:"deco",    label:"Stone Lantern",    cost:46, color:"#90A4AE", size:"md", desc:"A glowing stone garden lantern" },
+  { id:"g_rainbow2",   stageUnlock:4, type:"deco",    label:"Double Rainbow",   cost:46, color:"#7E57C2", size:"xl", desc:"Two full rainbows arc across the sky" },
+
+  /* ── Stage 5 — Blossoming ── */
+  { id:"g_cherry4",    stageUnlock:5, type:"tree",    label:"Magic Tree",       cost:50, color:"#CE93D8", size:"xl", desc:"A tree that glows at night" },
+  { id:"g_fountain3",  stageUnlock:5, type:"special", label:"Crystal Fountain", cost:50, color:"#B3E5FC", size:"xl", desc:"A fountain of sparkling crystal" },
+  { id:"g_windmill2",  stageUnlock:5, type:"special", label:"Fairy Windmill",   cost:52, color:"#F48FB1", size:"xl", desc:"A tiny windmill dusted in fairy light" },
+  { id:"g_rose5",      stageUnlock:5, type:"flower",  label:"Enchanted Roses",  cost:52, color:"#7E57C2", size:"lg", desc:"Roses that sparkle in the moonlight" },
+  { id:"g_mushroom4",  stageUnlock:5, type:"plant",   label:"Glowing Fungi",    cost:54, color:"#4FC3F7", size:"md", desc:"Softly glowing mushrooms" },
+  { id:"g_fireflies2", stageUnlock:5, type:"special", label:"Lantern Grove",    cost:54, color:"#FFE082", size:"lg", desc:"Rows of glowing paper lanterns" },
+  { id:"g_butterfly5", stageUnlock:5, type:"deco",    label:"Moon Moths",       cost:56, color:"#E1BEE7", size:"md", desc:"Beautiful moon moths in flight" },
+  { id:"g_treehouse2", stageUnlock:5, type:"special", label:"Cloud Castle",     cost:56, color:"#E3F2FD", size:"xl", desc:"A little castle floating in the clouds" },
+  { id:"g_gnome4",     stageUnlock:5, type:"deco",    label:"Star Gazer",       cost:58, color:"#7C4DFF", size:"md", desc:"A gnome gazing at the stars" },
+  { id:"g_rainbow3",   stageUnlock:5, type:"deco",    label:"Aurora",           cost:58, color:"#4FC3F7", size:"xl", desc:"Northern lights shimmer overhead" },
+
+  /* ── Stage 6 — Full Bloom ── */
+  { id:"g_treehouse3", stageUnlock:6, type:"special", label:"Sky Palace",       cost:60, color:"#FFD54F", size:"xl", desc:"A golden palace above the clouds" },
+  { id:"g_fountain4",  stageUnlock:6, type:"special", label:"Rainbow Fountain", cost:60, color:"#F48FB1", size:"xl", desc:"A fountain that sprays rainbows" },
+  { id:"g_cherry5",    stageUnlock:6, type:"tree",    label:"Golden Tree",      cost:62, color:"#FFD54F", size:"xl", desc:"An ancient tree of pure gold" },
+  { id:"g_windmill3",  stageUnlock:6, type:"special", label:"Star Mill",        cost:62, color:"#FFE082", size:"xl", desc:"A windmill powered by starlight" },
+  { id:"g_rose6",      stageUnlock:6, type:"flower",  label:"Legend Rose",      cost:64, color:"#FFD54F", size:"xl", desc:"The rarest rose in the world" },
+  { id:"g_fireflies3", stageUnlock:6, type:"special", label:"Galaxy Jar",       cost:64, color:"#7C4DFF", size:"lg", desc:"A jar holding an entire galaxy" },
+  { id:"g_butterfly6", stageUnlock:6, type:"deco",    label:"Phoenix Bird",     cost:66, color:"#FF7043", size:"xl", desc:"A legendary phoenix taking flight" },
+  { id:"g_rainbow4",   stageUnlock:6, type:"deco",    label:"Shooting Stars",   cost:66, color:"#FFE082", size:"lg", desc:"Stars streak across the garden sky" },
+  { id:"g_gnome5",     stageUnlock:6, type:"deco",    label:"Dragon Friend",    cost:68, color:"#66BB6A", size:"xl", desc:"A friendly little dragon" },
+  { id:"g_mushroom5",  stageUnlock:6, type:"plant",   label:"World Tree",       cost:68, color:"#43A047", size:"xl", desc:"The tree that holds the whole world" },
 ];
 
 /* ── Action Tabs — watering can + shop, side by side ── */
@@ -669,15 +728,19 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
    Two tabs: "Shop" (browse & buy plants/deco) and "My Garden" (see what's planted)
    Items are permanently planted — no equip/unequip, just collect & grow.
 ════════════════════════════════ */
-const CATEGORY_LABELS = {
-  flower:  "🌸 Flowers",
-  tree:    "🌳 Trees",
-  plant:   "🌿 Plants",
-  deco:    "🎀 Decorations",
-  special: "⭐ Special",
-};
 
-/* Mini SVG garden preview — matches real scene aesthetic */
+/* ── Stage metadata for shop display ── */
+const STAGE_SHOP_META = [
+  { id:0, name:"Seedling",    color:"#A5D6A7", bg:"#E8F5E9",  minScore:0   },
+  { id:1, name:"Sprouting",   color:"#4DB6AC", bg:"#E0F2F1",  minScore:15  },
+  { id:2, name:"Blooming",    color:"#7C4DFF", bg:"#EDE7F6",  minScore:35  },
+  { id:3, name:"Flourishing", color:"#FF7043", bg:"#FFF3E0",  minScore:70  },
+  { id:4, name:"Thriving",    color:"#F9A825", bg:"#FFF9C4",  minScore:120 },
+  { id:5, name:"Blossoming",  color:"#EC407A", bg:"#FCE4EC",  minScore:180 },
+  { id:6, name:"Full Bloom",  color:"#FFD54F", bg:"#FFFDE7",  minScore:260 },
+];
+
+/* ── Mini SVG garden preview ── */
 const GardenPreview = ({ ownedIds, stageId }) => {
   const grassColors = [
     ["#66BB6A","#43A047"],["#43A047","#388E3C"],["#388E3C","#2E7D32"],
@@ -692,10 +755,16 @@ const GardenPreview = ({ ownedIds, stageId }) => {
   const groundY = PH * 0.6;
   const POSITIONS = [0.08,0.18,0.78,0.88,0.12,0.82,0.24,0.72,0.30];
   const ITEM_SIZES_MAP = {
-    g_cherry:"xl",g_treehouse:"xl",g_windmill:"xl",g_fountain:"xl",
-    g_bamboo:"lg",g_sunflower:"lg",g_rainbow:"lg",
-    g_rose:"md",g_tulip:"md",g_cactus:"md",g_fern:"md",g_birdbath:"md",g_beehive:"md",g_gnome:"md",
-    g_daisy:"sm",g_bluebell:"sm",g_mushroom:"sm",g_ladybug:"sm",g_butterfly:"sm",g_fireflies:"sm",
+    g_cherry:"xl",g_cherry2:"xl",g_cherry3:"xl",g_cherry4:"xl",g_cherry5:"xl",
+    g_treehouse:"xl",g_treehouse2:"xl",g_treehouse3:"xl",
+    g_windmill:"xl",g_windmill2:"xl",g_windmill3:"xl",
+    g_fountain:"xl",g_fountain2:"xl",g_fountain3:"xl",g_fountain4:"xl",
+    g_fern3:"xl",g_bamboo3:"xl",g_rainbow2:"xl",g_rainbow3:"xl",g_rainbow4:"xl",
+    g_butterfly4:"lg",g_gnome5:"xl",g_mushroom5:"xl",
+    g_bamboo:"lg",g_bamboo2:"lg",g_sunflower:"lg",g_sunflower2:"lg",g_sunflower3:"lg",
+    g_rainbow:"lg",g_rose3:"lg",g_rose4:"lg",g_rose5:"lg",g_rose6:"xl",
+    g_beehive2:"lg",g_mushroom3:"lg",g_mushroom4:"md",g_fireflies2:"lg",
+    g_butterfly5:"md",g_gnome4:"md",
   };
   const ITEM_SCALES_MAP = { xl:0.36, lg:0.30, md:0.26, sm:0.22 };
   const displayIds = ownedIds.slice(0,9);
@@ -718,7 +787,7 @@ const GardenPreview = ({ ownedIds, stageId }) => {
         {displayIds.length === 0 ? (
           <text x={PW/2} y={PH*0.45} textAnchor="middle"
             fontFamily="'Poppins',sans-serif" fontSize="11" fill="#9B8DB5">
-            Spend seeds to plant your first item!
+            Plant your first item to see your garden here!
           </text>
         ) : (
           displayIds.map((id, i) => {
@@ -739,29 +808,48 @@ const GardenPreview = ({ ownedIds, stageId }) => {
   );
 };
 
+/* ══════════════════════════════════════════════
+   GARDEN SHOP PANEL
+   Items are gated by growth stage.
+   Each of 7 stages unlocks 10 new items.
+   Current stage items are purchasable; future stages show a lock.
+══════════════════════════════════════════════ */
 const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChildren, onClose }) => {
   const unlocks        = activeChild.seen_tooltips?.shop_unlocks || {};
   const ownedIds       = Object.keys(unlocks);
-  const spentSeeds     = Object.values(unlocks).reduce((a,v)=>a+(v?.cost||0), 0);
+  const spentSeeds     = Object.values(unlocks).reduce((a,v) => a + (v?.cost||0), 0);
   const availableSeeds = Math.max(0, growthScore - spentSeeds);
-  const stageId        = Math.min(6, [0,15,35,70,120,180,260].reduce((best, min, i) => growthScore >= min ? i : best, 0));
+
+  /* Current growth stage (0–6) */
+  const currentStageId = Math.min(6, STAGE_SHOP_META.reduce(
+    (best, s) => growthScore >= s.minScore ? s.id : best, 0
+  ));
 
   const [panelTab,   setPanelTab]   = useState("shop");
   const [selectedId, setSelectedId] = useState(null);
   const [buying,     setBuying]     = useState(false);
   const [successId,  setSuccessId]  = useState(null);
 
-  const ownedItems = GARDEN_ITEMS.filter(i => ownedIds.includes(i.id));
-  const shopItems  = GARDEN_ITEMS.filter(i => !ownedIds.includes(i.id));
-  const selected   = GARDEN_ITEMS.find(i => i.id === selectedId) || null;
+  const ownedItems   = GARDEN_ITEMS.filter(i => ownedIds.includes(i.id));
+  const selected     = GARDEN_ITEMS.find(i => i.id === selectedId) || null;
+
+  /* Group all items by their stageUnlock */
+  const itemsByStage = STAGE_SHOP_META.map(sm => ({
+    stage: sm,
+    items: GARDEN_ITEMS.filter(i => i.stageUnlock === sm.id),
+  }));
+
+  /* How many affordable unowned items exist in unlocked stages */
+  const affordableCount = GARDEN_ITEMS.filter(
+    i => i.stageUnlock <= currentStageId && !ownedIds.includes(i.id) && availableSeeds >= i.cost
+  ).length;
 
   const handleBuy = async () => {
     if (!selected || availableSeeds < selected.cost || buying) return;
     setBuying(true);
     const newUnlocks  = { ...unlocks, [selected.id]: { cost: selected.cost, at: Date.now() } };
     const newTooltips = { ...(activeChild.seen_tooltips||{}), shop_unlocks: newUnlocks };
-    const updates     = { seen_tooltips: newTooltips };
-    const { error } = await supabase.from("children").update(updates).eq("id", activeChild.id);
+    const { error } = await supabase.from("children").update({ seen_tooltips: newTooltips }).eq("id", activeChild.id);
     if (!error) {
       setActiveChild(prev => ({ ...prev, seen_tooltips: newTooltips }));
       setChildren(cs => cs.map(c => c.id===activeChild.id ? {...c, seen_tooltips: newTooltips} : c));
@@ -772,8 +860,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
     setSelectedId(null);
   };
 
-  const categories = ["flower","tree","plant","deco","special"];
-
+  /* ── Item card for purchasable (unlocked stage) items ── */
   const ShopItemCard = ({ item }) => {
     const isSelected = selectedId === item.id;
     const canAfford  = availableSeeds >= item.cost;
@@ -785,73 +872,115 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
         style={{
           background: isSuccess ? "#E8F5E9" : isSelected ? `${C.purple}12` : "#fff",
           border:`2px solid ${isSuccess ? C.mint : isSelected ? C.purple : canAfford ? C.border : "#e8e8e8"}`,
-          borderRadius:16, padding:"14px 8px",
+          borderRadius:16, padding:"12px 8px",
           cursor: canAfford ? "pointer" : "default",
-          textAlign:"center", transition:"all 0.18s",
-          position:"relative",
-          opacity: !canAfford ? 0.46 : 1,
+          textAlign:"center", transition:"all 0.18s", position:"relative",
+          opacity: !canAfford ? 0.48 : 1,
           boxShadow: isSelected ? `0 4px 14px ${C.purple}28` : "none",
           transform: isSelected ? "scale(1.03)" : "scale(1)",
         }}
       >
         {isSelected && (
           <div style={{position:"absolute",top:6,right:6,background:C.purple,
-            borderRadius:"50%",width:17,height:17,display:"flex",
-            alignItems:"center",justifyContent:"center"}}>
+            borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
           </div>
         )}
-        {/* SVG thumbnail */}
-        <div style={{height:58,display:"flex",alignItems:"flex-end",justifyContent:"center",
-          marginBottom:4,overflow:"hidden"}}>
-          <svg viewBox="0 0 60 58" width={60} height={58} style={{overflow:"visible"}}>
-            <GardenItemSVG id={item.id} cx={30} groundY={52} scale={0.38} w={60} h={58} idx={0}/>
+        <div style={{height:54,display:"flex",alignItems:"flex-end",justifyContent:"center",marginBottom:4,overflow:"hidden"}}>
+          <svg viewBox="0 0 60 56" width={60} height={56} style={{overflow:"visible"}}>
+            <GardenItemSVG id={item.id} cx={30} groundY={50} scale={0.38} w={60} h={56} idx={0}/>
           </svg>
         </div>
         <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
           color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
-        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:9,
-          color:C.muted,margin:"0 0 6px",lineHeight:1.3}}>{item.desc}</p>
         {isSuccess ? (
           <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.mint,margin:0}}>
             Planted! 🎉
           </p>
         ) : (
           <div style={{display:"inline-flex",alignItems:"center",gap:3,
-            background:canAfford ? "#EDE7F6" : "#f3f3f3",borderRadius:50,padding:"2px 8px"}}>
+            background:canAfford?"#EDE7F6":"#f3f3f3",borderRadius:50,padding:"2px 8px"}}>
             <span style={{fontSize:11}}>🌱</span>
             <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,
-              color:canAfford ? C.purple : "#bbb"}}>{item.cost}</span>
+              color:canAfford?C.purple:"#bbb"}}>{item.cost}</span>
           </div>
         )}
       </button>
     );
   };
 
+  /* ── Item card for owned items (My Garden tab) ── */
   const OwnedItemCard = ({ item }) => (
     <div style={{
-      background:`${item.color}14`,
-      border:`2px solid ${item.color}44`,
-      borderRadius:16, padding:"14px 8px", textAlign:"center", position:"relative",
+      background:`${item.color}14`, border:`2px solid ${item.color}44`,
+      borderRadius:16, padding:"12px 8px", textAlign:"center", position:"relative",
     }}>
       <div style={{position:"absolute",top:6,right:6,background:C.mint,
-        borderRadius:"50%",width:17,height:17,display:"flex",
-        alignItems:"center",justifyContent:"center"}}>
+        borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
       </div>
-      {/* SVG thumbnail */}
-      <div style={{height:58,display:"flex",alignItems:"flex-end",justifyContent:"center",
-        marginBottom:4,overflow:"hidden"}}>
-        <svg viewBox="0 0 60 58" width={60} height={58} style={{overflow:"visible"}}>
-          <GardenItemSVG id={item.id} cx={30} groundY={52} scale={0.38} w={60} h={58} idx={0}/>
+      <div style={{height:54,display:"flex",alignItems:"flex-end",justifyContent:"center",marginBottom:4,overflow:"hidden"}}>
+        <svg viewBox="0 0 60 56" width={60} height={56} style={{overflow:"visible"}}>
+          <GardenItemSVG id={item.id} cx={30} groundY={50} scale={0.38} w={60} h={56} idx={0}/>
         </svg>
       </div>
       <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
         color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
-      <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:10,
-        color:C.mint,margin:0}}>Planted ✓</p>
+      <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:10,color:C.mint,margin:0}}>
+        Planted ✓
+      </p>
     </div>
   );
+
+  /* ── Locked stage teaser card ── */
+  const LockedStageCard = ({ stage }) => {
+    const seedsNeeded = stage.minScore - growthScore;
+    return (
+      <div style={{
+        background:`${stage.color}08`,
+        border:`2px dashed ${stage.color}44`,
+        borderRadius:20, padding:"16px 20px", marginBottom:18,
+        opacity:0.85,
+      }}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+          <div style={{
+            background:`${stage.color}22`, borderRadius:"50%",
+            width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:20, flexShrink:0,
+          }}>
+            🔒
+          </div>
+          <div style={{flex:1}}>
+            <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:900,fontSize:15,
+              color:stage.color,margin:0}}>{stage.name} Stage</p>
+            <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:12,
+              color:C.muted,margin:0}}>
+              {seedsNeeded} more seeds to unlock 10 items
+            </p>
+          </div>
+          <div style={{
+            background:stage.bg, borderRadius:50, padding:"4px 10px",
+            flexShrink:0,
+          }}>
+            <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,
+              color:stage.color,margin:0}}>🌱 {stage.minScore}</p>
+          </div>
+        </div>
+        {/* Preview row — 5 mystery silhouettes */}
+        <div style={{display:"flex",gap:6,justifyContent:"center"}}>
+          {Array.from({length:10},(_,i)=>(
+            <div key={i} style={{
+              width:26, height:30, borderRadius:8,
+              background:`${stage.color}18`,
+              border:`1.5px dashed ${stage.color}33`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:12,
+            }}>?</div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -868,21 +997,24 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
       >
         <style>{`@keyframes shopScaleIn{from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}`}</style>
 
-        {/* Header */}
+        {/* ── Header ── */}
         <div style={{padding:"22px 20px 0",flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
             <div>
               <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:900,fontSize:20,color:C.text,margin:0}}>
                 Garden Shop 🪴
               </p>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:2}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginTop:2,flexWrap:"wrap"}}>
                 <span style={{fontSize:13}}>🌱</span>
                 <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:13,color:C.purple}}>
-                  {availableSeeds} seeds to spend
+                  {availableSeeds} seeds
+                </span>
+                <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:12,color:C.muted}}>
+                  · Stage {currentStageId}: {STAGE_SHOP_META[currentStageId].name}
                 </span>
                 {ownedIds.length > 0 && (
-                  <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:12,color:C.muted}}>
-                    · {ownedIds.length} planted
+                  <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:12,color:C.mint}}>
+                    · {ownedIds.length}/70 planted
                   </span>
                 )}
               </div>
@@ -891,77 +1023,109 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
               style={{background:"#f5f5f5",border:"none",borderRadius:"50%",
                 width:34,height:34,cursor:"pointer",fontSize:17,
                 display:"flex",alignItems:"center",justifyContent:"center",
-                color:"#666",flexShrink:0}}>
-              ✕
-            </button>
+                color:"#666",flexShrink:0}}>✕</button>
           </div>
 
           {/* Live garden preview */}
-          <GardenPreview ownedIds={ownedIds} stageId={stageId}/>
+          <GardenPreview ownedIds={ownedIds} stageId={currentStageId}/>
 
           {/* Tab switcher */}
           <div style={{display:"flex",background:"#F0EBF8",borderRadius:14,padding:3,marginBottom:16}}>
             {[
-              {id:"shop",   label:"🛒 Shop",     badge: shopItems.filter(i=>availableSeeds>=i.cost).length || null},
+              {id:"shop",   label:"🛒 Shop",     badge: affordableCount || null},
               {id:"garden", label:"🌻 My Garden", badge: ownedItems.length || null},
             ].map(t=>(
               <button key={t.id}
                 onClick={()=>{ setPanelTab(t.id); setSelectedId(null); }}
                 style={{
-                  flex:1, border:"none", borderRadius:11, padding:"9px 6px",
-                  cursor:"pointer", transition:"all 0.2s",
-                  background: panelTab===t.id ? "#fff" : "transparent",
-                  boxShadow: panelTab===t.id ? "0 2px 8px rgba(124,77,255,0.14)" : "none",
-                  fontFamily:"'Poppins',sans-serif", fontWeight:700, fontSize:13,
-                  color: panelTab===t.id ? C.purple : C.muted,
+                  flex:1,border:"none",borderRadius:11,padding:"9px 6px",cursor:"pointer",
+                  transition:"all 0.2s",
+                  background:panelTab===t.id?"#fff":"transparent",
+                  boxShadow:panelTab===t.id?"0 2px 8px rgba(124,77,255,0.14)":"none",
+                  fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:13,
+                  color:panelTab===t.id?C.purple:C.muted,
                   display:"flex",alignItems:"center",justifyContent:"center",gap:6,
                 }}>
                 {t.label}
                 {t.badge != null && t.badge > 0 && (
-                  <span style={{background: panelTab===t.id ? C.purple : C.muted,
-                    color:"#fff",borderRadius:50,padding:"0 6px",
-                    fontSize:10,fontWeight:900,lineHeight:"16px"}}>{t.badge}</span>
+                  <span style={{background:panelTab===t.id?C.purple:C.muted,color:"#fff",
+                    borderRadius:50,padding:"0 6px",fontSize:10,fontWeight:900,lineHeight:"16px"}}>
+                    {t.badge}
+                  </span>
                 )}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Scrollable content */}
+        {/* ── Scrollable content ── */}
         <div style={{flex:1,overflowY:"auto",padding:"0 20px 110px"}}>
 
+          {/* ── SHOP TAB ── */}
           {panelTab === "shop" && (
             <>
-              {shopItems.length === 0 ? (
-                <div style={{textAlign:"center",padding:"32px 20px"}}>
-                  <p style={{fontSize:40,marginBottom:12}}>🌸</p>
+              {itemsByStage.map(({ stage, items }) => {
+                const isLocked   = stage.id > currentStageId;
+                const unownedItems = items.filter(i => !ownedIds.includes(i.id));
+                if (unownedItems.length === 0 && !isLocked) return null; // all purchased, skip
+
+                if (isLocked) {
+                  return <LockedStageCard key={stage.id} stage={stage}/>;
+                }
+
+                return (
+                  <div key={stage.id}>
+                    {/* Stage header */}
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                      <div style={{
+                        background:stage.bg, borderRadius:50, padding:"3px 12px",
+                        display:"flex",alignItems:"center",gap:5,
+                      }}>
+                        <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,
+                          fontSize:11,color:stage.color}}>
+                          ✦ {stage.name} items
+                        </span>
+                      </div>
+                      {unownedItems.length < items.length && (
+                        <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:11,color:C.mint}}>
+                          {items.length - unownedItems.length}/{items.length} planted
+                        </span>
+                      )}
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20}}>
+                      {unownedItems.map(item => <ShopItemCard key={item.id} item={item}/>)}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* All current items purchased */}
+              {GARDEN_ITEMS.filter(i => i.stageUnlock <= currentStageId && !ownedIds.includes(i.id)).length === 0 && currentStageId < 6 && (
+                <div style={{textAlign:"center",padding:"20px 20px 0"}}>
+                  <p style={{fontSize:32,marginBottom:8}}>🌸</p>
+                  <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:16,color:C.text,margin:"0 0 6px"}}>
+                    All available items planted!
+                  </p>
+                  <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:13,color:C.muted,margin:0,lineHeight:1.6}}>
+                    Keep earning seeds to reach {STAGE_SHOP_META[currentStageId+1].name} and unlock 10 more!
+                  </p>
+                </div>
+              )}
+              {GARDEN_ITEMS.filter(i => !ownedIds.includes(i.id)).length === 0 && (
+                <div style={{textAlign:"center",padding:"20px 20px 0"}}>
+                  <p style={{fontSize:40,marginBottom:8}}>🏆</p>
                   <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:18,color:C.text,margin:"0 0 6px"}}>
                     Garden complete!
                   </p>
                   <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:14,color:C.muted,margin:0,lineHeight:1.6}}>
-                    You've collected every plant and decoration. Your garden is truly magical! 🌟
+                    You've collected all 70 garden items. Truly legendary! 🌟
                   </p>
                 </div>
-              ) : (
-                categories.map(cat => {
-                  const catItems = shopItems.filter(i => i.type === cat);
-                  if (catItems.length === 0) return null;
-                  return (
-                    <div key={cat}>
-                      <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.muted,
-                        letterSpacing:1.2,textTransform:"uppercase",margin:"4px 0 10px"}}>
-                        {CATEGORY_LABELS[cat]}
-                      </p>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:18}}>
-                        {catItems.map(item => <ShopItemCard key={item.id} item={item}/>)}
-                      </div>
-                    </div>
-                  );
-                })
               )}
             </>
           )}
 
+          {/* ── MY GARDEN TAB ── */}
           {panelTab === "garden" && (
             <>
               {ownedItems.length === 0 ? (
@@ -971,26 +1135,30 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
                     Nothing planted yet!
                   </p>
                   <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:14,color:C.muted,margin:0,lineHeight:1.6}}>
-                    Visit the Shop tab and spend your seeds to add plants and decorations to your garden!
+                    Head to the Shop tab and spend your seeds to start building your garden!
                   </p>
                 </div>
               ) : (
                 <>
                   <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:13,color:C.muted,
                     margin:"0 0 14px",textAlign:"center",lineHeight:1.6}}>
-                    Everything here lives in your garden above! 🌿
+                    {ownedItems.length} of 70 items planted in your garden 🌿
                   </p>
-                  {categories.map(cat => {
-                    const catItems = ownedItems.filter(i => i.type === cat);
-                    if (catItems.length === 0) return null;
+                  {/* Group by stage */}
+                  {itemsByStage.map(({ stage, items }) => {
+                    const planted = items.filter(i => ownedIds.includes(i.id));
+                    if (planted.length === 0) return null;
                     return (
-                      <div key={cat}>
-                        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:C.muted,
-                          letterSpacing:1.2,textTransform:"uppercase",margin:"4px 0 10px"}}>
-                          {CATEGORY_LABELS[cat]}
-                        </p>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:18}}>
-                          {catItems.map(item => <OwnedItemCard key={item.id} item={item}/>)}
+                      <div key={stage.id}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                          <div style={{background:stage.bg,borderRadius:50,padding:"3px 12px"}}>
+                            <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:11,color:stage.color}}>
+                              ✦ {stage.name}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20}}>
+                          {planted.map(item => <OwnedItemCard key={item.id} item={item}/>)}
                         </div>
                       </div>
                     );
@@ -1001,19 +1169,18 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
           )}
         </div>
 
-        {/* Sticky buy confirm bar */}
+        {/* ── Sticky buy confirm bar ── */}
         {panelTab === "shop" && selected && (
-          <div style={{borderTop:`1.5px solid ${C.border}`,
-            padding:"12px 20px 20px",flexShrink:0,background:"#fff",
-            borderRadius:"0 0 28px 28px",boxShadow:"0 -4px 20px rgba(0,0,0,0.06)"}}>
+          <div style={{borderTop:`1.5px solid ${C.border}`,padding:"12px 20px 20px",
+            flexShrink:0,background:"#fff",borderRadius:"0 0 28px 28px",
+            boxShadow:"0 -4px 20px rgba(0,0,0,0.06)"}}>
             <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:11,
               color:C.muted,margin:"0 0 10px",textAlign:"center"}}>
               This will be permanently planted in your garden 🌱
             </p>
             <div style={{display:"flex",alignItems:"center",gap:14}}>
               <div style={{background:`${selected.color}18`,borderRadius:14,width:56,height:56,
-                flexShrink:0,display:"flex",alignItems:"flex-end",justifyContent:"center",
-                overflow:"hidden"}}>
+                flexShrink:0,display:"flex",alignItems:"flex-end",justifyContent:"center",overflow:"hidden"}}>
                 <svg viewBox="0 0 56 56" width={56} height={56} style={{overflow:"visible"}}>
                   <GardenItemSVG id={selected.id} cx={28} groundY={50} scale={0.36} w={56} h={56} idx={0}/>
                 </svg>
@@ -1027,7 +1194,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
               <button
                 onClick={handleBuy}
                 disabled={buying || availableSeeds < selected.cost}
-                style={{background: buying ? `${C.purple}88` : `linear-gradient(135deg,${C.purple},#9C6FFF)`,
+                style={{background:buying?`${C.purple}88`:`linear-gradient(135deg,${C.purple},#9C6FFF)`,
                   border:"none",borderRadius:14,padding:"12px 18px",cursor:"pointer",
                   display:"flex",alignItems:"center",gap:7,
                   boxShadow:`0 4px 16px ${C.purple}40`,transition:"all 0.15s",flexShrink:0}}>
@@ -1052,7 +1219,6 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
   );
 };
 
-/* ── Stage evolution ── */
 const StageEvolution = ({ currentScore, mascotId, stageId }) => {
   const topRow = STAGES.slice(0, 4);
   const botRow = STAGES.slice(4, 7);

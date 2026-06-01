@@ -11,13 +11,13 @@ const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
    7 GARDEN STAGES — seeds based
 ══════════════════════════════════════════════ */
 export const STAGES = [
-  { id:0, name:"Seedling",    minScore:0,   desc:"Your garden journey begins!",          color:"#A5D6A7", bg:"#E8F5E9",  accessory:"none"   },
-  { id:1, name:"Sprouting",   minScore:15,  desc:"Little shoots are appearing!",         color:"#4DB6AC", bg:"#E0F2F1",  accessory:"leaf"   },
-  { id:2, name:"Blooming",    minScore:35,  desc:"Your first flowers are blooming!",     color:"#7C4DFF", bg:"#EDE7F6",  accessory:"crown"  },
-  { id:3, name:"Flourishing", minScore:70,  desc:"Your garden is full of life!",         color:"#FF7043", bg:"#FFF3E0",  accessory:"double" },
-  { id:4, name:"Thriving",    minScore:120, desc:"A lush garden surrounds you!",         color:"#F9A825", bg:"#FFF9C4",  accessory:"glow"   },
-  { id:5, name:"Blossoming",  minScore:180, desc:"Magic fills your enchanted garden!",   color:"#EC407A", bg:"#FCE4EC",  accessory:"halo"   },
-  { id:6, name:"Full Bloom",  minScore:260, desc:"Your garden has reached its peak!",    color:"#FFD54F", bg:"#FFFDE7",  accessory:"legend" },
+  { id:0, name:"Seedling",    minScore:0,   desc:"Your journey begins! 10 garden items are ready to plant.", color:"#A5D6A7", bg:"#E8F5E9",  accessory:"none",   unlockCount:10 },
+  { id:1, name:"Sprouting",   minScore:15,  desc:"You're growing! 10 new garden items are now in the shop.", color:"#4DB6AC", bg:"#E0F2F1",  accessory:"leaf",   unlockCount:10 },
+  { id:2, name:"Blooming",    minScore:35,  desc:"Beautiful! 10 more items have bloomed in your shop.",      color:"#7C4DFF", bg:"#EDE7F6",  accessory:"crown",  unlockCount:10 },
+  { id:3, name:"Flourishing", minScore:70,  desc:"Wow! 10 exciting new items are waiting for you.",          color:"#FF7043", bg:"#FFF3E0",  accessory:"double", unlockCount:10 },
+  { id:4, name:"Thriving",    minScore:120, desc:"Amazing! 10 rare garden items have been unlocked.",        color:"#F9A825", bg:"#FFF9C4",  accessory:"glow",   unlockCount:10 },
+  { id:5, name:"Blossoming",  minScore:180, desc:"Magic! 10 enchanted items are now in your shop.",          color:"#EC407A", bg:"#FCE4EC",  accessory:"halo",   unlockCount:10 },
+  { id:6, name:"Full Bloom",  minScore:260, desc:"Legendary! 10 ultimate garden items have been unlocked!",  color:"#FFD54F", bg:"#FFFDE7",  accessory:"legend", unlockCount:10 },
 ];
 
 /* ── Seed calculator ── */
@@ -304,6 +304,32 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx }) => {
   const s = scale;
   const gY = groundY;
   const suf = `gi_${id}_${idx}`;
+
+  /* Variant IDs map to the closest base renderer */
+  const BASE_ID = {
+    g_cherry2:"g_cherry",  g_cherry3:"g_cherry",  g_cherry4:"g_cherry",  g_cherry5:"g_cherry",
+    g_rose2:"g_rose",      g_rose3:"g_rose",      g_rose4:"g_rose",      g_rose5:"g_rose",    g_rose6:"g_rose",
+    g_tulip2:"g_tulip",
+    g_daisy2:"g_daisy",    g_daisy3:"g_daisy",
+    g_bluebell2:"g_bluebell",
+    g_bamboo2:"g_bamboo",  g_bamboo3:"g_bamboo",
+    g_fern2:"g_fern",      g_fern3:"g_fern",
+    g_cactus2:"g_cactus",
+    g_mushroom2:"g_mushroom",g_mushroom3:"g_mushroom",g_mushroom4:"g_mushroom",g_mushroom5:"g_bamboo",
+    g_sunflower2:"g_sunflower",g_sunflower3:"g_sunflower",
+    g_ladybug2:"g_ladybug",g_ladybug3:"g_ladybug",
+    g_butterfly2:"g_butterfly",g_butterfly3:"g_butterfly",g_butterfly4:"g_butterfly",
+    g_butterfly5:"g_butterfly",g_butterfly6:"g_butterfly",
+    g_beehive2:"g_cherry",  g_beehive3:"g_beehive", // beehive2 = flower arch → cherry blossom shape
+    g_birdbath2:"g_birdbath",
+    g_gnome2:"g_ladybug",   g_gnome3:"g_gnome",    g_gnome4:"g_gnome",    g_gnome5:"g_gnome",
+    g_treehouse2:"g_treehouse",g_treehouse3:"g_treehouse",
+    g_windmill2:"g_windmill",  g_windmill3:"g_windmill",
+    g_fountain2:"g_fountain",  g_fountain3:"g_fountain",  g_fountain4:"g_fountain",
+    g_rainbow2:"g_rainbow",    g_rainbow3:"g_rainbow",    g_rainbow4:"g_rainbow",
+    g_fireflies2:"g_beehive",  g_fireflies3:"g_fireflies",
+  };
+  const resolvedId = BASE_ID[id] || id;
 
   const items = {
 
@@ -896,82 +922,41 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx }) => {
     },
   };
 
-  const renderer = items[id];
+  const renderer = items[resolvedId];
   if (!renderer) return null;
   return renderer();
 };
 
 /* ══════════════════════════════════════════════
    ANIMATED GARDEN SCENE — mascot composited inside
+   Backdrop is fixed — a single cheerful daytime garden.
+   What changes is only what the child has planted via the shop.
 ══════════════════════════════════════════════ */
 export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = false, mascotStageId = 0, gardenItems = [] }) => {
   const w = size;
-  const h = Math.round(size * 1.05); // taller — square-ish, feels immersive
+  const h = Math.round(size * 1.05);
+  // stageId kept for mascot accessory callers but NOT used for backdrop
   const stageId = typeof stage === "object" ? stage.id : stage;
 
-  const skies = [
-    ["#B9F0C2","#DCF5E0"],
-    ["#A0E8F0","#D0F5F9"],
-    ["#C4B0F5","#E8E0FF"],
-    ["#FFD4A8","#FFE8CC"],
-    ["#FFED9A","#FFFACC"],
-    ["#FFB0D0","#FFD6E8"],
-    ["#FFE066","#FFF5B0"],
-  ];
-  const [skyTop, skyBot] = skies[stageId] || skies[0];
+  /* ── Fixed backdrop colours ── */
+  const skyTop  = dark ? "#0d1a2e" : "#B9F0C2";
+  const skyBot  = dark ? "#1a2e40" : "#DCF5E0";
+  const grass   = ["#43A047","#66BB6A","#81C784","#A5D6A7"];
 
-  const grassColors = [
-    ["#43A047","#66BB6A","#81C784","#A5D6A7"],
-    ["#388E3C","#43A047","#66BB6A","#81C784"],
-    ["#2E7D32","#388E3C","#43A047","#66BB6A"],
-    ["#33691E","#558B2F","#689F38","#8BC34A"],
-    ["#1B5E20","#2E7D32","#388E3C","#43A047"],
-    ["#1B5E20","#2E7D32","#388E3C","#43A047"],
-    ["#1B5E20","#2E7D32","#43A047","#66BB6A"],
-  ][stageId] || ["#43A047","#66BB6A","#81C784","#A5D6A7"];
-
-  const flowerData = [
-    { colors:[], count:0 },
-    { colors:["#A5D6A7","#C8E6C9"], count:4 },
-    { colors:["#CE93D8","#81D4FA","#B39DDB","#E1BEE7"], count:7 },
-    { colors:["#FF8A65","#FFD54F","#CE93D8","#81C784","#FFAB91"], count:10 },
-    { colors:["#FF7043","#FFD54F","#CE93D8","#81C784","#F48FB1","#FF8A65"], count:13 },
-    { colors:["#F48FB1","#CE93D8","#FFD54F","#81D4FA","#FF7043","#A5D6A7","#F8BBD0"], count:16 },
-    { colors:["#FFD54F","#F48FB1","#CE93D8","#FF7043","#81D4FA","#A5D6A7","#FFE082","#CE93D8"], count:20 },
-  ][stageId] || { colors:[], count:0 };
-
-  // Ground horizon Y — lower in scene to leave sky room
   const groundY = h * 0.62;
 
-  // Flowers: avoid centre zone (where mascot stands) for showMascot mode
-  const allPositions = Array.from({length: flowerData.count}, (_,i) => {
-    const raw = 0.03 + (i / Math.max(flowerData.count-1,1)) * 0.94;
-    // skip centre for mascot
-    if (showMascot && raw > 0.35 && raw < 0.65) {
-      return raw < 0.5 ? raw - 0.14 : raw + 0.14;
-    }
-    return raw;
-  }).map((x,i) => ({
-    x,
-    groundOffset: (Math.sin(x * Math.PI * 2.3 + i) * 0.04),
-    size: 7 + (i % 5) * 2.2,
-    sway: i % 2 === 0 ? "gSwayL" : "gSwayR",
-    delay: `${(i * 0.22 % 2).toFixed(2)}s`,
-    color: flowerData.colors[i % flowerData.colors.length],
-  }));
-
-  // Grass blades — dense, full width
+  /* Grass blades — fixed density, fixed colour */
   const blades = Array.from({length:28}, (_,i) => ({
     x: (i/27) * w,
     stemH: h*(0.12 + (i%5)*0.04),
     width: 3 + (i%3)*1.5,
     sway: i%2===0 ? "gSwayL" : "gSwayR",
     delay: `${(i*0.14%2.5).toFixed(2)}s`,
-    color: grassColors[i%grassColors.length],
+    color: grass[i%grass.length],
     opacity: 0.55 + (i%4)*0.1,
   }));
 
-  // Mascot body SVG for the specific animal (simplified upright figure at ground)
+  /* Mascot body colours — unchanged */
   const mascotColors = {
     fox:   {body:"#FF8A65",belly:"#FFCCBC",ear:"#FF7043",eye:"#1a1a2e"},
     bunny: {body:"#FCE4EC",belly:"#F8BBD0",ear:"#F8BBD0",eye:"#1a1a2e"},
@@ -981,13 +966,12 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
     dog:   {body:"#FFB74D",belly:"#FFCC80",ear:"#FFA726",eye:"#1a1a2e"},
   };
   const mc = mascotColors[mascotId] || mascotColors.fox;
-  const mw = w * 0.22; // mascot width
-  const mh = mw * 1.5; // mascot height
-  const mx = w/2 - mw/2; // centre x
+  const mw = w * 0.22;
+  const mh = mw * 1.5;
   const mGroundY = groundY - h*0.01;
-  const myBase = mGroundY - mh; // mascot top y
+  const myBase   = mGroundY - mh;
 
-  const animId = `gs${stageId}${showMascot?'m':''}`;
+  const animId = `gs_fixed${showMascot?'m':''}`;
 
   return (
     <div style={{position:"relative",width:"100%",height:h,display:"block",overflow:"hidden"}}>
@@ -1000,27 +984,20 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
         @keyframes gBounce{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-12px) rotate(1deg)}}
         @keyframes gSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
       `}</style>
-      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h}
-        style={{display:"block"}}>
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} style={{display:"block"}}>
         <defs>
           <linearGradient id={`sky_${animId}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={dark?"#0d1a2e":skyTop}/>
-            <stop offset="100%" stopColor={dark?"#1a2e40":skyBot}/>
+            <stop offset="0%" stopColor={skyTop}/>
+            <stop offset="100%" stopColor={skyBot}/>
           </linearGradient>
           <linearGradient id={`gnd_${animId}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={grassColors[1]}/>
-            <stop offset="100%" stopColor={grassColors[0]}/>
+            <stop offset="0%" stopColor={grass[1]}/>
+            <stop offset="100%" stopColor={grass[0]}/>
           </linearGradient>
           <radialGradient id={`sun_${animId}`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#FFFDE7" stopOpacity="0.9"/>
             <stop offset="100%" stopColor="#FFD54F" stopOpacity="0"/>
           </radialGradient>
-          {stageId >= 4 && (
-            <radialGradient id={`mglow_${animId}`} cx="50%" cy="65%" r="55%">
-              <stop offset="0%" stopColor={stageId>=5?"#F48FB1":"#FFD54F"} stopOpacity="0.28"/>
-              <stop offset="100%" stopColor="transparent" stopOpacity="0"/>
-            </radialGradient>
-          )}
           <clipPath id={`clip_${animId}`}>
             <rect width={w} height={h}/>
           </clipPath>
@@ -1028,77 +1005,45 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
 
         <g clipPath={`url(#clip_${animId})`}>
 
-        {/* Sky */}
+        {/* Sky — always the same fresh daytime blue-green */}
         <rect width={w} height={h} fill={`url(#sky_${animId})`}/>
-        {stageId>=4 && <rect width={w} height={h} fill={`url(#mglow_${animId})`}/>}
 
-        {/* Sun */}
-        {stageId<=4 && <>
-          <circle cx={w*0.84} cy={h*0.13} r={w*0.072} fill="#FFD54F" opacity="0.95">
-            <animate attributeName="r" values={`${w*0.068};${w*0.082};${w*0.068}`} dur="4s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx={w*0.84} cy={h*0.13} r={w*0.115} fill={`url(#sun_${animId})`}/>
-          {[0,45,90,135,180,225,270,315].map((a,i)=>{
-            const r=a*Math.PI/180;
-            return <line key={i}
-              x1={w*0.84+Math.cos(r)*w*0.092} y1={h*0.13+Math.sin(r)*w*0.092}
-              x2={w*0.84+Math.cos(r)*w*0.13}  y2={h*0.13+Math.sin(r)*w*0.13}
-              stroke="#FFD54F" strokeWidth="2.5" opacity="0.55" strokeLinecap="round"/>;
-          })}
-        </>}
+        {/* Sun — always present, gently pulsing */}
+        <circle cx={w*0.84} cy={h*0.13} r={w*0.072} fill="#FFD54F" opacity="0.95">
+          <animate attributeName="r" values={`${w*0.068};${w*0.082};${w*0.068}`} dur="4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx={w*0.84} cy={h*0.13} r={w*0.115} fill={`url(#sun_${animId})`}/>
+        {[0,45,90,135,180,225,270,315].map((a,i)=>{
+          const r=a*Math.PI/180;
+          return <line key={i}
+            x1={w*0.84+Math.cos(r)*w*0.092} y1={h*0.13+Math.sin(r)*w*0.092}
+            x2={w*0.84+Math.cos(r)*w*0.13}  y2={h*0.13+Math.sin(r)*w*0.13}
+            stroke="#FFD54F" strokeWidth="2.5" opacity="0.55" strokeLinecap="round"/>;
+        })}
 
-        {/* Moon for dark stages */}
-        {stageId>=5 && <>
-          <circle cx={w*0.82} cy={h*0.12} r={w*0.07} fill="#FFFDE7" opacity="0.9"/>
-          <circle cx={w*0.87} cy={h*0.1}  r={w*0.055} fill={skyTop} />
-          {[{x:0.65,y:0.07},{x:0.72,y:0.19},{x:0.9,y:0.17}].map((s,i)=>(
-            <circle key={i} cx={w*s.x} cy={h*s.y} r="2.5" fill="#FFF9C4">
-              <animate attributeName="opacity" values="0.2;1;0.2" dur={`${1.5+i*0.6}s`} repeatCount="indefinite"/>
-            </circle>
-          ))}
-        </>}
-
-        {/* Stars */}
-        {stageId>=5 && [
-          {x:0.08,y:0.06,d:"0s"},{x:0.25,y:0.03,d:"0.5s"},{x:0.45,y:0.09,d:"1s"},
-          {x:0.6,y:0.04,d:"0.3s"},{x:0.35,y:0.16,d:"0.8s"},{x:0.15,y:0.2,d:"1.3s"},
-        ].map((s,i)=>(
-          <circle key={i} cx={w*s.x} cy={h*s.y} r="2.8" fill="#FFE082">
-            <animate attributeName="opacity" values="0.1;0.9;0.1" dur="2.2s" begin={s.d} repeatCount="indefinite"/>
-          </circle>
-        ))}
-
-        {/* Rainbow — stage 6 */}
-        {stageId===6 && ["#FF7043","#FFD54F","#66BB6A","#4FC3F7","#CE93D8"].map((c,i)=>(
-          <path key={i}
-            d={`M${w*0.02},${h*0.55} Q${w*0.5},${h*(0.05-i*0.04)} ${w*0.98},${h*0.55}`}
-            fill="none" stroke={c} strokeWidth="6" opacity={0.45-i*0.05} strokeLinecap="round"/>
-        ))}
-
-        {/* Clouds */}
-        {stageId>=1 && [{x:0.04,y:0.14,s:0.9,dur:"20s"},{x:0.52,y:0.08,s:1.1,dur:"28s"}].map((cl,i)=>(
+        {/* Two drifting clouds */}
+        {[{x:0.04,y:0.14,s:0.9,dur:"20s"},{x:0.52,y:0.08,s:1.1,dur:"28s"}].map((cl,i)=>(
           <g key={i} style={{animation:`gCloud ${cl.dur} ease-in-out infinite alternate`}}>
             <g transform={`translate(${w*cl.x},${h*cl.y}) scale(${cl.s})`}>
-              <ellipse cx="32" cy="0" rx="32" ry="15" fill="white" opacity={dark?0.12:0.8}/>
-              <ellipse cx="14" cy="6"  rx="22" ry="13" fill="white" opacity={dark?0.1:0.7}/>
-              <ellipse cx="54" cy="7"  rx="24" ry="12" fill="white" opacity={dark?0.1:0.7}/>
+              <ellipse cx="32" cy="0" rx="32" ry="15" fill="white" opacity="0.82"/>
+              <ellipse cx="14" cy="6"  rx="22" ry="13" fill="white" opacity="0.72"/>
+              <ellipse cx="54" cy="7"  rx="24" ry="12" fill="white" opacity="0.72"/>
             </g>
           </g>
         ))}
 
-        {/* Ground — gently rolling hill fills bottom 38% */}
+        {/* Ground — gently rolling hill */}
         <path d={`M0,${groundY+h*0.02}
           C${w*0.15},${groundY-h*0.05} ${w*0.3},${groundY+h*0.02} ${w*0.5},${groundY-h*0.02}
           C${w*0.7},${groundY-h*0.06} ${w*0.85},${groundY+h*0.03} ${w},${groundY}
           L${w},${h} L0,${h} Z`}
           fill={`url(#gnd_${animId})`}/>
-        {/* Highlight edge */}
         <path d={`M0,${groundY+h*0.02}
           C${w*0.15},${groundY-h*0.05} ${w*0.3},${groundY+h*0.02} ${w*0.5},${groundY-h*0.02}
           C${w*0.7},${groundY-h*0.06} ${w*0.85},${groundY+h*0.03} ${w},${groundY}`}
           fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/>
 
-        {/* Back grass blades — behind flowers */}
+        {/* Grass blades */}
         {blades.map((b,i)=>(
           <g key={i} style={{animation:`${b.sway} ${2.2+i*0.12}s ease-in-out infinite`,
             animationDelay:b.delay, transformOrigin:`${b.x}px ${groundY}px`}}>
@@ -1111,70 +1056,13 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
           </g>
         ))}
 
-        {/* Dirt patch — seedling only */}
-        {stageId===0 && <>
-          <ellipse cx={w*0.5} cy={groundY+h*0.02} rx={w*0.2} ry={h*0.05}
-            fill="#8D6E63" opacity="0.85"/>
-          <ellipse cx={w*0.5} cy={groundY} rx={w*0.13} ry={h*0.03}
-            fill="#A1887F" opacity="0.5"/>
-        </>}
-
-        {/* Single sprout — seedling */}
-        {stageId===0 && (
-          <g style={{animation:"gSwayL 3.5s ease-in-out infinite",
-            transformOrigin:`${w*0.5}px ${groundY}px`}}>
-            <line x1={w*0.5} y1={groundY} x2={w*0.5} y2={groundY-h*0.22}
-              stroke="#43A047" strokeWidth="5" strokeLinecap="round"/>
-            <ellipse cx={w*0.43} cy={groundY-h*0.13} rx={w*0.065} ry={h*0.04}
-              fill="#66BB6A" transform={`rotate(-38 ${w*0.43} ${groundY-h*0.13})`}/>
-            <ellipse cx={w*0.57} cy={groundY-h*0.16} rx={w*0.065} ry={h*0.04}
-              fill="#81C784" transform={`rotate(38 ${w*0.57} ${groundY-h*0.16})`}/>
-            <ellipse cx={w*0.5} cy={groundY-h*0.22} rx={w*0.04} ry={h*0.03} fill="#A5D6A7"/>
-          </g>
-        )}
-
-        {/* Flowers — both sides of mascot */}
-        {allPositions.map((p,i)=>{
-          const fx = w * p.x;
-          const gy = groundY + p.groundOffset*h;
-          const stemH = p.size * 5;
-          const fy = gy - stemH;
-          return (
-            <g key={i} style={{animation:`${p.sway} ${2+i*0.18}s ease-in-out infinite`,
-              animationDelay:p.delay, transformOrigin:`${fx}px ${gy}px`}}>
-              <path d={`M${fx},${gy} C${fx-2},${gy-stemH*0.4} ${fx+3},${gy-stemH*0.7} ${fx},${fy}`}
-                stroke="#43A047" strokeWidth="2.8" fill="none" strokeLinecap="round"/>
-              <ellipse cx={fx-p.size*0.9} cy={gy-stemH*0.42}
-                rx={p.size} ry={p.size*0.38} fill="#66BB6A" opacity="0.88"
-                transform={`rotate(-32 ${fx-p.size*0.9} ${gy-stemH*0.42})`}/>
-              {i%2===0 && <ellipse cx={fx+p.size*0.9} cy={gy-stemH*0.6}
-                rx={p.size*0.85} ry={p.size*0.33} fill="#81C784" opacity="0.82"
-                transform={`rotate(32 ${fx+p.size*0.9} ${gy-stemH*0.6})`}/>}
-              {[0,51.4,102.8,154.2,205.6,257,308.4].map((ang,pi)=>{
-                const rad=ang*Math.PI/180;
-                return <ellipse key={pi}
-                  cx={fx+Math.cos(rad)*p.size*1.08} cy={fy+Math.sin(rad)*p.size*1.08}
-                  rx={p.size*0.68} ry={p.size*0.44}
-                  fill={p.color} opacity="0.95"
-                  transform={`rotate(${ang} ${fx+Math.cos(rad)*p.size*1.08} ${fy+Math.sin(rad)*p.size*1.08})`}/>;
-              })}
-              <circle cx={fx} cy={fy} r={p.size*0.45} fill="#FFD54F"/>
-              <circle cx={fx} cy={fy} r={p.size*0.22} fill="#F9A825"/>
-            </g>
-          );
-        })}
-
         {/* Mascot composited at ground level */}
         {showMascot && mascotId && (
           <g style={{animation:"gBounce 3.2s ease-in-out infinite"}}>
-            {/* Shadow */}
             <ellipse cx={w/2} cy={mGroundY+h*0.008} rx={mw*0.42} ry={h*0.018}
               fill="rgba(0,0,0,0.12)"/>
-            {/* Body */}
             <ellipse cx={w/2} cy={myBase+mh*0.65} rx={mw*0.38} ry={mh*0.32} fill={mc.body}/>
-            {/* Belly */}
             <ellipse cx={w/2} cy={myBase+mh*0.68} rx={mw*0.22} ry={mh*0.22} fill={mc.belly}/>
-            {/* Ears / head features */}
             {mascotId==="fox"&&<>
               <polygon points={`${w/2-mw*0.22},${myBase+mh*0.18} ${w/2-mw*0.32},${myBase} ${w/2-mw*0.1},${myBase+0.15*mh}`} fill={mc.ear}/>
               <polygon points={`${w/2+mw*0.22},${myBase+mh*0.18} ${w/2+mw*0.32},${myBase} ${w/2+mw*0.1},${myBase+0.15*mh}`} fill={mc.ear}/>
@@ -1195,86 +1083,58 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
               <ellipse cx={w/2-mw*0.2} cy={myBase+mh*0.1} rx={mw*0.1} ry={mw*0.14} fill={mc.ear}/>
               <ellipse cx={w/2+mw*0.2} cy={myBase+mh*0.1} rx={mw*0.1} ry={mw*0.14} fill={mc.ear}/>
             </>}
-            {/* Head */}
             <ellipse cx={w/2} cy={myBase+mh*0.26} rx={mw*0.3} ry={mh*0.24} fill={mc.body}/>
-            {/* Eyes */}
             <circle cx={w/2-mw*0.1} cy={myBase+mh*0.24} r={mw*0.065} fill="white"/>
             <circle cx={w/2+mw*0.1} cy={myBase+mh*0.24} r={mw*0.065} fill="white"/>
             <circle cx={w/2-mw*0.09} cy={myBase+mh*0.25} r={mw*0.034} fill={mc.eye}/>
             <circle cx={w/2+mw*0.11} cy={myBase+mh*0.25} r={mw*0.034} fill={mc.eye}/>
-            {/* Shine dots */}
             <circle cx={w/2-mw*0.075} cy={myBase+mh*0.23} r={mw*0.014} fill="white"/>
             <circle cx={w/2+mw*0.125} cy={myBase+mh*0.23} r={mw*0.014} fill="white"/>
-            {/* Smile */}
             <path d={`M${w/2-mw*0.1},${myBase+mh*0.32} Q${w/2},${myBase+mh*0.38} ${w/2+mw*0.1},${myBase+mh*0.32}`}
               fill="none" stroke={mc.eye} strokeWidth="2.5" strokeLinecap="round"/>
-            {/* Arms */}
             <ellipse cx={w/2-mw*0.42} cy={myBase+mh*0.58} rx={mw*0.1} ry={mh*0.16}
               fill={mc.body} transform={`rotate(-22 ${w/2-mw*0.42} ${myBase+mh*0.58})`}/>
             <ellipse cx={w/2+mw*0.42} cy={myBase+mh*0.58} rx={mw*0.1} ry={mh*0.16}
               fill={mc.body} transform={`rotate(22 ${w/2+mw*0.42} ${myBase+mh*0.58})`}/>
-            {/* Legs */}
             <ellipse cx={w/2-mw*0.15} cy={mGroundY-h*0.02} rx={mw*0.12} ry={mh*0.1} fill={mc.body}/>
             <ellipse cx={w/2+mw*0.15} cy={mGroundY-h*0.02} rx={mw*0.12} ry={mh*0.1} fill={mc.body}/>
           </g>
         )}
 
-        {/* Butterflies — stage 3+ */}
-        {stageId>=3 && [
-          {x:0.15,y:0.42,c:"#F48FB1",d:"0s",dur:"4.5s"},
-          {x:0.82,y:0.38,c:"#CE93D8",d:"1.4s",dur:"5.5s"},
-          ...(stageId>=5?[{x:0.5,y:0.3,c:"#81D4FA",d:"0.7s",dur:"3.8s"}]:[]),
-        ].map((b,i)=>(
-          <g key={i} style={{animation:`gFloat ${b.dur} ease-in-out infinite`,animationDelay:b.d}}>
-            <g transform={`translate(${w*b.x},${h*b.y})`}>
-              <ellipse cx="-10" cy="-5" rx="12" ry="8" fill={b.c} opacity="0.92" transform="rotate(-22 -10 -5)"/>
-              <ellipse cx="10"  cy="-5" rx="12" ry="8" fill={b.c} opacity="0.92" transform="rotate(22 10 -5)"/>
-              <ellipse cx="-7"  cy="6"  rx="8"  ry="5" fill={b.c} opacity="0.72" transform="rotate(28 -7 6)"/>
-              <ellipse cx="7"   cy="6"  rx="8"  ry="5" fill={b.c} opacity="0.72" transform="rotate(-28 7 6)"/>
-              <ellipse cx="0" cy="0" rx="2.2" ry="9" fill="#5D4037" opacity="0.75"/>
-              <line x1="0" y1="-9" x2="-7" y2="-16" stroke="#5D4037" strokeWidth="1.2" opacity="0.7"/>
-              <line x1="0" y1="-9" x2="7"  y2="-16" stroke="#5D4037" strokeWidth="1.2" opacity="0.7"/>
-              <circle cx="-7" cy="-16" r="2" fill={b.c}/>
-              <circle cx="7"  cy="-16" r="2" fill={b.c}/>
-            </g>
-          </g>
-        ))}
-
-        {/* Fireflies — stage 5+ */}
-        {stageId>=5 && [
-          {x:0.1,y:0.5,d:"0s"},{x:0.9,y:0.45,d:"0.8s"},
-          {x:0.3,y:0.38,d:"1.5s"},{x:0.72,y:0.55,d:"0.4s"},
-          ...(stageId===6?[{x:0.5,y:0.32,d:"1.1s"},{x:0.2,y:0.58,d:"1.9s"}]:[]),
-        ].map((f,i)=>(
-          <circle key={i} cx={w*f.x} cy={h*f.y} r="4" fill="#FFE082">
-            <animate attributeName="opacity" values="0.1;1;0.1"
-              dur="2s" begin={f.d} repeatCount="indefinite"/>
-            <animate attributeName="r" values="2;5;2"
-              dur="2s" begin={f.d} repeatCount="indefinite"/>
-          </circle>
-        ))}
-
-        {/* ── Purchased garden items ── */}
+        {/* ── Purchased garden items — the only thing that changes ── */}
         {gardenItems.length > 0 && (() => {
-          // Deterministic positions: spread across ground, avoid centre mascot zone when showMascot
           const ITEM_POSITIONS = [
-            0.08, 0.18, 0.78, 0.88,  // far edges first
-            0.12, 0.82,               // near edges
-            0.24, 0.72,               // mid-outer
-            0.30, 0.68,               // mid
-            0.06, 0.92,               // extreme edges
-            0.20, 0.76,               // mid-outer 2
-            0.15, 0.85,               // varied
-            0.35, 0.65,               // inner (only used when no mascot or small items)
-            0.10, 0.90,               // extra
+            0.08, 0.18, 0.78, 0.88,
+            0.12, 0.82,
+            0.24, 0.72,
+            0.30, 0.68,
+            0.06, 0.92,
+            0.20, 0.76,
+            0.15, 0.85,
+            0.35, 0.65,
+            0.10, 0.90,
           ];
-          // Large items (cherry, treehouse, windmill, fountain) go to edges
           const sizeOrder = { xl:0, lg:1, md:2, sm:3 };
           const ITEM_SIZES = {
-            g_cherry:"xl", g_treehouse:"xl", g_windmill:"xl", g_fountain:"xl",
-            g_bamboo:"lg", g_sunflower:"lg", g_rainbow:"lg",
-            g_rose:"md", g_tulip:"md", g_cactus:"md", g_fern:"md", g_birdbath:"md", g_beehive:"md", g_gnome:"md",
-            g_daisy:"sm", g_bluebell:"sm", g_mushroom:"sm", g_ladybug:"sm", g_butterfly:"sm", g_fireflies:"sm",
+            g_cherry:"xl",g_cherry2:"xl",g_cherry3:"xl",g_cherry4:"xl",g_cherry5:"xl",
+            g_treehouse:"xl",g_treehouse2:"xl",g_treehouse3:"xl",
+            g_windmill:"xl",g_windmill2:"xl",g_windmill3:"xl",
+            g_fountain:"xl",g_fountain2:"xl",g_fountain3:"xl",g_fountain4:"xl",
+            g_fern3:"xl",g_bamboo3:"xl",g_rainbow2:"xl",g_rainbow3:"xl",g_rainbow4:"xl",
+            g_gnome5:"xl",g_mushroom5:"xl",g_butterfly6:"xl",g_rose6:"xl",
+            g_bamboo:"lg",g_bamboo2:"lg",g_sunflower:"lg",g_sunflower2:"lg",g_sunflower3:"lg",
+            g_rainbow:"lg",g_rose3:"lg",g_rose4:"lg",g_rose5:"lg",
+            g_beehive2:"lg",g_mushroom3:"lg",g_fireflies2:"lg",g_butterfly4:"lg",g_gnome2:"lg",
+            g_rose:"md",g_tulip:"md",g_tulip2:"md",g_cactus:"md",g_cactus2:"md",
+            g_fern:"md",g_fern2:"md",g_birdbath:"md",g_birdbath2:"md",
+            g_beehive:"md",g_gnome:"md",g_gnome3:"md",g_gnome4:"md",
+            g_mushroom4:"md",g_butterfly5:"md",g_beehive3:"sm",
+            g_daisy:"sm",g_daisy2:"sm",g_daisy3:"sm",
+            g_bluebell:"sm",g_bluebell2:"sm",
+            g_mushroom:"sm",g_mushroom2:"sm",
+            g_ladybug:"sm",g_ladybug2:"sm",g_ladybug3:"sm",
+            g_butterfly:"sm",g_butterfly2:"sm",g_butterfly3:"sm",
+            g_fireflies:"sm",g_fireflies3:"lg",
           };
           const ITEM_SCALES = { xl:1.0, lg:0.85, md:0.72, sm:0.62 };
 
@@ -1285,7 +1145,6 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
           return sorted.map((id, i) => {
             const posIdx = i % ITEM_POSITIONS.length;
             let xFrac = ITEM_POSITIONS[posIdx];
-            // Push inward items away from mascot centre when showMascot
             if (showMascot && xFrac > 0.38 && xFrac < 0.62) {
               xFrac = xFrac < 0.5 ? xFrac - 0.1 : xFrac + 0.1;
             }
@@ -1299,7 +1158,7 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
           });
         })()}
 
-        {/* Front grass fringe — over everything */}
+        {/* Front grass fringe — always on top */}
         {Array.from({length:16},(_,i)=>({x:(i/15)*w, bh:h*0.08+Math.sin(i*1.3)*h*0.05})).map((b,i)=>(
           <g key={i} style={{animation:`${i%2===0?"gSwayL":"gSwayR"} ${1.8+i*0.1}s ease-in-out infinite`,
             animationDelay:`${(i*0.13%2).toFixed(2)}s`, transformOrigin:`${b.x}px ${groundY+h*0.12}px`}}>
@@ -1307,7 +1166,7 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
               C${b.x-4},${groundY+h*0.14-b.bh*0.55}
                ${b.x+3},${groundY+h*0.14-b.bh*0.82}
                ${b.x+3},${groundY+h*0.14-b.bh}`}
-              stroke={grassColors[0]} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85"/>
+              stroke={grass[0]} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85"/>
           </g>
         ))}
 
@@ -1420,7 +1279,7 @@ export const GrowthProgressBar = ({ score, onPress }) => {
             {stage.name}
           </p>
           <p style={{fontFamily:F.b,fontWeight:500,fontSize:12,color:"#9B8DB5",margin:0}}>
-            {next?`${next.minScore-score} seeds to ${next.name}`:"Maximum stage reached!"}
+            {next?`${next.minScore-score} seeds to unlock ${next.name} items`:"All garden items unlocked!"}
           </p>
         </div>
         <div style={{background:stage.bg,borderRadius:50,padding:"4px 12px",
@@ -1499,16 +1358,20 @@ export const GrowthCelebration = ({ mascotId, newStage, childName, onDismiss }) 
           marginBottom:20,textAlign:"left"}}>
           <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:12,
             color:stage.color,letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>
-            Your garden
+            🛒 Garden Shop Unlocked
           </p>
           <p style={{fontFamily:"'Poppins',sans-serif",fontSize:14,fontWeight:500,
-            color:"#2D2040",margin:0}}>
-            {newStage===1&&"Tiny green shoots are sprouting in your garden!"}
-            {newStage===2&&"Colourful flowers are blooming all around you!"}
-            {newStage===3&&"Your garden is bursting with life and butterflies!"}
-            {newStage===4&&"Glowing flowers fill your lush garden!"}
-            {newStage===5&&"Magic fireflies dance in your enchanted garden!"}
-            {newStage===6&&"Stars rain down on your Full Bloom garden!"}
+            color:"#2D2040",margin:"0 0 6px",lineHeight:1.5}}>
+            <strong>10 new garden items</strong> are now available in the shop!
+          </p>
+          <p style={{fontFamily:"'Poppins',sans-serif",fontSize:13,fontWeight:500,
+            color:"#9B8DB5",margin:0,lineHeight:1.5}}>
+            {newStage===1&&"Flowers, plants and critters to start building your garden!"}
+            {newStage===2&&"Colourful blooms and fun decorations have arrived!"}
+            {newStage===3&&"Trees, magical creatures and special items to explore!"}
+            {newStage===4&&"Rare plants and enchanted decorations are waiting for you!"}
+            {newStage===5&&"Legendary items and magical centrepieces are now available!"}
+            {newStage===6&&"The ultimate garden items are yours to collect!"}
           </p>
         </div>
         <button onClick={onDismiss} style={{
