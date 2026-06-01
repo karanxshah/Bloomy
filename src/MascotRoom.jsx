@@ -553,44 +553,52 @@ const GARDEN_ITEMS = [
 
 /* ══════════════════════════════════════════════
    WATERING CAN OVERLAY
-   Single SVG fills the hero. Can drawn in local coords,
-   positioned and animated with SVG animateTransform so
-   translation and geometry are always in sync.
-   The can matches the round-body style in the reference image.
-   Duration: 3.2s — slides in, pours, slides out.
+   ViewBox matches GardenScene exactly (500 × 525).
+   Everything — can body, spout, nozzle, jets, splash —
+   is drawn in scene coordinates inside ONE <g> that
+   slides in/out with animateTransform type="translate".
+   No nested transforms. No CSS animation on SVG.
 ══════════════════════════════════════════════ */
 const WateringOverlay = ({ active }) => {
   if (!active) return null;
 
   /*
-    COORDINATE PLAN  (viewBox 0 0 400 300)
-    ─────────────────────────────────────
-    Can resting position:  centre of body at (300, 105)
-    The can is already tilted ~30° (pouring pose).
-    Nozzle tip in scene coords:  approx (168, 188)
-    Water jets fan from (168,188) downward-left.
-    Splash zone centre: (120, 258) — on the garden ground band (~62% of 300 = 186... 
-      but the hero div is taller than the SVG; we put ground at y=258 which looks right
-      for the lower third of a 300-tall scene).
+    SCENE LAYOUT  (viewBox 0 0 500 525, matching GardenScene size=500)
+    Ground is at ~y=325 (62% of 525).
+
+    Can placed in upper-right, already tilted in pouring pose:
+      Body centre: (370, 160)
+      Can is rotated -30° around body centre in the <g transform>.
+      After rotation, nozzle tip lands at approx scene (210, 265).
+
+    Jets radiate from nozzle tip (210, 265) downward-left.
+    Splash puddle at (175, 320) — just above ground line.
+
+    Slide animation: translate X from +600 → 0 → +600 (slides in from right).
   */
 
-  // 12 water jets — lines radiating from nozzle tip, fanning downward-left
-  // Each jet is a line from nozzleX,nozzleY to an endpoint
-  const NX = 168; const NY = 188; // nozzle tip in scene coords
-  const JETS = [
-    // angle in degrees from nozzle (roughly 200°–260° = down-left fan)
-    { ex:-62, ey:55,  delay:"0.62s", dur:"0.18s" },
-    { ex:-52, ey:62,  delay:"0.64s", dur:"0.18s" },
-    { ex:-42, ey:68,  delay:"0.66s", dur:"0.18s" },
-    { ex:-30, ey:72,  delay:"0.68s", dur:"0.17s" },
-    { ex:-18, ey:74,  delay:"0.70s", dur:"0.17s" },
-    { ex:-5,  ey:73,  delay:"0.72s", dur:"0.17s" },
-    { ex:-72, ey:46,  delay:"0.63s", dur:"0.19s" },
-    { ex:-80, ey:34,  delay:"0.61s", dur:"0.19s" },
-    { ex:-88, ey:20,  delay:"0.59s", dur:"0.20s" },
-    { ex:-58, ey:58,  delay:"0.65s", dur:"0.18s" },
-    { ex:-25, ey:70,  delay:"0.69s", dur:"0.17s" },
-    { ex:-10, ey:72,  delay:"0.71s", dur:"0.17s" },
+  // Nozzle tip scene position (after can rotation maths)
+  const NX = 212, NY = 268;
+  // Ground splash centre
+  const SX = 178, SY = 322;
+
+  // 14 water jets fanning out from nozzle, matching reference image spray arc
+  // Jets go down-left in a fan from about 190°–260° (measured from rightward = 0°)
+  const jets = [
+    { dx:-110, dy: 60 },
+    { dx:-95,  dy: 75 },
+    { dx:-80,  dy: 88 },
+    { dx:-64,  dy: 98 },
+    { dx:-48,  dy:106 },
+    { dx:-30,  dy:110 },
+    { dx:-14,  dy:112 },
+    { dx:-125, dy: 44 },
+    { dx:-138, dy: 28 },
+    { dx:-148, dy: 10 },
+    { dx:-72,  dy: 96 },
+    { dx:-55,  dy:104 },
+    { dx:-20,  dy:110 },
+    { dx:-38,  dy:108 },
   ];
 
   return (
@@ -599,189 +607,167 @@ const WateringOverlay = ({ active }) => {
       pointerEvents:"none", overflow:"hidden",
     }}>
       <svg
-        viewBox="0 0 400 300"
+        viewBox="0 0 500 525"
         width="100%" height="100%"
-        preserveAspectRatio="xMidYMid slice"
-        style={{position:"absolute",inset:0,display:"block"}}
+        preserveAspectRatio="xMidYMid meet"
+        style={{position:"absolute", inset:0, display:"block"}}
       >
         <defs>
-          <linearGradient id="wBody" x1="0" y1="0" x2="0.3" y2="1">
-            <stop offset="0%" stopColor="#80DEEA"/>
-            <stop offset="60%" stopColor="#4DD0E1"/>
-            <stop offset="100%" stopColor="#26C6DA"/>
+          <linearGradient id="wCan" x1="0" y1="0" x2="0.2" y2="1">
+            <stop offset="0%"  stopColor="#80DEEA"/>
+            <stop offset="50%" stopColor="#4DD0E1"/>
+            <stop offset="100%" stopColor="#00BCD4"/>
           </linearGradient>
-          <linearGradient id="wBodySide" x1="1" y1="0" x2="0" y2="0">
-            <stop offset="0%" stopColor="#0097A7"/>
-            <stop offset="100%" stopColor="#26C6DA"/>
+          <linearGradient id="wCanDark" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#00ACC1"/>
+            <stop offset="100%" stopColor="#006064"/>
           </linearGradient>
-          <clipPath id="wSceneClip"><rect width="400" height="300"/></clipPath>
+          <clipPath id="wOvClip"><rect width="500" height="525"/></clipPath>
         </defs>
 
-        <g clipPath="url(#wSceneClip)">
+        <g clipPath="url(#wOvClip)">
 
-          {/* ── Water jets (drawn first so they appear behind nozzle rim) ── */}
-          <g opacity="0">
-            {/* Group fades in when pouring starts, fades out at end */}
-            <animate attributeName="opacity"
-              values="0;0;1;1;1;0"
-              keyTimes="0;0.22;0.30;0.68;0.78;1"
-              dur="3.2s" repeatCount="1" fill="freeze"/>
-
-            {JETS.map((j, i) => (
-              <line key={i}
-                x1={NX} y1={NY}
-                x2={NX + j.ex} y2={NY + j.ey}
-                stroke="#81D4FA" strokeWidth={i < 3 ? 2.2 : i < 7 ? 1.8 : 1.4}
-                strokeLinecap="round" opacity="0">
-                <animate attributeName="opacity"
-                  values="0;0.9;0.9;0"
-                  keyTimes="0;0.15;0.85;1"
-                  dur={j.dur} begin={j.delay}
-                  repeatCount="indefinite"/>
-                {/* Animate stroke-dashoffset for a "growing" jet effect */}
-                <animate attributeName="stroke-dasharray"
-                  values={`0 ${Math.hypot(j.ex,j.ey)};${Math.hypot(j.ex,j.ey)} 0`}
-                  keyTimes="0;1"
-                  dur={j.dur} begin={j.delay}
-                  repeatCount="indefinite"/>
-              </line>
-            ))}
-          </g>
-
-          {/* ── Ground splash / puddle ── */}
-          <ellipse cx="128" cy="258" rx="0" ry="0" fill="#B2EBF2" opacity="0">
-            <animate attributeName="opacity"
-              values="0;0;0.5;0.5;0.3;0"
-              keyTimes="0;0.28;0.36;0.7;0.82;1"
-              dur="3.2s" repeatCount="1" fill="freeze"/>
-            <animate attributeName="rx"
-              values="0;0;34;34;34;34"
-              keyTimes="0;0.28;0.36;0.7;0.82;1"
-              dur="3.2s" repeatCount="1" fill="freeze"/>
-            <animate attributeName="ry"
-              values="0;0;7;7;7;7"
-              keyTimes="0;0.28;0.36;0.7;0.82;1"
-              dur="3.2s" repeatCount="1" fill="freeze"/>
-          </ellipse>
-
-          {/* Splash ring */}
-          <ellipse cx="128" cy="258" rx="0" ry="0"
-            fill="none" stroke="#4FC3F7" strokeWidth="1.8" opacity="0">
-            <animate attributeName="opacity" values="0;0;0.8;0" keyTimes="0;0.3;0.42;0.55" dur="3.2s" fill="freeze"/>
-            <animate attributeName="rx"    values="0;0;6;22"    keyTimes="0;0.3;0.34;0.55" dur="3.2s" fill="freeze"/>
-            <animate attributeName="ry"    values="0;0;3;8"     keyTimes="0;0.3;0.34;0.55" dur="3.2s" fill="freeze"/>
-          </ellipse>
-
-          {/* ── WATERING CAN — slides in from right using animateTransform ──
-              The can is drawn in LOCAL coords where the body centre = (0,0).
-              A <g transform="translate(300,105) rotate(-32,0,0)"> positions it
-              in scene space, already in the pouring tilt.
-              An <animateTransform> on the outer group slides it in/out.
-          ── */}
-
-          {/* Outer group: handles the slide-in translate */}
+          {/* ── Everything slides in from right together ── */}
           <g>
             <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="430,0; 0,0; 0,0; 430,0"
-              keyTimes="0;0.18;0.80;1"
-              dur="3.2s"
-              calcMode="spline"
-              keySplines="0.4 0 0.2 1; 0 0 1 1; 0.4 0 0.2 1"
+              attributeName="transform" type="translate"
+              values="600,0; 0,0; 0,0; 600,0"
+              keyTimes="0; 0.20; 0.78; 1"
+              dur="3.0s" calcMode="spline"
+              keySplines="0.25 0.1 0.25 1; 0 0 1 1; 0.25 0.1 0.25 1"
               repeatCount="1" fill="freeze"/>
 
-            {/* Inner group: positions can in scene + applies tilt */}
-            {/* Body centre at scene (300,105), tilted -32° so spout aims lower-left */}
-            <g transform="translate(300,105) rotate(-32)">
+            {/* ════ WATER JETS ════
+                Drawn BEFORE the can so they appear behind the nozzle.
+                All originate from (NX, NY). Fan angle matches reference image.
+            */}
+            <g>
+              {/* Jets fade in 0.55s into animation, stay until 0.78 mark, then fade */}
+              <animate attributeName="opacity"
+                values="0;0;1;1;0"
+                keyTimes="0;0.55;0.62;0.78;0.85"
+                dur="3.0s" repeatCount="1" fill="freeze"/>
 
-              {/*
-                CAN in LOCAL coords (body centre = 0,0):
-                Matching the reference image:
-                - Large rounded oval body
-                - Spout exits from left side (~x=-55,y=+15), curves forward to nozzle at (-115, +45)
-                - Nozzle is a round disc, facing left
-                - Handle is thick D-shape on the right side
-                - Lid/opening on top
+              {jets.map((j, i) => {
+                const len = Math.hypot(j.dx, j.dy);
+                return (
+                  <line key={i}
+                    x1={NX} y1={NY}
+                    x2={NX + j.dx} y2={NY + j.dy}
+                    stroke="#81D4FA"
+                    strokeWidth={i < 4 ? 2.5 : i < 9 ? 2.0 : 1.5}
+                    strokeLinecap="round"
+                    strokeDasharray={`0 ${len}`}
+                    opacity="0.9">
+                    <animate
+                      attributeName="stroke-dasharray"
+                      values={`0 ${len}; ${len} 0; ${len} 0; 0 ${len}`}
+                      keyTimes="0;0.3;0.7;1"
+                      dur={`${0.22 + (i % 4) * 0.03}s`}
+                      begin={`${0.6 + (i % 5) * 0.035}s`}
+                      repeatCount="indefinite"/>
+                  </line>
+                );
+              })}
+            </g>
+
+            {/* ════ SPLASH PUDDLE at ground ════ */}
+            <ellipse cx={SX} cy={SY} rx="0" ry="0" fill="#B2EBF2" opacity="0">
+              <animate attributeName="opacity" values="0;0;0.55;0.55;0;0" keyTimes="0;0.55;0.65;0.78;0.86;1" dur="3.0s" fill="freeze"/>
+              <animate attributeName="rx"      values="0;0;42;42;42;0"   keyTimes="0;0.55;0.65;0.78;0.86;1" dur="3.0s" fill="freeze"/>
+              <animate attributeName="ry"      values="0;0;9;9;9;0"      keyTimes="0;0.55;0.65;0.78;0.86;1" dur="3.0s" fill="freeze"/>
+            </ellipse>
+            <ellipse cx={SX} cy={SY} rx="0" ry="0" fill="none" stroke="#4FC3F7" strokeWidth="2" opacity="0">
+              <animate attributeName="opacity" values="0;0;0.9;0;0" keyTimes="0;0.56;0.64;0.72;1" dur="3.0s" fill="freeze"/>
+              <animate attributeName="rx"      values="0;0;8;38;38" keyTimes="0;0.56;0.60;0.72;1" dur="3.0s" fill="freeze"/>
+              <animate attributeName="ry"      values="0;0;4;11;11" keyTimes="0;0.56;0.60;0.72;1" dur="3.0s" fill="freeze"/>
+            </ellipse>
+
+            {/* ════ WATERING CAN ════
+                Drawn in scene coords with the body already placed and rotated.
+                Body centre: (370,160). Tilted -30° around that point.
+                We use a nested <g transform> for the rotation only —
+                this is static (not animated), so it's reliable.
+            */}
+            <g transform="translate(370,160) rotate(-30) translate(-370,-160)">
+
+              {/* ── BODY — large rounded oval, like teapot ── */}
+              <ellipse cx="370" cy="160" rx="88" ry="76"
+                fill="url(#wCan)" stroke="#006064" strokeWidth="4"/>
+              {/* Right-side darkening (3D shadow) */}
+              <ellipse cx="390" cy="168" rx="80" ry="68"
+                fill="url(#wCanDark)" opacity="0.18"/>
+              {/* Top-left highlight */}
+              <ellipse cx="338" cy="132" rx="38" ry="26"
+                fill="rgba(255,255,255,0.30)"/>
+              {/* Inner rim shadow */}
+              <ellipse cx="370" cy="160" rx="80" ry="68"
+                fill="none" stroke="rgba(0,0,0,0.10)" strokeWidth="4"/>
+
+              {/* ── SPOUT — tapered, exits lower-left of body ──
+                  Root attaches at body left edge around (283,172).
+                  Narrows toward nozzle disc.
+                  Drawn as filled polygon for proper tapered look.
               */}
-
-              {/* ── BODY — large rounded oval ── */}
-              {/* Main fill */}
-              <ellipse cx="0" cy="10" rx="62" ry="54"
-                fill="url(#wBody)" stroke="#00838F" strokeWidth="3"/>
-              {/* Shadow on right/bottom edge */}
-              <ellipse cx="8" cy="16" rx="58" ry="50"
-                fill="url(#wBodySide)" stroke="none" opacity="0.25"/>
-              {/* Highlight reflection (upper-left) */}
-              <ellipse cx="-18" cy="-8" rx="28" ry="20"
-                fill="rgba(255,255,255,0.28)" stroke="none"/>
-              {/* Subtle inner contour */}
-              <ellipse cx="0" cy="10" rx="54" ry="47"
-                fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2"/>
-
-              {/* ── SPOUT — tapered pipe from left body, curving to nozzle ── */}
-              {/* The spout in the reference tapers: wide at root, narrow at tip */}
-              {/* Root at body left: (-55,+18). Nozzle centre: (-115,+45) */}
-              {/* Draw as a filled shape (two bezier paths top+bottom + close) */}
               <path d="
-                M -48,5
-                Q -80,18 -108,38
-                Q -110,40 -112,43
-                L -108,52
-                Q -106,50 -104,47
-                Q -78,30 -48,22
+                M 285,148
+                Q 258,154 232,166
+                Q 216,172 206,178
+                L 214,198
+                Q 224,192 240,186
+                Q 266,174 292,168
                 Z
-              " fill="url(#wBody)" stroke="#00838F" strokeWidth="2.5"/>
-              {/* Spout highlight */}
-              <path d="M -52,8 Q -82,20 -106,40" stroke="rgba(255,255,255,0.3)" strokeWidth="3" strokeLinecap="round" fill="none"/>
+              " fill="url(#wCan)" stroke="#006064" strokeWidth="3"/>
+              {/* Spout top highlight */}
+              <path d="M 288,152 Q 260,158 234,169"
+                stroke="rgba(255,255,255,0.35)" strokeWidth="4" strokeLinecap="round" fill="none"/>
+              {/* Spout bottom shadow */}
+              <path d="M 288,166 Q 260,173 235,183"
+                stroke="rgba(0,96,100,0.3)" strokeWidth="3" strokeLinecap="round" fill="none"/>
 
-              {/* ── NOZZLE (rose head) — flat round disc, faces left ── */}
-              {/* Centre at (-115,+46) in local coords */}
-              <ellipse cx="-116" cy="46" rx="13" ry="17"
-                fill="#26C6DA" stroke="#00838F" strokeWidth="2.5"
-                transform="rotate(10 -116 46)"/>
-              {/* Nozzle face (slightly lighter disc) */}
-              <ellipse cx="-116" cy="46" rx="9" ry="13"
-                fill="#80DEEA" stroke="#00838F" strokeWidth="1.5"
-                transform="rotate(10 -116 46)"/>
-              {/* Holes in grid pattern */}
+              {/* ── NOZZLE DISC — round, at spout tip ── */}
+              {/* Centre approx (207,186) — this IS the nozzle face */}
+              <ellipse cx="208" cy="185" rx="20" ry="24"
+                fill="#26C6DA" stroke="#006064" strokeWidth="3.5"
+                transform="rotate(-15 208 185)"/>
+              <ellipse cx="208" cy="185" rx="13" ry="17"
+                fill="#80DEEA" stroke="#006064" strokeWidth="1.5"
+                transform="rotate(-15 208 185)"/>
+              {/* Holes — 3×3 grid */}
               {[
-                [-119,40],[-113,40],[-107,42],
-                [-120,47],[-114,47],[-108,48],
-                [-120,54],[-114,54],[-108,55],
+                [202,176],[209,175],[216,177],
+                [200,183],[207,183],[214,184],
+                [201,190],[208,190],[215,191],
               ].map(([hx,hy],i)=>(
-                <circle key={i} cx={hx} cy={hy} r="1.6" fill="#006064" opacity="0.85"/>
+                <circle key={i} cx={hx} cy={hy} r="2.2" fill="#004D40" opacity="0.85"/>
               ))}
 
-              {/* ── HANDLE — thick D-arc on the right ── */}
-              {/* Attaches at body right: top attach ≈ (+50,-20), bottom ≈ (+50,+40) */}
-              {/* Outer stroke = dark, inner = can colour */}
-              <path d="M 50,-22 Q 95,-22 95,10 Q 95,44 50,42"
-                fill="none" stroke="#00838F" strokeWidth="14" strokeLinecap="round"/>
-              <path d="M 50,-22 Q 95,-22 95,10 Q 95,44 50,42"
-                fill="none" stroke="#4DD0E1" strokeWidth="9" strokeLinecap="round"/>
+              {/* ── HANDLE — thick D-shape, right side of body ── */}
+              {/* Top attach: (450,110), bottom attach: (450,210) */}
+              <path d="M 452,115 Q 510,115 510,160 Q 510,208 452,208"
+                fill="none" stroke="#006064" strokeWidth="20" strokeLinecap="round"/>
+              <path d="M 452,115 Q 510,115 510,160 Q 510,208 452,208"
+                fill="none" stroke="#4DD0E1" strokeWidth="13" strokeLinecap="round"/>
               {/* Handle highlight */}
-              <path d="M 52,-18 Q 88,-18 88,10 Q 88,40 52,38"
-                fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="3" strokeLinecap="round"/>
+              <path d="M 454,120 Q 500,120 500,160 Q 500,200 454,200"
+                fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="5" strokeLinecap="round"/>
 
-              {/* ── LID / OPENING ON TOP ── */}
-              {/* Oval opening tilted on top of body */}
-              <ellipse cx="-10" cy="-50" rx="28" ry="10"
-                fill="#00ACC1" stroke="#00838F" strokeWidth="2.5"
-                transform="rotate(-8 -10 -50)"/>
-              {/* Lid inner (open top) */}
-              <ellipse cx="-10" cy="-50" rx="20" ry="7"
-                fill="#0097A7" stroke="none"
-                transform="rotate(-8 -10 -50)"/>
-              {/* Lid rim highlight */}
-              <ellipse cx="-16" cy="-53" rx="12" ry="4"
-                fill="rgba(255,255,255,0.3)" stroke="none"
-                transform="rotate(-8 -16 -53)"/>
+              {/* ── LID / OPENING — round opening on top of body ── */}
+              <ellipse cx="354" cy="86" rx="40" ry="14"
+                fill="#00ACC1" stroke="#006064" strokeWidth="3.5"
+                transform="rotate(-12 354 86)"/>
+              <ellipse cx="354" cy="86" rx="28" ry="9"
+                fill="#00838F"
+                transform="rotate(-12 354 86)"/>
+              {/* Lid shine */}
+              <ellipse cx="344" cy="82" rx="16" ry="5"
+                fill="rgba(255,255,255,0.35)"
+                transform="rotate(-12 344 82)"/>
 
-            </g>{/* end tilt group */}
+            </g>{/* end can rotate group */}
+
           </g>{/* end slide group */}
-
-        </g>{/* end clip */}
+        </g>
       </svg>
     </div>
   );
@@ -876,58 +862,56 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
             }}>{msg}</div>
           )}
 
-          {/* Watering can icon — round oval body matching reference style */}
-          <svg width="68" height="58" viewBox="-10 -14 130 110" fill="none">
+
+          {/* Watering can — round oval body matching reference image */}
+          <svg width="72" height="62" viewBox="80 60 340 270" fill="none">
             <defs>
-              <linearGradient id="btnCan" x1="0" y1="0" x2="0.3" y2="1">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.95)"/>
-                <stop offset="60%" stopColor="rgba(255,255,255,0.80)"/>
-                <stop offset="100%" stopColor="rgba(255,255,255,0.60)"/>
+              <linearGradient id="btnCan" x1="0" y1="0" x2="0.2" y2="1">
+                <stop offset="0%"  stopColor="rgba(255,255,255,0.96)"/>
+                <stop offset="50%" stopColor="rgba(255,255,255,0.82)"/>
+                <stop offset="100%" stopColor="rgba(255,255,255,0.62)"/>
               </linearGradient>
             </defs>
-
-            {/* Body — large oval */}
-            <ellipse cx="62" cy="42" rx="52" ry="42" fill="url(#btnCan)" stroke="rgba(255,255,255,0.7)" strokeWidth="3"/>
-            {/* Body highlight */}
-            <ellipse cx="46" cy="28" rx="24" ry="16" fill="rgba(255,255,255,0.35)"/>
-
-            {/* Handle — D-arc on right */}
-            <path d="M 104,22 Q 128,22 128,42 Q 128,62 104,62"
-              fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="10" strokeLinecap="round"/>
-            <path d="M 104,22 Q 128,22 128,42 Q 128,62 104,62"
-              fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="5" strokeLinecap="round"/>
-
-            {/* Lid opening on top */}
-            <ellipse cx="54" cy="2" rx="22" ry="8"
-              fill="rgba(255,255,255,0.8)" stroke="rgba(255,255,255,0.6)" strokeWidth="2"
-              transform="rotate(-5 54 2)"/>
-            <ellipse cx="54" cy="2" rx="14" ry="5"
-              fill="rgba(179,229,252,0.9)"
-              transform="rotate(-5 54 2)"/>
-
-            {/* Spout — long tapered pipe angling lower-left */}
-            <path d="M 22,56 Q -4,62 -28,78 Q -30,80 -32,82 L -24,90 Q -22,88 -20,86 Q 4,72 26,68 Z"
-              fill="rgba(255,255,255,0.82)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5"/>
-
-            {/* Nozzle disc */}
-            <ellipse cx="-32" cy="82" rx="11" ry="15"
-              fill="rgba(179,229,252,0.95)" stroke="rgba(255,255,255,0.7)" strokeWidth="2"
-              transform="rotate(12 -32 82)"/>
-            <ellipse cx="-32" cy="82" rx="7" ry="10"
-              fill="rgba(255,255,255,0.5)"
-              transform="rotate(12 -32 82)"/>
-            {/* Nozzle holes */}
-            {[[-35,76],[-29,76],[-36,83],[-30,83],[-24,83],[-34,89],[-28,89]].map(([hx,hy],i)=>(
-              <circle key={i} cx={hx} cy={hy} r="1.3" fill="rgba(2,136,209,0.7)"/>
-            ))}
-
-            {/* Water jets from nozzle */}
+            {/* Body */}
+            <ellipse cx="370" cy="160" rx="88" ry="76"
+              fill="url(#btnCan)" stroke="rgba(255,255,255,0.7)" strokeWidth="4"/>
+            <ellipse cx="338" cy="132" rx="38" ry="26"
+              fill="rgba(255,255,255,0.35)"/>
+            {/* Handle */}
+            <path d="M 452,115 Q 510,115 510,160 Q 510,208 452,208"
+              fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="20" strokeLinecap="round"/>
+            <path d="M 452,115 Q 510,115 510,160 Q 510,208 452,208"
+              fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="10" strokeLinecap="round"/>
+            {/* Lid */}
+            <ellipse cx="354" cy="86" rx="40" ry="14"
+              fill="rgba(255,255,255,0.85)" stroke="rgba(255,255,255,0.6)" strokeWidth="3"
+              transform="rotate(-12 354 86)"/>
+            <ellipse cx="354" cy="86" rx="26" ry="9"
+              fill="rgba(179,229,252,0.9)" transform="rotate(-12 354 86)"/>
+            {/* Spout */}
+            <path d="M 285,148 Q 258,154 232,166 Q 216,172 206,178 L 214,198 Q 224,192 240,186 Q 266,174 292,168 Z"
+              fill="rgba(255,255,255,0.82)" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
+            {/* Nozzle */}
+            <ellipse cx="208" cy="185" rx="20" ry="24"
+              fill="rgba(179,229,252,0.95)" stroke="rgba(255,255,255,0.8)" strokeWidth="3.5"
+              transform="rotate(-15 208 185)"/>
+            <ellipse cx="208" cy="185" rx="13" ry="17"
+              fill="rgba(255,255,255,0.5)" transform="rotate(-15 208 185)"/>
             {[
-              {x2:-58,y2:90},{x2:-64,y2:98},{x2:-56,y2:100},
-              {x2:-52,y2:88},{x2:-68,y2:94},{x2:-48,y2:96},
+              [202,176],[209,175],[216,177],
+              [200,183],[207,183],[214,184],
+              [201,190],[208,190],[215,191],
+            ].map(([hx,hy],i)=>(
+              <circle key={i} cx={hx} cy={hy} r="2.2" fill="rgba(2,100,110,0.75)"/>
+            ))}
+            {/* Jets */}
+            {[
+              {dx:-55,dy:30},{dx:-48,dy:38},{dx:-40,dy:44},
+              {dx:-30,dy:48},{dx:-18,dy:50},{dx:-65,dy:20},
+              {dx:-72,dy:10},
             ].map((j,i)=>(
-              <line key={i} x1={-36} y1={86} x2={j.x2} y2={j.y2}
-                stroke="rgba(179,229,252,0.85)" strokeWidth={i<2?2:1.4} strokeLinecap="round"/>
+              <line key={i} x1={208} y1={195} x2={208+j.dx} y2={195+j.dy}
+                stroke="rgba(179,229,252,0.9)" strokeWidth={i<2?2.5:1.8} strokeLinecap="round"/>
             ))}
           </svg>
 
