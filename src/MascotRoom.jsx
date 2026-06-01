@@ -62,11 +62,11 @@ const FontLoader = () => (
     @keyframes droop       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
     @keyframes groundShadow { 0%,100%{transform:scaleX(1);opacity:0.18} 50%{transform:scaleX(0.7);opacity:0.08} }
     @keyframes shopGlow    { 0%,100%{box-shadow:0 8px 28px rgba(124,77,255,0.45),0 2px 8px rgba(124,77,255,0.2)} 50%{box-shadow:0 12px 36px rgba(124,77,255,0.65),0 4px 16px rgba(240,98,146,0.3)} }
-    @keyframes canSlideIn  { 0%{transform:translateX(140%) rotate(0deg);opacity:0} 30%{opacity:1} 55%{transform:translateX(0%) rotate(0deg)} 70%{transform:translateX(0%) rotate(-38deg)} 85%{transform:translateX(0%) rotate(-38deg)} 100%{transform:translateX(140%) rotate(0deg);opacity:0} }
-    @keyframes waterStream { 0%{opacity:0;height:0} 20%{opacity:1;height:0} 55%{opacity:1;height:100%} 85%{opacity:1;height:100%} 100%{opacity:0;height:100%} }
-    @keyframes dropSplash  { 0%{opacity:0;transform:translateY(-8px) scaleY(0.5)} 20%{opacity:1;transform:translateY(0) scaleY(1)} 70%{opacity:0.8;transform:translateY(60px) scale(1.1)} 100%{opacity:0;transform:translateY(80px) scaleY(0.3)} }
-    @keyframes splashRing  { 0%{transform:scale(0);opacity:0.8} 100%{transform:scale(2.5);opacity:0} }
-    @keyframes grassGlow   { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.25) saturate(1.4)} }
+    @keyframes canSlideIn  { 0%{transform:translateX(120%);opacity:0} 18%{opacity:1;transform:translateX(0%)} 75%{transform:translateX(0%)} 100%{transform:translateX(120%);opacity:0} }
+    @keyframes canTilt     { 0%,18%{transform:rotate(0deg)} 32%,72%{transform:rotate(-48deg)} 86%,100%{transform:rotate(0deg)} }
+    @keyframes dropFall    { 0%{opacity:0;transform:translateY(-4px)} 15%{opacity:1} 85%{opacity:0.7} 100%{opacity:0;transform:translateY(0)} }
+    @keyframes splashRing  { 0%{r:4;opacity:0.9} 100%{r:18;opacity:0} }
+    @keyframes grassGlow   { 0%,100%{opacity:0} 40%,70%{opacity:1} }
   `}</style>
 );
 
@@ -552,149 +552,241 @@ const GARDEN_ITEMS = [
 ];
 
 /* ══════════════════════════════════════════════
-   WATERING CAN OVERLAY — renders over the garden hero
-   A detailed SVG watering can slides in from the right,
-   tilts over the garden, pours a stream of water drops,
-   then slides back out. Duration ~2.8s total.
+   WATERING CAN OVERLAY
+   Single SVG covering the entire hero area so the can,
+   spout tip, water arc and ground splashes all share
+   one coordinate system and are always perfectly aligned.
+   Duration: 2.8s — can slides in, tilts, pours, slides out.
 ══════════════════════════════════════════════ */
-const WateringOverlay = ({ active, mascotColor }) => {
+const WateringOverlay = ({ active }) => {
   if (!active) return null;
 
-  // Water drop positions — staggered cascade from spout
-  const DROPS = Array.from({length:10}, (_, i) => ({
+  /* ─── Geometry constants (viewBox 400 × 320) ─────────────────────
+     The can's pivot is at (310, 60) in scene space.
+     When tilted -48deg around that point the spout tip lands at
+     roughly (200, 170) — above the garden ground band.
+     Drops fall from (200,170) in a slight arc to the ground at y≈265.
+  ─────────────────────────────────────────────────────────────────── */
+  const VW = 400; const VH = 320;
+  const PIVOT_X = 310; const PIVOT_Y = 60;
+
+  // Spout tip offset from pivot in the CAN's local (un-rotated) coords.
+  // After -48° rotation it lands near (200, 170) in scene space.
+  // We'll draw drops starting at that scene point.
+  const SPOUT_X = 196; const SPOUT_Y = 172;
+  const GROUND_Y = 268;
+
+  // 8 drops at slightly varied x offsets, staggered in time
+  const DROPS = Array.from({length: 8}, (_, i) => ({
     id: i,
-    x: 52 + i * 3.5,       // slight spread
-    delay: `${0.65 + i * 0.06}s`,
-    dur: `${0.5 + (i % 3) * 0.08}s`,
+    cx: SPOUT_X + (i % 3) * 7 - 7,
+    // Each drop travels from SPOUT_Y to GROUND_Y over its duration
+    dur: `${0.55 + (i % 3) * 0.07}s`,
+    begin: `${0.72 + i * 0.09}s`,
+    endX: SPOUT_X + (i % 3) * 9 - 9 + Math.sin(i) * 8,
   }));
 
-  // Ground splash rings at landing zone
+  // 3 splash rings at ground, staggered after first drop lands
   const SPLASHES = [
-    { x:48, delay:"0.9s" },
-    { x:62, delay:"1.05s" },
-    { x:55, delay:"1.2s" },
+    { cx: SPOUT_X - 6, begin:"1.1s" },
+    { cx: SPOUT_X + 6, begin:"1.25s" },
+    { cx: SPOUT_X,     begin:"1.4s" },
   ];
 
   return (
     <div style={{
       position:"absolute", inset:0, zIndex:4,
-      pointerEvents:"none",
-      overflow:"hidden",
+      pointerEvents:"none", overflow:"hidden",
     }}>
-      {/* The watering can — slides in from right, tilts, pours, exits */}
-      <div style={{
-        position:"absolute",
-        right:"8%",
-        top:"18%",
-        width:160, height:160,
-        animation:"canSlideIn 2.8s cubic-bezier(0.4,0,0.2,1) forwards",
-        transformOrigin:"60% 60%",
-      }}>
-        <svg viewBox="0 0 160 160" width={160} height={160} style={{overflow:"visible"}}>
-          <defs>
-            <linearGradient id="canBody" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#4FC3F7"/>
-              <stop offset="100%" stopColor="#0288D1"/>
-            </linearGradient>
-            <linearGradient id="canShine" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.55)"/>
-              <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
-            </linearGradient>
-          </defs>
+      <svg
+        viewBox={`0 0 ${VW} ${VH}`}
+        width="100%" height="100%"
+        preserveAspectRatio="xMidYMid slice"
+        style={{position:"absolute",inset:0}}
+      >
+        <defs>
+          <linearGradient id="wCanBody" x1="0" y1="0" x2="0.4" y2="1">
+            <stop offset="0%" stopColor="#4DD0E1"/>
+            <stop offset="100%" stopColor="#0097A7"/>
+          </linearGradient>
+          <linearGradient id="wCanSide" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#80DEEA"/>
+            <stop offset="100%" stopColor="#0097A7"/>
+          </linearGradient>
+          <linearGradient id="wDropGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#B2EBF2" stopOpacity="0.95"/>
+            <stop offset="100%" stopColor="#4FC3F7" stopOpacity="0.6"/>
+          </linearGradient>
 
-          {/* Can body */}
-          <ellipse cx="72" cy="70" rx="42" ry="36" fill="url(#canBody)" stroke="#0277BD" strokeWidth="2.5"/>
-          {/* Body shine */}
-          <ellipse cx="62" cy="56" rx="22" ry="14" fill="url(#canShine)" opacity="0.7"/>
+          {/* Clip so the can group stays in view but hides behind right edge */}
+          <clipPath id="wClip"><rect width={VW} height={VH}/></clipPath>
+        </defs>
 
-          {/* Spout — angles down-left */}
-          <path d="M 32 74 Q 12 76 4 96 Q 0 106 8 108"
-            stroke="#0277BD" strokeWidth="9" strokeLinecap="round" fill="none"/>
-          <path d="M 32 74 Q 12 76 4 96 Q 0 106 8 108"
-            stroke="#4FC3F7" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
-          {/* Spout tip / rose head */}
-          <ellipse cx="8" cy="108" rx="9" ry="6" fill="#0277BD" transform="rotate(-20 8 108)"/>
-          {/* Holes in rose */}
-          {[[-3,-1],[0,-3],[3,-1],[0,2],[-5,2],[5,1]].map(([dx,dy],i)=>(
-            <circle key={i} cx={8+dx} cy={108+dy} r="1.2" fill="#4FC3F7" opacity="0.8"/>
-          ))}
+        <g clipPath="url(#wClip)">
 
-          {/* Handle — arcs over the top */}
-          <path d="M 50 38 Q 72 10 94 38"
-            stroke="#0277BD" strokeWidth="9" strokeLinecap="round" fill="none"/>
-          <path d="M 50 38 Q 72 10 94 38"
-            stroke="#4FC3F7" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
+          {/* ── Grass-glow strip at ground when water lands ── */}
+          <ellipse cx={SPOUT_X} cy={GROUND_Y + 8} rx="60" ry="10"
+            fill="#A5D6A7" opacity="0">
+            <animate attributeName="opacity"
+              values="0;0;0.55;0.55;0.3;0"
+              keyTimes="0;0.35;0.45;0.72;0.86;1"
+              dur="2.8s" fill="freeze"/>
+          </ellipse>
 
-          {/* Lid */}
-          <ellipse cx="72" cy="36" rx="30" ry="8" fill="#0288D1" stroke="#0277BD" strokeWidth="2"/>
-          <ellipse cx="72" cy="33" rx="20" ry="5" fill="#4FC3F7" opacity="0.6"/>
-
-          {/* Flower sticker on body */}
-          {[0,60,120,180,240,300].map((a,i)=>{
-            const r = a*Math.PI/180;
-            return <ellipse key={i}
-              cx={72+Math.cos(r)*9} cy={74+Math.sin(r)*9}
-              rx={5.5} ry={3.5}
-              fill={["#FFD54F","#F48FB1","#CE93D8","#81C784","#FF7043","#B3E5FC"][i]}
-              opacity="0.85"
-              transform={`rotate(${a} ${72+Math.cos(r)*9} ${74+Math.sin(r)*9})`}/>;
-          })}
-          <circle cx="72" cy="74" r="5" fill="#FFD54F"/>
-          <circle cx="72" cy="74" r="2.5" fill="#F9A825"/>
-        </svg>
-
-        {/* Water stream — clips to animate height growing from spout */}
-        <div style={{
-          position:"absolute",
-          left:2, top:102,
-          width:52, height:90,
-          overflow:"hidden",
-          transformOrigin:"top center",
-          transform:"rotate(20deg)",
-        }}>
-          <div style={{
-            width:"100%",
-            background:"linear-gradient(to bottom, rgba(79,195,247,0.85), rgba(2,136,209,0.4))",
-            borderRadius:8,
-            animation:`waterStream 2.8s ease forwards`,
-          }}/>
-        </div>
-      </div>
-
-      {/* Water drops falling and splashing at ground level */}
-      <div style={{position:"absolute", left:"12%", bottom:"22%", width:120, height:110}}>
-        <svg viewBox="0 0 120 110" width={120} height={110} style={{overflow:"visible"}}>
-
-          {/* Falling drops */}
-          {DROPS.map(d=>(
+          {/* ── Water drops — each is a teardrop path animated down ── */}
+          {DROPS.map(d => (
             <g key={d.id}>
-              <path d={`M${d.x},0 Q${d.x+4},5 ${d.x},12 Q${d.x-4},5 ${d.x},0Z`}
-                fill="#4FC3F7" opacity="0.85"
-                style={{animation:`dropSplash ${d.dur} ${d.delay} ease-in forwards`}}/>
+              {/* Teardrop body */}
+              <ellipse cx={d.cx} cy={SPOUT_Y} rx="3.5" ry="5.5"
+                fill="url(#wDropGrad)" opacity="0">
+                <animate attributeName="opacity"
+                  values="0;0;0.95;0.8;0"
+                  keyTimes="0;0.05;0.2;0.8;1"
+                  dur={d.dur} begin={d.begin} fill="freeze" repeatCount="1"/>
+                <animate attributeName="cy"
+                  values={`${SPOUT_Y};${SPOUT_Y + 10};${GROUND_Y - 5}`}
+                  keyTimes="0;0.2;1"
+                  dur={d.dur} begin={d.begin} fill="freeze" repeatCount="1"
+                  calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 1 1"/>
+                <animate attributeName="cx"
+                  values={`${d.cx};${d.cx + 3};${d.endX}`}
+                  keyTimes="0;0.3;1"
+                  dur={d.dur} begin={d.begin} fill="freeze" repeatCount="1"/>
+                {/* Squash on landing */}
+                <animate attributeName="ry"
+                  values="5.5;5.5;5.5;3;1"
+                  keyTimes="0;0.1;0.85;0.95;1"
+                  dur={d.dur} begin={d.begin} fill="freeze" repeatCount="1"/>
+                <animate attributeName="rx"
+                  values="3.5;3.5;3.5;5;7"
+                  keyTimes="0;0.1;0.85;0.95;1"
+                  dur={d.dur} begin={d.begin} fill="freeze" repeatCount="1"/>
+              </ellipse>
             </g>
           ))}
 
-          {/* Ground splash rings */}
-          {SPLASHES.map((s,i)=>(
-            <ellipse key={i} cx={s.x} cy={95} rx="10" ry="4"
-              fill="none" stroke="#4FC3F7" strokeWidth="2" opacity="0.7"
-              style={{animation:`splashRing 0.5s ${s.delay} ease-out forwards`}}/>
+          {/* ── Splash rings on ground ── */}
+          {SPLASHES.map((s, i) => (
+            <ellipse key={i} cx={s.cx} cy={GROUND_Y + 2}
+              rx="4" ry="2.5"
+              fill="none" stroke="#4FC3F7" strokeWidth="1.8" opacity="0">
+              <animate attributeName="opacity"
+                values="0;0.85;0" dur="0.55s" begin={s.begin} fill="freeze"/>
+              <animate attributeName="rx"
+                values="4;20" dur="0.55s" begin={s.begin} fill="freeze"/>
+              <animate attributeName="ry"
+                values="2.5;6" dur="0.55s" begin={s.begin} fill="freeze"/>
+            </ellipse>
           ))}
 
-          {/* Puddle glow on ground */}
-          <ellipse cx="55" cy="98" rx="38" ry="8"
-            fill="#B3E5FC" opacity="0"
-            style={{animation:`splashRing 0.8s 0.9s ease-out forwards`}}/>
-        </svg>
-      </div>
+          {/* ══ WATERING CAN ══
+              Pivot at (PIVOT_X, PIVOT_Y).
+              Step 1: whole group slides in from right (translateX).
+              Step 2: inner group rotates around pivot to tilt can.
+              This two-layer approach keeps translate and rotate independent.
+          ══ */}
+          <g style={{animation:"canSlideIn 2.8s cubic-bezier(0.4,0,0.2,1) forwards"}}>
+            {/* Tilt group — rotates around the pivot point */}
+            <g style={{
+              transformOrigin:`${PIVOT_X}px ${PIVOT_Y}px`,
+              animation:"canTilt 2.8s cubic-bezier(0.4,0,0.2,1) forwards",
+            }}>
+              {/*
+                CAN DESIGN (in can-local coords, pivot at 310,60):
+                Classic garden watering can:
+                  - Rounded rectangular body, slightly wider at top
+                  - Long spout angling forward-down from lower-front of body
+                  - Top carry-handle arcing over the body
+                  - Small fill-hole on top
+                All drawn relative to pivot (310,60).
+              */}
 
-      {/* Green glow pulse on the grass as it gets watered */}
-      <div style={{
-        position:"absolute", bottom:0, left:0, right:0, height:"28%",
-        background:"linear-gradient(to top, rgba(102,187,106,0.3), transparent)",
-        animation:"grassGlow 2.8s ease forwards",
-        pointerEvents:"none",
-      }}/>
+              {/* ── Body ── */}
+              {/* Main body — rounded rect, slightly tapered */}
+              <path d={`
+                M ${PIVOT_X-52},${PIVOT_Y+8}
+                Q ${PIVOT_X-54},${PIVOT_Y+8} ${PIVOT_X-54},${PIVOT_Y+16}
+                L ${PIVOT_X-48},${PIVOT_Y+72}
+                Q ${PIVOT_X-48},${PIVOT_Y+80} ${PIVOT_X-38},${PIVOT_Y+80}
+                L ${PIVOT_X+30},${PIVOT_Y+80}
+                Q ${PIVOT_X+38},${PIVOT_Y+80} ${PIVOT_X+38},${PIVOT_Y+72}
+                L ${PIVOT_X+36},${PIVOT_Y+16}
+                Q ${PIVOT_X+36},${PIVOT_Y+8} ${PIVOT_X+28},${PIVOT_Y+8}
+                Z
+              `} fill="url(#wCanBody)" stroke="#00838F" strokeWidth="2"/>
+
+              {/* Body highlight (left-top reflection) */}
+              <path d={`
+                M ${PIVOT_X-46},${PIVOT_Y+14}
+                Q ${PIVOT_X-46},${PIVOT_Y+12} ${PIVOT_X-40},${PIVOT_Y+12}
+                L ${PIVOT_X},${PIVOT_Y+12}
+                Q ${PIVOT_X+4},${PIVOT_Y+12} ${PIVOT_X+4},${PIVOT_Y+16}
+                L ${PIVOT_X+2},${PIVOT_Y+40}
+                Q ${PIVOT_X-12},${PIVOT_Y+36} ${PIVOT_X-46},${PIVOT_Y+40}
+                Z
+              `} fill="rgba(255,255,255,0.22)"/>
+
+              {/* Body right-side shadow */}
+              <path d={`
+                M ${PIVOT_X+20},${PIVOT_Y+12}
+                L ${PIVOT_X+36},${PIVOT_Y+18}
+                L ${PIVOT_X+38},${PIVOT_Y+72}
+                L ${PIVOT_X+24},${PIVOT_Y+80}
+                L ${PIVOT_X+20},${PIVOT_Y+12}
+              `} fill="rgba(0,0,0,0.1)"/>
+
+              {/* ── Top lid / rim ── */}
+              <rect x={PIVOT_X-52} y={PIVOT_Y+4} width={90} height={10}
+                rx="5" fill="#00ACC1" stroke="#00838F" strokeWidth="1.5"/>
+              {/* Fill hole */}
+              <ellipse cx={PIVOT_X+20} cy={PIVOT_Y+4} rx="8" ry="5"
+                fill="#0097A7" stroke="#00838F" strokeWidth="1.5"/>
+              <ellipse cx={PIVOT_X+20} cy={PIVOT_Y+2} rx="5" ry="3"
+                fill="#80DEEA" opacity="0.6"/>
+
+              {/* ── Carry handle (arcs from back-top to back-mid) ── */}
+              <path d={`M ${PIVOT_X+30},${PIVOT_Y+14} Q ${PIVOT_X+58},${PIVOT_Y-18} ${PIVOT_X+36},${PIVOT_Y+50}`}
+                stroke="#00838F" strokeWidth="9" strokeLinecap="round" fill="none"/>
+              <path d={`M ${PIVOT_X+30},${PIVOT_Y+14} Q ${PIVOT_X+58},${PIVOT_Y-18} ${PIVOT_X+36},${PIVOT_Y+50}`}
+                stroke="#4DD0E1" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
+
+              {/* ── Spout — exits from lower-front of body, angles forward-down ──
+                  Spout root at body left (~PIVOT_X-54, PIVOT_Y+55)
+                  Spout tip at (~PIVOT_X-100, PIVOT_Y+95) — a long forward-angled pipe.
+                  After -48° tilt the tip will be near scene (200,172).
+              ── */}
+              {/* Spout outer (darker) */}
+              <path d={`M ${PIVOT_X-46},${PIVOT_Y+52} Q ${PIVOT_X-68},${PIVOT_Y+58} ${PIVOT_X-96},${PIVOT_Y+92}`}
+                stroke="#00838F" strokeWidth="11" strokeLinecap="round" fill="none"/>
+              {/* Spout inner (lighter) */}
+              <path d={`M ${PIVOT_X-46},${PIVOT_Y+52} Q ${PIVOT_X-68},${PIVOT_Y+58} ${PIVOT_X-96},${PIVOT_Y+92}`}
+                stroke="#4DD0E1" strokeWidth="7" strokeLinecap="round" fill="none"/>
+
+              {/* ── Rose head (sprinkler nozzle) at spout tip ── */}
+              {/* Nozzle disc */}
+              <ellipse cx={PIVOT_X-100} cy={PIVOT_Y+96} rx="12" ry="9"
+                fill="#00ACC1" stroke="#00838F" strokeWidth="1.5"
+                transform={`rotate(52 ${PIVOT_X-100} ${PIVOT_Y+96})`}/>
+              {/* Nozzle face highlight */}
+              <ellipse cx={PIVOT_X-100} cy={PIVOT_Y+96} rx="8" ry="6"
+                fill="#80DEEA" opacity="0.5"
+                transform={`rotate(52 ${PIVOT_X-100} ${PIVOT_Y+96})`}/>
+              {/* Holes in rose — 5 dots in a pattern */}
+              {[[-4,-2],[-1,-4],[2,-3],[-3,1],[1,2]].map(([dx,dy],i)=>(
+                <circle key={i}
+                  cx={PIVOT_X - 100 + dx}
+                  cy={PIVOT_Y + 96 + dy}
+                  r="1.4" fill="#00838F" opacity="0.9"/>
+              ))}
+
+              {/* ── Decorative stripe on body ── */}
+              <path d={`M ${PIVOT_X-52},${PIVOT_Y+44} L ${PIVOT_X+36},${PIVOT_Y+42}`}
+                stroke="rgba(255,255,255,0.3)" strokeWidth="3" strokeLinecap="round"/>
+            </g>
+          </g>
+
+        </g>
+      </svg>
     </div>
   );
 };
@@ -788,29 +880,48 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
             }}>{msg}</div>
           )}
 
-          {/* Watering can icon */}
-          <svg width="56" height="56" viewBox="0 0 80 80" fill="none">
-            {/* Can body */}
-            <ellipse cx="36" cy="46" rx="22" ry="18" fill="rgba(255,255,255,0.92)" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
-            {/* Body bottom */}
-            <path d="M 14 46 Q 12 64 17 66 L 55 66 Q 60 64 58 46" fill="rgba(255,255,255,0.78)" stroke="rgba(255,255,255,0.5)" strokeWidth="1.8"/>
-            {/* Spout */}
-            <path d="M 16 50 Q 4 52 2 64" stroke="rgba(255,255,255,0.95)" strokeWidth="5" strokeLinecap="round" fill="none"/>
-            {/* Rose head */}
-            <ellipse cx="3" cy="65" rx="6" ry="4" fill="rgba(179,229,252,0.9)" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" transform="rotate(-10 3 65)"/>
-            {/* Rose holes */}
-            {[[-2,0],[1,-2],[3,1],[-1,2],[2,-1]].map(([dx,dy],i)=>(
-              <circle key={i} cx={3+dx} cy={65+dy} r="0.9" fill="rgba(2,136,209,0.7)"/>
+          {/* Watering can icon — matches the overlay can design */}
+          <svg width="64" height="54" viewBox="0 0 90 76" fill="none">
+            <defs>
+              <linearGradient id="btnCanBody" x1="0" y1="0" x2="0.3" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.95)"/>
+                <stop offset="100%" stopColor="rgba(255,255,255,0.72)"/>
+              </linearGradient>
+            </defs>
+            {/* Body */}
+            <path d="M 8 12 Q 6 12 6 18 L 10 66 Q 10 72 18 72 L 62 72 Q 70 72 70 66 L 72 18 Q 72 12 66 12 Z"
+              fill="url(#btnCanBody)" stroke="rgba(255,255,255,0.6)" strokeWidth="2"/>
+            {/* Body highlight */}
+            <path d="M 10 16 Q 10 14 18 14 L 42 14 L 40 42 Q 24 40 10 44 Z"
+              fill="rgba(255,255,255,0.3)"/>
+            {/* Lid/rim */}
+            <rect x="6" y="8" width="66" height="8" rx="4"
+              fill="rgba(255,255,255,0.8)" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
+            {/* Fill hole */}
+            <ellipse cx="58" cy="8" rx="8" ry="5"
+              fill="rgba(179,229,252,0.9)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.2"/>
+            {/* Carry handle */}
+            <path d="M 56 12 Q 82 -4 74 46"
+              stroke="rgba(255,255,255,0.9)" strokeWidth="6.5" strokeLinecap="round" fill="none"/>
+            <path d="M 56 12 Q 82 -4 74 46"
+              stroke="rgba(255,255,255,0.5)" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+            {/* Spout — exits lower-left, angles forward */}
+            <path d="M 8 52 Q -6 56 -14 70"
+              stroke="rgba(255,255,255,0.9)" strokeWidth="8" strokeLinecap="round" fill="none"/>
+            <path d="M 8 52 Q -6 56 -14 70"
+              stroke="rgba(255,255,255,0.5)" strokeWidth="4.5" strokeLinecap="round" fill="none"/>
+            {/* Rose nozzle */}
+            <ellipse cx="-15" cy="71" rx="9" ry="6.5"
+              fill="rgba(179,229,252,0.9)" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"
+              transform="rotate(-35 -15 71)"/>
+            {/* Nozzle holes */}
+            {[[-3,-1],[0,-3],[3,-1],[-1,2],[2,1]].map(([dx,dy],i)=>(
+              <circle key={i} cx={-15+dx} cy={71+dy} r="1.1" fill="rgba(2,136,209,0.8)"/>
             ))}
-            {/* Handle */}
-            <path d="M 26 28 Q 36 14 48 28" stroke="rgba(255,255,255,0.95)" strokeWidth="5.5" strokeLinecap="round" fill="none"/>
-            {/* Lid */}
-            <ellipse cx="36" cy="29" rx="18" ry="5" fill="rgba(255,255,255,0.7)" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"/>
-            {/* Water drop accent */}
-            <path d="M 58 32 Q 68 26 74 22" stroke="rgba(255,255,255,0.9)" strokeWidth="3" strokeLinecap="round"/>
-            <circle cx="74" cy="21" r="3.5" fill="#B3E5FC" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2"/>
-            <circle cx="68" cy="26" r="2" fill="#B3E5FC" opacity="0.8"/>
-            <circle cx="62" cy="29" r="1.5" fill="#B3E5FC" opacity="0.7"/>
+            {/* Water drops from nozzle */}
+            <path d="M -18 76 Q -22 82 -18 88 Q -14 82 -18 76Z" fill="#B3E5FC" opacity="0.9"/>
+            <path d="M -10 79 Q -14 84 -10 89 Q -6 84 -10 79Z" fill="#B3E5FC" opacity="0.7"/>
+            <path d="M -24 80 Q -28 85 -24 90 Q -20 85 -24 80Z" fill="#B3E5FC" opacity="0.6"/>
           </svg>
 
           <p style={{fontFamily:F.h, fontWeight:800, fontSize:14, color:"#fff", margin:0}}>
@@ -1692,7 +1803,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
         </div>
 
         {/* Watering can overlay — plays over garden when watering */}
-        <WateringOverlay active={wateringScene} mascotColor={cm.color}/>
+        <WateringOverlay active={wateringScene}/>
 
         {/* Content sits above the garden */}
         {/* Fixed back button — always visible even when scrolled */}
