@@ -1161,7 +1161,6 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
   const [selectedId, setSelectedId] = useState(null);
   const [buying,     setBuying]     = useState(false);
   const [successId,  setSuccessId]  = useState(null);
-  const [saving,     setSaving]     = useState(false);
 
   const ownedItems   = GARDEN_ITEMS.filter(i => ownedIds.includes(i.id));
   const selected     = GARDEN_ITEMS.find(i => i.id === selectedId) || null;
@@ -1177,41 +1176,68 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
     i => i.stageUnlock <= currentStageId && !ownedIds.includes(i.id) && availableSeeds >= i.cost
   ).length;
 
-  /* Persist a new seen_tooltips object everywhere it lives (db + both states). */
-  const persistTooltips = async (newTooltips) => {
-    const { error } = await supabase.from("children").update({ seen_tooltips: newTooltips }).eq("id", activeChild.id);
-    if (!error) {
-      setActiveChild(prev => ({ ...prev, seen_tooltips: newTooltips }));
-      setChildren(cs => cs.map(c => c.id===activeChild.id ? {...c, seen_tooltips: newTooltips} : c));
-    }
-    return !error;
+  /* Compute the planted list from a child snapshot (used inside functional updates). */
+  const plantedFrom = (child) => {
+    const u = child?.seen_tooltips?.shop_unlocks || {};
+    const stored = child?.seen_tooltips?.shop_planted;
+    return Array.isArray(stored) ? stored.filter(id => u[id]).slice(0, PLANT_LIMIT)
+                                 : Object.keys(u).slice(0, PLANT_LIMIT);
   };
 
-  const handleBuy = async () => {
+  /* One persistence pipeline: whenever the garden data changes locally, mirror it to
+     the children list immediately and write to the DB (debounced so a flurry of taps
+     becomes a single write). A flush on unmount covers closing the shop mid-debounce. */
+  const tipKey = JSON.stringify({
+    p: activeChild.seen_tooltips?.shop_planted ?? null,
+    o: ownedIds.length,
+  });
+  const persistRef = useRef({ id: activeChild.id, tips: activeChild.seen_tooltips });
+  persistRef.current = { id: activeChild.id, tips: activeChild.seen_tooltips };
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return; }   // don't write on first render
+    const { id, tips } = persistRef.current;
+    setChildren(cs => cs.map(c => c.id===id ? { ...c, seen_tooltips: tips } : c));
+    const t = setTimeout(() => {
+      supabase.from("children").update({ seen_tooltips: tips }).eq("id", id);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [tipKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Flush the latest garden state to the DB when the shop closes.
+  useEffect(() => () => {
+    const { id, tips } = persistRef.current;
+    if (mounted.current) supabase.from("children").update({ seen_tooltips: tips }).eq("id", id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleBuy = () => {
     if (!selected || availableSeeds < selected.cost || buying) return;
+    const id = selected.id, cost = selected.cost;
     setBuying(true);
-    const newUnlocks  = { ...unlocks, [selected.id]: { cost: selected.cost, at: Date.now() } };
-    // Auto-plant the new item if there's still room in the garden.
-    const newPlanted  = plantedIds.length < PLANT_LIMIT ? [...plantedIds, selected.id] : plantedIds;
-    const newTooltips = { ...(activeChild.seen_tooltips||{}), shop_unlocks: newUnlocks, shop_planted: newPlanted };
-    if (await persistTooltips(newTooltips)) {
-      setSuccessId(selected.id);
-      setTimeout(() => setSuccessId(null), 2400);
-    }
+    setActiveChild(prev => {
+      const u = prev?.seen_tooltips?.shop_unlocks || {};
+      if (u[id]) return prev;                                   // already owned
+      const newUnlocks = { ...u, [id]: { cost, at: Date.now() } };
+      const cur = plantedFrom(prev);
+      const newPlanted = cur.length < PLANT_LIMIT ? [...cur, id] : cur;   // auto-plant if room
+      return { ...prev, seen_tooltips: { ...(prev.seen_tooltips||{}),
+        shop_unlocks: newUnlocks, shop_planted: newPlanted } };
+    });
+    setSuccessId(id);
+    setTimeout(() => setSuccessId(null), 2400);
     setBuying(false);
     setSelectedId(null);
   };
 
-  /* Plant or remove an owned item from the garden (respects the 9-item limit). */
-  const togglePlant = async (id) => {
-    if (saving) return;
-    const isPlanted = plantedIds.includes(id);
-    if (!isPlanted && plantedIds.length >= PLANT_LIMIT) return;   // garden full
-    const newPlanted = isPlanted ? plantedIds.filter(x => x !== id) : [...plantedIds, id];
-    const newTooltips = { ...(activeChild.seen_tooltips||{}), shop_planted: newPlanted };
-    setSaving(true);
-    await persistTooltips(newTooltips);
-    setSaving(false);
+  /* Plant or remove an owned item from the garden (functional → safe for rapid taps). */
+  const togglePlant = (id) => {
+    setActiveChild(prev => {
+      const cur = plantedFrom(prev);
+      const isPlanted = cur.includes(id);
+      if (!isPlanted && cur.length >= PLANT_LIMIT) return prev;  // garden full
+      const newPlanted = isPlanted ? cur.filter(x => x !== id) : [...cur, id];
+      return { ...prev, seen_tooltips: { ...(prev.seen_tooltips||{}), shop_planted: newPlanted } };
+    });
   };
 
   /* ── Item card for purchasable (unlocked stage) items ── */
@@ -1270,7 +1296,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
     return (
       <button
         onClick={() => { if (!blocked) togglePlant(item.id); }}
-        disabled={blocked || saving}
+        disabled={blocked}
         style={{
           background: isPlanted ? `${item.color}1F` : "#fff",
           border:`2px solid ${isPlanted ? item.color : "#e6e6e6"}`,

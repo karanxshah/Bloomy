@@ -1577,11 +1577,11 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
             );
           });
 
-          // GROUND back row — slightly up the hill and smaller, drawn behind the front row.
+          // GROUND back row — same ground line, just smaller and drawn behind the front row.
           back.forEach((id, i) => {
             backEls.push(
               <GardenItemSVG key={`gb_${id}_${i}`} id={id} cx={w*spread(i, back.length || 1, 0.16)}
-                groundY={groundY - h*0.045} scale={SCALES[metaOf(id).size]*0.78}
+                groundY={groundY} scale={SCALES[metaOf(id).size]*0.8}
                 w={w} h={h} idx={i}/>
             );
           });
