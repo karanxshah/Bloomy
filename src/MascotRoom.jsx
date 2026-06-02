@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { GrowthMascot, GardenScene, GardenItemSVG, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
+import { GrowthMascot, GardenScene, GardenItemSVG, GARDEN_RENDER_META, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
 
 /* ── Activity-based expression tier ─────────────────────────────────
    Driven by days with ANY activity in the last 7 days.
@@ -1064,21 +1064,14 @@ const GardenPreview = ({ ownedIds, stageId }) => {
   const [skyBot, skyTop] = skyColors[stageId] || skyColors[0];
   const PW = 320; const PH = 100;
   const groundY = PH * 0.6;
-  const POSITIONS = [0.08,0.18,0.78,0.88,0.12,0.82,0.24,0.72,0.30];
-  const ITEM_SIZES_MAP = {
-    g_cherry:"xl",g_cherry2:"xl",g_cherry3:"xl",g_cherry4:"xl",g_cherry5:"xl",
-    g_treehouse:"xl",g_treehouse2:"xl",g_treehouse3:"xl",
-    g_windmill:"xl",g_windmill2:"xl",g_windmill3:"xl",
-    g_fountain:"xl",g_fountain2:"xl",g_fountain3:"xl",g_fountain4:"xl",
-    g_fern3:"xl",g_bamboo3:"xl",g_rainbow2:"xl",g_rainbow3:"xl",g_rainbow4:"xl",
-    g_butterfly4:"lg",g_gnome5:"xl",g_mushroom5:"xl",
-    g_bamboo:"lg",g_bamboo2:"lg",g_sunflower:"lg",g_sunflower2:"lg",g_sunflower3:"lg",
-    g_rainbow:"lg",g_rose3:"lg",g_rose4:"lg",g_rose5:"lg",g_rose6:"xl",
-    g_beehive2:"lg",g_mushroom3:"lg",g_mushroom4:"md",g_fireflies2:"lg",
-    g_butterfly5:"md",g_gnome4:"md",
-  };
+  const GROUND_X = [0.10,0.90,0.24,0.76,0.40,0.62,0.06,0.94,0.32];
+  const AIR_X    = [0.34,0.64,0.18,0.82,0.50];
+  const SKY_X    = [0.24,0.72,0.46,0.34,0.62];
   const ITEM_SCALES_MAP = { xl:0.36, lg:0.30, md:0.26, sm:0.22 };
+  const metaOf = (id) => GARDEN_RENDER_META[id] || { size:"md", layer:"ground" };
   const displayIds = ownedIds.slice(0,9);
+  const pv = { ground:[], air:[], sky:[] };
+  displayIds.forEach((id) => { pv[metaOf(id).layer].push(id); });
 
   return (
     <div style={{borderRadius:14,overflow:"hidden",height:PH,marginBottom:14,
@@ -1101,13 +1094,23 @@ const GardenPreview = ({ ownedIds, stageId }) => {
             Plant your first item to see your garden here!
           </text>
         ) : (
-          displayIds.map((id, i) => {
-            const sz = ITEM_SIZES_MAP[id] || "md";
-            const scale = ITEM_SCALES_MAP[sz];
-            const cx = PW * POSITIONS[i % POSITIONS.length];
-            return <GardenItemSVG key={id} id={id} cx={cx} groundY={groundY}
-              scale={scale} w={PW} h={PH} idx={i}/>;
-          })
+          <>
+            {pv.sky.map((id, i) => (
+              <GardenItemSVG key={`sky_${id}`} id={id} cx={PW*SKY_X[i%SKY_X.length]}
+                groundY={PH*(0.34+(i%2)*0.06)} scale={ITEM_SCALES_MAP[metaOf(id).size]}
+                w={PW} h={PH} idx={200+i}/>
+            ))}
+            {pv.ground.map((id, i) => (
+              <GardenItemSVG key={`gnd_${id}`} id={id} cx={PW*GROUND_X[i%GROUND_X.length]}
+                groundY={groundY} scale={ITEM_SCALES_MAP[metaOf(id).size]}
+                w={PW} h={PH} idx={i}/>
+            ))}
+            {pv.air.map((id, i) => (
+              <GardenItemSVG key={`air_${id}`} id={id} cx={PW*AIR_X[i%AIR_X.length]}
+                groundY={groundY-PH*(0.14+(i%2)*0.06)} scale={ITEM_SCALES_MAP[metaOf(id).size]}
+                w={PW} h={PH} idx={100+i}/>
+            ))}
+          </>
         )}
         {Array.from({length:12},(_,i)=>({x:(i/11)*PW,bh:PH*0.07+Math.sin(i*1.4)*PH*0.03})).map((b,i)=>(
           <path key={i}
