@@ -1367,7 +1367,7 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
   const skyBot  = dark ? "#1a2e40" : "#DCF5E0";
   const grass   = ["#43A047","#66BB6A","#81C784","#A5D6A7"];
 
-  const groundY = h * 0.62;
+  const groundY = h * 0.56;
 
   /* Grass blades — fixed density, fixed colour. Kept short so they
      carpet the ground without towering over the planted items. */
@@ -1526,85 +1526,46 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
           </g>
         )}
 
-        {/* ── Purchased garden items — layer-aware placement ──
-             Each item knows whether it belongs on the ground, in the
-             air just above the grass, or high up in the sky.  Ground items
-             sit ON the grass in two evenly-spaced depth rows (tall things
-             recede to the back); flat items like the Koi Pond always stay
-             on the front row so nothing looks like it is floating. */}
+        {/* ── Purchased garden items — placed to FRAME the mascot ──
+             The mascot stands centred in front of the scene, so every item is
+             positioned in the visible left/right side zones (never the centre
+             column) and on the ground line / sky band that stays on-screen on
+             phones. Nothing is hidden behind the mascot or clipped off-screen. */}
         {gardenItems.length > 0 && (() => {
           const SCALES = { xl:1.0, lg:0.85, md:0.72, sm:0.62 };
           const sizeOrder = { xl:0, lg:1, md:2, sm:3 };
           const metaOf = (id) => GARDEN_RENDER_META[id] || { size:"md", layer:"ground" };
-          // Flat / water / structured items read badly when lifted — keep them up front.
-          const KEEP_FRONT = { g_fountain:1, g_fountain2:1, g_fountain3:1, g_fountain4:1,
-            g_fireflies:1, g_fireflies3:1, g_mushroom2:1, g_ladybug3:1, g_cactus2:1, g_birdbath:1 };
 
-          // Split the owned items into their placement layers.
-          const ground = [], air = [], sky = [];
-          gardenItems.forEach((id) => {
-            const layer = metaOf(id).layer;
-            if (layer === "air") air.push(id);
-            else if (layer === "sky") sky.push(id);
-            else ground.push(id);
-          });
-
-          // Evenly spread `n` items across the usable width, nudging any that
-          // would land on the mascot in the centre.
-          const spread = (idx, n, pad) => {
-            let f = 0.06 + 0.88 * ((idx + 0.5) / n);
-            if (showMascot && f > 0.40 && f < 0.60) f = f < 0.5 ? f - pad : f + pad;
-            return f;
+          // Side zones that frame the centred mascot — the centre (~0.30–0.70) stays clear.
+          // t=0 is the OUTER edge, t=1 borders the mascot, so the biggest items sit outermost.
+          const LZONE = [0.07, 0.30], RZONE = [0.70, 0.93];
+          const sideX = (i, n) => {
+            const onLeft = i % 2 === 0;
+            const k = Math.floor(i / 2);
+            const count = onLeft ? Math.ceil(n / 2) : Math.floor(n / 2);
+            const t = count > 1 ? k / (count - 1) : 0.5;
+            const [a, b] = onLeft ? LZONE : RZONE;
+            return onLeft ? a + t * (b - a) : b - t * (b - a);
           };
+          const bySize = (arr) => [...arr].sort((a,b) => sizeOrder[metaOf(a).size] - sizeOrder[metaOf(b).size]);
 
-          // Decide each ground item's depth row. Tall items (xl/lg) recede to
-          // the back unless they're flagged as KEEP_FRONT.
-          const ordered = [...ground].sort((a,b) => sizeOrder[metaOf(a).size] - sizeOrder[metaOf(b).size]);
-          const back = [], front = [];
-          ordered.forEach((id) => {
-            const big = sizeOrder[metaOf(id).size] <= 1; // xl or lg
-            (big && !KEEP_FRONT[id] ? back : front).push(id);
-          });
+          // Give every planted item its OWN column (biggest outermost), so no two items
+          // share an x and nothing hides behind another. Layer decides the height band.
+          const ordered = bySize(gardenItems);
+          const xOf = {};
+          ordered.forEach((id, gi) => { xOf[id] = w * sideX(gi, ordered.length); });
+          const baseYOf = (id) => { const l = metaOf(id).layer;
+            return l === "sky" ? h*0.33 : l === "air" ? groundY - h*0.14 : groundY; };
+          const scaleOf = (id) => { const l = metaOf(id).layer; const sc = SCALES[metaOf(id).size];
+            return l === "sky" ? sc*0.8 : sc; };
 
-          const skyEls = [], backEls = [], frontEls = [], airEls = [];
-
-          // SKY — high up, drawn first so it sits behind everything.
-          sky.forEach((id, i) => {
-            skyEls.push(
-              <GardenItemSVG key={`sky_${id}_${i}`} id={id} cx={w*spread(i, sky.length || 1, 0)}
-                groundY={h * (0.16 + (i % 3) * 0.05)} scale={SCALES[metaOf(id).size]}
-                w={w} h={h} idx={200+i}/>
-            );
-          });
-
-          // GROUND back row — same ground line, just smaller and drawn behind the front row.
-          back.forEach((id, i) => {
-            backEls.push(
-              <GardenItemSVG key={`gb_${id}_${i}`} id={id} cx={w*spread(i, back.length || 1, 0.16)}
-                groundY={groundY} scale={SCALES[metaOf(id).size]*0.8}
-                w={w} h={h} idx={i}/>
-            );
-          });
-
-          // GROUND front row — planted right on the grass at full size.
-          front.forEach((id, i) => {
-            frontEls.push(
-              <GardenItemSVG key={`gf_${id}_${i}`} id={id} cx={w*spread(i, front.length || 1, 0.16)}
-                groundY={groundY} scale={SCALES[metaOf(id).size]}
-                w={w} h={h} idx={50+i}/>
-            );
-          });
-
-          // AIR — hovers just above the (short) grass, in front of ground items.
-          air.forEach((id, i) => {
-            airEls.push(
-              <GardenItemSVG key={`air_${id}_${i}`} id={id} cx={w*spread(i, air.length || 1, 0.12)}
-                groundY={groundY - h * (0.07 + (i % 3) * 0.035)} scale={SCALES[metaOf(id).size]}
-                w={w} h={h} idx={100+i}/>
-            );
-          });
-
-          return [...skyEls, ...backEls, ...frontEls, ...airEls];
+          // Draw far→near (sky behind ground behind air) for correct depth.
+          const sky = [], ground = [], air = [];
+          ordered.forEach(id => { const l = metaOf(id).layer; (l==="sky"?sky:l==="air"?air:ground).push(id); });
+          return [...sky, ...ground, ...air].map((id, di) => (
+            <GardenItemSVG key={`it_${id}`} id={id} cx={xOf[id]} groundY={baseYOf(id)}
+              scale={scaleOf(id)} w={w} h={h} idx={di}/>
+          ));
         })()}
 
         {/* Front grass fringe — always on top, kept low */}

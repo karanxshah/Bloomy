@@ -1890,7 +1890,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
           />
           {/* Fade to app bg at bottom so cards transition cleanly */}
           <div style={{
-            position:"absolute", bottom:0, left:0, right:0, height:"50%",
+            position:"absolute", bottom:0, left:0, right:0, height:"28%",
             background:`linear-gradient(to bottom, transparent, ${C.bg} 100%)`,
           }}/>
         </div>
