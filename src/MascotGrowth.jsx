@@ -959,7 +959,7 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx=0 }) => {
   },
 
   g_fountain2: () => {                               // KOI POND — flat on the ground!
-    const px=cx, py=gY-h*0.04*s, rw=30*s, rh=11*s;
+    const rw=30*s, rh=11*s, px=cx, py=gY-rh;   // rim's lowest point sits on the ground line
     return <g key={suf}>
       <defs><radialGradient id={uid('w')} cx="50%" cy="40%" r="70%"><stop offset="0%" stopColor="#B3E5FC"/><stop offset="100%" stopColor="#0288D1"/></radialGradient></defs>
       {ring(11,i=>{const a=i*32.7*Math.PI/180; return <ellipse key={i} cx={px+Math.cos(a)*rw} cy={py+Math.sin(a)*rh} rx={4*s} ry={3*s} fill="#90A4AE"/>;})}
@@ -982,8 +982,9 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx=0 }) => {
   },
 
   g_fireflies: () => {                               // Firefly Jar
-    const jx=cx, jy=gY-h*0.14*s;
+    const jx=cx, jy=gY;
     return <g key={suf}>
+      <ellipse cx={jx} cy={jy} rx={9*s} ry={3*s} fill="#000" opacity="0.1"/>
       <rect x={jx-8*s} y={jy-h*0.12*s} width={16*s} height={h*0.12*s} rx={5*s} fill="#E8F5E9" opacity="0.9" stroke="#A5D6A7" strokeWidth={1.5*s}/>
       <rect x={jx-5*s} y={jy-h*0.15*s} width={10*s} height={h*0.04*s} rx={2*s} fill="#C8E6C9" stroke="#A5D6A7" strokeWidth={1.5*s}/>
       <rect x={jx-6*s} y={jy-h*0.165*s} width={12*s} height={4*s} rx={2*s} fill="#8D6E63"/>
@@ -1059,6 +1060,8 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx=0 }) => {
     const fx=cx;
     return <g key={suf}>
       <defs><linearGradient id={uid('c')} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#E1F5FE"/><stop offset="100%" stopColor="#4FC3F7"/></linearGradient></defs>
+      <ellipse cx={fx} cy={gY} rx={15*s} ry={5*s} fill="#90A4AE"/>
+      <rect x={fx-5*s} y={gY-h*0.16*s} width={10*s} height={h*0.16*s} rx={3*s} fill="#B0BEC5"/>
       <ellipse cx={fx} cy={gY-h*0.16*s} rx={20*s} ry={7*s} fill="#B3E5FC"/>
       <ellipse cx={fx} cy={gY-h*0.16*s} rx={17*s} ry={5*s} fill="#81D4FA"/>
       <path d={`M${fx-5*s},${gY-h*0.16*s} L${fx-3*s},${gY-h*0.34*s} L${fx+3*s},${gY-h*0.34*s} L${fx+5*s},${gY-h*0.16*s} Z`} fill={`url(#${uid('c')})`} stroke="#fff" strokeWidth={s} opacity="0.9"/>
@@ -1204,6 +1207,8 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx=0 }) => {
     const fx=cx;
     const cols=["#EF5350","#FFD54F","#66BB6A","#4FC3F7","#CE93D8"];
     return <g key={suf}>
+      <ellipse cx={fx} cy={gY} rx={15*s} ry={5*s} fill="#90A4AE"/>
+      <rect x={fx-5*s} y={gY-h*0.16*s} width={10*s} height={h*0.16*s} rx={3*s} fill="#B0BEC5"/>
       <ellipse cx={fx} cy={gY-h*0.16*s} rx={20*s} ry={7*s} fill="#B0BEC5"/>
       <ellipse cx={fx} cy={gY-h*0.16*s} rx={17*s} ry={5*s} fill="#E1F5FE"/>
       <rect x={fx-4*s} y={gY-h*0.32*s} width={8*s} height={h*0.16*s} rx={3*s} fill="#CFD8DC"/>
@@ -1256,8 +1261,9 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx=0 }) => {
   },
 
   g_fireflies3: () => {                              // Galaxy Jar
-    const jx=cx, jy=gY-h*0.16*s;
+    const jx=cx, jy=gY-16*s;                          // jar bottom rests on the ground line
     return <g key={suf}>
+      <ellipse cx={jx} cy={gY} rx={12*s} ry={3*s} fill="#000" opacity="0.12"/>
       <defs><radialGradient id={uid('gx')} cx="50%" cy="45%" r="55%"><stop offset="0%" stopColor="#7C4DFF"/><stop offset="60%" stopColor="#311B92"/><stop offset="100%" stopColor="#1A0E3D"/></radialGradient></defs>
       <ellipse cx={jx} cy={jy} rx={13*s} ry={16*s} fill={`url(#${uid('gx')})`} stroke="#B39DDB" strokeWidth={1.6*s}/>
       <path d={`M${jx-11*s},${jy+2*s} Q${jx},${jy-4*s} ${jx+11*s},${jy+6*s}`} fill="none" stroke="#B388FF" strokeWidth={2.4*s} opacity="0.6"/>
@@ -1363,15 +1369,16 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
 
   const groundY = h * 0.62;
 
-  /* Grass blades — fixed density, fixed colour */
-  const blades = Array.from({length:28}, (_,i) => ({
-    x: (i/27) * w,
-    stemH: h*(0.12 + (i%5)*0.04),
-    width: 3 + (i%3)*1.5,
+  /* Grass blades — fixed density, fixed colour. Kept short so they
+     carpet the ground without towering over the planted items. */
+  const blades = Array.from({length:34}, (_,i) => ({
+    x: (i/33) * w,
+    stemH: h*(0.028 + (i%4)*0.011),
+    width: 2.5 + (i%3)*1,
     sway: i%2===0 ? "gSwayL" : "gSwayR",
     delay: `${(i*0.14%2.5).toFixed(2)}s`,
     color: grass[i%grass.length],
-    opacity: 0.55 + (i%4)*0.1,
+    opacity: 0.5 + (i%4)*0.1,
   }));
 
   /* Mascot body colours — unchanged */
@@ -1521,13 +1528,17 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
 
         {/* ── Purchased garden items — layer-aware placement ──
              Each item knows whether it belongs on the ground, in the
-             air just above the grass, or high up in the sky.  We place
-             each layer on its own baseline so a Koi Pond sits on the
-             grass while a Sky Palace floats among the clouds. */}
+             air just above the grass, or high up in the sky.  Ground items
+             sit ON the grass in two evenly-spaced depth rows (tall things
+             recede to the back); flat items like the Koi Pond always stay
+             on the front row so nothing looks like it is floating. */}
         {gardenItems.length > 0 && (() => {
           const SCALES = { xl:1.0, lg:0.85, md:0.72, sm:0.62 };
           const sizeOrder = { xl:0, lg:1, md:2, sm:3 };
           const metaOf = (id) => GARDEN_RENDER_META[id] || { size:"md", layer:"ground" };
+          // Flat / water / structured items read badly when lifted — keep them up front.
+          const KEEP_FRONT = { g_fountain:1, g_fountain2:1, g_fountain3:1, g_fountain4:1,
+            g_fireflies:1, g_fireflies3:1, g_mushroom2:1, g_ladybug3:1, g_cactus2:1, g_birdbath:1 };
 
           // Split the owned items into their placement layers.
           const ground = [], air = [], sky = [];
@@ -1538,71 +1549,73 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
             else ground.push(id);
           });
 
-          // x-fractions fan outward from the edges toward the middle so
-          // the scene fills evenly and the centre stays clear for the mascot.
-          const GROUND_X = [0.10,0.90,0.22,0.78,0.34,0.66,0.04,0.95,0.16,0.84,0.28,0.72,0.46,0.56];
-          const AIR_X    = [0.30,0.66,0.18,0.80,0.48,0.10,0.90];
-          const SKY_X    = [0.22,0.74,0.46,0.32,0.62,0.12,0.86];
-
-          const clearCentre = (xFrac, pad) => {
-            if (showMascot && xFrac > 0.40 && xFrac < 0.60) {
-              return xFrac < 0.5 ? xFrac - pad : xFrac + pad;
-            }
-            return xFrac;
+          // Evenly spread `n` items across the usable width, nudging any that
+          // would land on the mascot in the centre.
+          const spread = (idx, n, pad) => {
+            let f = 0.06 + 0.88 * ((idx + 0.5) / n);
+            if (showMascot && f > 0.40 && f < 0.60) f = f < 0.5 ? f - pad : f + pad;
+            return f;
           };
 
-          const skyEls = [], groundEls = [], airEls = [];
+          // Decide each ground item's depth row. Tall items (xl/lg) recede to
+          // the back unless they're flagged as KEEP_FRONT.
+          const ordered = [...ground].sort((a,b) => sizeOrder[metaOf(a).size] - sizeOrder[metaOf(b).size]);
+          const back = [], front = [];
+          ordered.forEach((id) => {
+            const big = sizeOrder[metaOf(id).size] <= 1; // xl or lg
+            (big && !KEEP_FRONT[id] ? back : front).push(id);
+          });
 
-          // SKY — drawn first so it sits behind everything (it's far away).
+          const skyEls = [], backEls = [], frontEls = [], airEls = [];
+
+          // SKY — high up, drawn first so it sits behind everything.
           sky.forEach((id, i) => {
-            const xFrac = SKY_X[i % SKY_X.length];
-            const sz = metaOf(id).size;
-            const baseY = h * (0.34 + (i % 3) * 0.05);
             skyEls.push(
-              <GardenItemSVG key={`sky_${id}_${i}`} id={id} cx={w*xFrac}
-                groundY={baseY} scale={SCALES[sz]} w={w} h={h} idx={200+i}/>
+              <GardenItemSVG key={`sky_${id}_${i}`} id={id} cx={w*spread(i, sky.length || 1, 0)}
+                groundY={h * (0.16 + (i % 3) * 0.05)} scale={SCALES[metaOf(id).size]}
+                w={w} h={h} idx={200+i}/>
             );
           });
 
-          // GROUND — biggest items toward the back (higher, slightly smaller),
-          // smaller items toward the front, in two rows of depth.
-          [...ground]
-            .sort((a,b) => sizeOrder[metaOf(a).size] - sizeOrder[metaOf(b).size])
-            .forEach((id, i) => {
-              const xFrac = clearCentre(GROUND_X[i % GROUND_X.length], 0.14);
-              const sz = metaOf(id).size;
-              const backRow = i % 2 === 1;
-              const baseY = backRow ? groundY - h*0.055 : groundY;
-              const depth = backRow ? 0.82 : 1.0;
-              groundEls.push(
-                <GardenItemSVG key={`gnd_${id}_${i}`} id={id} cx={w*xFrac}
-                  groundY={baseY} scale={SCALES[sz]*depth} w={w} h={h} idx={i}/>
-              );
-            });
+          // GROUND back row — slightly up the hill and smaller, drawn behind the front row.
+          back.forEach((id, i) => {
+            backEls.push(
+              <GardenItemSVG key={`gb_${id}_${i}`} id={id} cx={w*spread(i, back.length || 1, 0.16)}
+                groundY={groundY - h*0.045} scale={SCALES[metaOf(id).size]*0.78}
+                w={w} h={h} idx={i}/>
+            );
+          });
 
-          // AIR — floats just above the grass, in front of ground items.
+          // GROUND front row — planted right on the grass at full size.
+          front.forEach((id, i) => {
+            frontEls.push(
+              <GardenItemSVG key={`gf_${id}_${i}`} id={id} cx={w*spread(i, front.length || 1, 0.16)}
+                groundY={groundY} scale={SCALES[metaOf(id).size]}
+                w={w} h={h} idx={50+i}/>
+            );
+          });
+
+          // AIR — hovers just above the (short) grass, in front of ground items.
           air.forEach((id, i) => {
-            const xFrac = clearCentre(AIR_X[i % AIR_X.length], 0.12);
-            const sz = metaOf(id).size;
-            const baseY = groundY - h * (0.15 + (i % 3) * 0.05);
             airEls.push(
-              <GardenItemSVG key={`air_${id}_${i}`} id={id} cx={w*xFrac}
-                groundY={baseY} scale={SCALES[sz]} w={w} h={h} idx={100+i}/>
+              <GardenItemSVG key={`air_${id}_${i}`} id={id} cx={w*spread(i, air.length || 1, 0.12)}
+                groundY={groundY - h * (0.07 + (i % 3) * 0.035)} scale={SCALES[metaOf(id).size]}
+                w={w} h={h} idx={100+i}/>
             );
           });
 
-          return [...skyEls, ...groundEls, ...airEls];
+          return [...skyEls, ...backEls, ...frontEls, ...airEls];
         })()}
 
-        {/* Front grass fringe — always on top */}
-        {Array.from({length:16},(_,i)=>({x:(i/15)*w, bh:h*0.08+Math.sin(i*1.3)*h*0.05})).map((b,i)=>(
+        {/* Front grass fringe — always on top, kept low */}
+        {Array.from({length:20},(_,i)=>({x:(i/19)*w, bh:h*0.03+Math.sin(i*1.3)*h*0.014})).map((b,i)=>(
           <g key={i} style={{animation:`${i%2===0?"gSwayL":"gSwayR"} ${1.8+i*0.1}s ease-in-out infinite`,
             animationDelay:`${(i*0.13%2).toFixed(2)}s`, transformOrigin:`${b.x}px ${groundY+h*0.12}px`}}>
             <path d={`M${b.x},${groundY+h*0.14}
-              C${b.x-4},${groundY+h*0.14-b.bh*0.55}
-               ${b.x+3},${groundY+h*0.14-b.bh*0.82}
-               ${b.x+3},${groundY+h*0.14-b.bh}`}
-              stroke={grass[0]} strokeWidth="3.5" fill="none" strokeLinecap="round" opacity="0.85"/>
+              C${b.x-3},${groundY+h*0.14-b.bh*0.55}
+               ${b.x+2},${groundY+h*0.14-b.bh*0.82}
+               ${b.x+2},${groundY+h*0.14-b.bh}`}
+              stroke={grass[0]} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.8"/>
           </g>
         ))}
 
