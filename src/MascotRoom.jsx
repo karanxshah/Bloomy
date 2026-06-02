@@ -1184,9 +1184,16 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
                                  : Object.keys(u).slice(0, PLANT_LIMIT);
   };
 
-  /* One persistence pipeline: whenever the garden data changes locally, mirror it to
-     the children list immediately and write to the DB (debounced so a flurry of taps
-     becomes a single write). A flush on unmount covers closing the shop mid-debounce. */
+  /* Reliable DB write. supabase-js queries are lazy thenables — they only fire the
+     request when awaited or .then()-ed, so we MUST chain .then() here or nothing saves. */
+  const saveTips = (childId, tips) =>
+    supabase.from("children").update({ seen_tooltips: tips }).eq("id", childId)
+      .then(({ error }) => { if (error) console.warn("Garden save failed:", error.message); },
+            (err) => console.warn("Garden save error:", err));
+
+  /* Persistence pipeline: mirror local garden changes into the children list right away,
+     and write to the DB (debounced so a flurry of plant/remove taps is a single write).
+     An unmount flush covers closing the shop before the debounce fires. */
   const tipKey = JSON.stringify({
     p: activeChild.seen_tooltips?.shop_planted ?? null,
     o: ownedIds.length,
@@ -1195,41 +1202,38 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
   persistRef.current = { id: activeChild.id, tips: activeChild.seen_tooltips };
   const mounted = useRef(false);
   useEffect(() => {
-    if (!mounted.current) { mounted.current = true; return; }   // don't write on first render
+    if (!mounted.current) { mounted.current = true; return; }   // skip the initial render
     const { id, tips } = persistRef.current;
     setChildren(cs => cs.map(c => c.id===id ? { ...c, seen_tooltips: tips } : c));
-    const t = setTimeout(() => {
-      supabase.from("children").update({ seen_tooltips: tips }).eq("id", id);
-    }, 350);
+    const t = setTimeout(() => saveTips(id, tips), 300);
     return () => clearTimeout(t);
   }, [tipKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Flush the latest garden state to the DB when the shop closes.
-  useEffect(() => () => {
-    const { id, tips } = persistRef.current;
-    if (mounted.current) supabase.from("children").update({ seen_tooltips: tips }).eq("id", id);
+  useEffect(() => () => {                                        // flush on close
+    if (mounted.current) saveTips(persistRef.current.id, persistRef.current.tips);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBuy = () => {
     if (!selected || availableSeeds < selected.cost || buying) return;
     const id = selected.id, cost = selected.cost;
+    const u = getUnlocks(activeChild);
+    if (u[id]) return;                                          // already owned
+    const newUnlocks = { ...u, [id]: { cost, at: Date.now() } };
+    const cur = plantedFrom(activeChild);
+    const newPlanted = cur.length < PLANT_LIMIT ? [...cur, id] : cur;   // auto-plant if room
+    const newTips = { ...(activeChild.seen_tooltips||{}), shop_unlocks: newUnlocks, shop_planted: newPlanted };
     setBuying(true);
-    setActiveChild(prev => {
-      const u = prev?.seen_tooltips?.shop_unlocks || {};
-      if (u[id]) return prev;                                   // already owned
-      const newUnlocks = { ...u, [id]: { cost, at: Date.now() } };
-      const cur = plantedFrom(prev);
-      const newPlanted = cur.length < PLANT_LIMIT ? [...cur, id] : cur;   // auto-plant if room
-      return { ...prev, seen_tooltips: { ...(prev.seen_tooltips||{}),
-        shop_unlocks: newUnlocks, shop_planted: newPlanted } };
-    });
+    setActiveChild(prev => ({ ...prev, seen_tooltips: newTips }));
+    setChildren(cs => cs.map(c => c.id===activeChild.id ? { ...c, seen_tooltips: newTips } : c));
+    saveTips(activeChild.id, newTips);                          // purchases save immediately
     setSuccessId(id);
     setTimeout(() => setSuccessId(null), 2400);
     setBuying(false);
     setSelectedId(null);
   };
 
-  /* Plant or remove an owned item from the garden (functional → safe for rapid taps). */
+  /* Plant or remove an owned item from the garden (functional → safe for rapid taps;
+     the debounced effect above persists the result). */
   const togglePlant = (id) => {
     setActiveChild(prev => {
       const cur = plantedFrom(prev);
