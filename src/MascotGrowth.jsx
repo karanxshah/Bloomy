@@ -563,9 +563,9 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx=0 }) => {
   },
 
   g_ladybug2: () => {                                // Snail
-    const sx=cx, sy=gY-6*s;
+    const sx=cx, sy=gY;
     return <g key={suf}>
-      <ellipse cx={sx-2*s} cy={gY-2*s} rx={16*s} ry={4*s} fill="#A1887F" opacity="0.5"/>
+      <ellipse cx={sx-2*s} cy={gY} rx={16*s} ry={4*s} fill="#A1887F" opacity="0.5"/>
       <path d={`M${sx-12*s},${sy} q${-3*s},${-9*s} ${8*s},${-10*s} q${10*s},${0} ${9*s},${9*s}`} stroke="#90A4AE" strokeWidth={3*s} fill="#CFD8DC" strokeLinecap="round"/>
       <g><animate attributeName="opacity" values="1;1" dur="1s"/>
         {/* spiral shell */}
@@ -959,7 +959,7 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx=0 }) => {
   },
 
   g_fountain2: () => {                               // KOI POND — flat on the ground!
-    const rw=30*s, rh=11*s, px=cx, py=gY-rh;   // rim's lowest point sits on the ground line
+    const rw=30*s, rh=11*s, px=cx, py=gY-rh*0.45;   // pond is set INTO the ground
     return <g key={suf}>
       <defs><radialGradient id={uid('w')} cx="50%" cy="40%" r="70%"><stop offset="0%" stopColor="#B3E5FC"/><stop offset="100%" stopColor="#0288D1"/></radialGradient></defs>
       {ring(11,i=>{const a=i*32.7*Math.PI/180; return <ellipse key={i} cx={px+Math.cos(a)*rw} cy={py+Math.sin(a)*rh} rx={4*s} ry={3*s} fill="#90A4AE"/>;})}

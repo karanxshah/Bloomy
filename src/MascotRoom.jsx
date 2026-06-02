@@ -1006,15 +1006,15 @@ const ActionTabs = ({ mascotId, stageId, mascotName, moodLog, score, activityTie
           }}>
             <span style={{fontSize:12}}>🌱</span>
             <span style={{fontFamily:F.b, fontWeight:800, fontSize:12, color:"#fff"}}>
-              {score} seeds
+              {getAvailableSeeds(activeChild, score)} seeds
             </span>
           </div>
 
-          {/* Unlocked items count */}
-          {Object.keys(activeChild.seen_tooltips?.shop_unlocks||{}).length > 0 && (
+          {/* Planted items count */}
+          {getOwnedIds(activeChild).length > 0 && (
             <p style={{fontFamily:F.b,fontWeight:600,fontSize:11,
               color:"rgba(255,255,255,0.8)",margin:0}}>
-              {Object.keys(activeChild.seen_tooltips.shop_unlocks).length} planted 🌿
+              {getPlantedIds(activeChild).length}/{PLANT_LIMIT} planted 🌿
             </p>
           )}
         </button>
@@ -1050,6 +1050,23 @@ const STAGE_SHOP_META = [
   { id:5, name:"Blossoming",  color:"#EC407A", bg:"#FCE4EC",  minScore:180 },
   { id:6, name:"Full Bloom",  color:"#FFD54F", bg:"#FFFDE7",  minScore:260 },
 ];
+
+/* ── Garden ownership / planting helpers ──
+   owned   = every item the child has purchased  (seen_tooltips.shop_unlocks)
+   planted = the subset currently growing in the garden, capped at PLANT_LIMIT
+             (seen_tooltips.shop_planted). For children from before this field
+             existed, we fall back to their first PLANT_LIMIT owned items. */
+const PLANT_LIMIT = 9;
+const getUnlocks   = (child) => child?.seen_tooltips?.shop_unlocks || {};
+const getOwnedIds  = (child) => Object.keys(getUnlocks(child));
+const getPlantedIds = (child) => {
+  const unlocks = getUnlocks(child);
+  const stored  = child?.seen_tooltips?.shop_planted;
+  if (Array.isArray(stored)) return stored.filter(id => unlocks[id]).slice(0, PLANT_LIMIT);
+  return Object.keys(unlocks).slice(0, PLANT_LIMIT);   // back-compat default
+};
+const getSpentSeeds     = (child) => Object.values(getUnlocks(child)).reduce((a,v)=>a+(v?.cost||0),0);
+const getAvailableSeeds = (child, growthScore) => Math.max(0, (growthScore||0) - getSpentSeeds(child));
 
 /* ── Mini SVG garden preview ── */
 const GardenPreview = ({ ownedIds, stageId }) => {
@@ -1129,10 +1146,11 @@ const GardenPreview = ({ ownedIds, stageId }) => {
    Current stage items are purchasable; future stages show a lock.
 ══════════════════════════════════════════════ */
 const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChildren, onClose }) => {
-  const unlocks        = activeChild.seen_tooltips?.shop_unlocks || {};
-  const ownedIds       = Object.keys(unlocks);
-  const spentSeeds     = Object.values(unlocks).reduce((a,v) => a + (v?.cost||0), 0);
-  const availableSeeds = Math.max(0, growthScore - spentSeeds);
+  const unlocks        = getUnlocks(activeChild);
+  const ownedIds       = getOwnedIds(activeChild);
+  const plantedIds     = getPlantedIds(activeChild);
+  const availableSeeds = getAvailableSeeds(activeChild, growthScore);
+  const gardenFull     = plantedIds.length >= PLANT_LIMIT;
 
   /* Current growth stage (0–6) */
   const currentStageId = Math.min(6, STAGE_SHOP_META.reduce(
@@ -1143,6 +1161,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
   const [selectedId, setSelectedId] = useState(null);
   const [buying,     setBuying]     = useState(false);
   const [successId,  setSuccessId]  = useState(null);
+  const [saving,     setSaving]     = useState(false);
 
   const ownedItems   = GARDEN_ITEMS.filter(i => ownedIds.includes(i.id));
   const selected     = GARDEN_ITEMS.find(i => i.id === selectedId) || null;
@@ -1158,20 +1177,41 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
     i => i.stageUnlock <= currentStageId && !ownedIds.includes(i.id) && availableSeeds >= i.cost
   ).length;
 
-  const handleBuy = async () => {
-    if (!selected || availableSeeds < selected.cost || buying) return;
-    setBuying(true);
-    const newUnlocks  = { ...unlocks, [selected.id]: { cost: selected.cost, at: Date.now() } };
-    const newTooltips = { ...(activeChild.seen_tooltips||{}), shop_unlocks: newUnlocks };
+  /* Persist a new seen_tooltips object everywhere it lives (db + both states). */
+  const persistTooltips = async (newTooltips) => {
     const { error } = await supabase.from("children").update({ seen_tooltips: newTooltips }).eq("id", activeChild.id);
     if (!error) {
       setActiveChild(prev => ({ ...prev, seen_tooltips: newTooltips }));
       setChildren(cs => cs.map(c => c.id===activeChild.id ? {...c, seen_tooltips: newTooltips} : c));
+    }
+    return !error;
+  };
+
+  const handleBuy = async () => {
+    if (!selected || availableSeeds < selected.cost || buying) return;
+    setBuying(true);
+    const newUnlocks  = { ...unlocks, [selected.id]: { cost: selected.cost, at: Date.now() } };
+    // Auto-plant the new item if there's still room in the garden.
+    const newPlanted  = plantedIds.length < PLANT_LIMIT ? [...plantedIds, selected.id] : plantedIds;
+    const newTooltips = { ...(activeChild.seen_tooltips||{}), shop_unlocks: newUnlocks, shop_planted: newPlanted };
+    if (await persistTooltips(newTooltips)) {
       setSuccessId(selected.id);
       setTimeout(() => setSuccessId(null), 2400);
     }
     setBuying(false);
     setSelectedId(null);
+  };
+
+  /* Plant or remove an owned item from the garden (respects the 9-item limit). */
+  const togglePlant = async (id) => {
+    if (saving) return;
+    const isPlanted = plantedIds.includes(id);
+    if (!isPlanted && plantedIds.length >= PLANT_LIMIT) return;   // garden full
+    const newPlanted = isPlanted ? plantedIds.filter(x => x !== id) : [...plantedIds, id];
+    const newTooltips = { ...(activeChild.seen_tooltips||{}), shop_planted: newPlanted };
+    setSaving(true);
+    await persistTooltips(newTooltips);
+    setSaving(false);
   };
 
   /* ── Item card for purchasable (unlocked stage) items ── */
@@ -1223,28 +1263,44 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
     );
   };
 
-  /* ── Item card for owned items (My Garden tab) ── */
-  const OwnedItemCard = ({ item }) => (
-    <div style={{
-      background:`${item.color}14`, border:`2px solid ${item.color}44`,
-      borderRadius:16, padding:"12px 8px", textAlign:"center", position:"relative",
-    }}>
-      <div style={{position:"absolute",top:6,right:6,background:C.mint,
-        borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <span style={{color:"#fff",fontSize:9,fontWeight:900}}>✓</span>
-      </div>
-      <div style={{height:72,display:"flex",alignItems:"flex-end",justifyContent:"center",marginBottom:4,overflow:"hidden"}}>
-        <svg viewBox="0 0 80 76" width={80} height={76} style={{overflow:"visible"}}>
-          <GardenItemSVG id={item.id} cx={40} groundY={64} scale={0.52} w={80} h={76} idx={0}/>
-        </svg>
-      </div>
-      <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
-        color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
-      <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:10,color:C.mint,margin:0}}>
-        Planted ✓
-      </p>
-    </div>
-  );
+  /* ── Item card for owned items (My Garden tab) — tap to plant / remove ── */
+  const OwnedItemCard = ({ item }) => {
+    const isPlanted = plantedIds.includes(item.id);
+    const blocked   = !isPlanted && gardenFull;   // can't plant more until something is removed
+    return (
+      <button
+        onClick={() => { if (!blocked) togglePlant(item.id); }}
+        disabled={blocked || saving}
+        style={{
+          background: isPlanted ? `${item.color}1F` : "#fff",
+          border:`2px solid ${isPlanted ? item.color : "#e6e6e6"}`,
+          borderRadius:16, padding:"12px 8px", textAlign:"center", position:"relative",
+          cursor: blocked ? "default" : "pointer",
+          opacity: blocked ? 0.45 : 1,
+          transition:"all 0.18s",
+          boxShadow: isPlanted ? `0 3px 12px ${item.color}33` : "none",
+        }}
+      >
+        <div style={{position:"absolute",top:6,right:6,
+          background: isPlanted ? C.mint : "#d9d4e8",
+          borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{color:"#fff",fontSize:9,fontWeight:900}}>{isPlanted ? "✓" : "+"}</span>
+        </div>
+        <div style={{height:72,display:"flex",alignItems:"flex-end",justifyContent:"center",marginBottom:4,overflow:"hidden",
+          filter: isPlanted ? "none" : "grayscale(0.35)"}}>
+          <svg viewBox="0 0 80 76" width={80} height={76} style={{overflow:"visible"}}>
+            <GardenItemSVG id={item.id} cx={40} groundY={64} scale={0.52} w={80} h={76} idx={0}/>
+          </svg>
+        </div>
+        <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:11,
+          color:C.text,margin:"0 0 2px",lineHeight:1.2}}>{item.label}</p>
+        <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:700,fontSize:10,
+          color: isPlanted ? C.mint : blocked ? "#bbb" : C.purple, margin:0}}>
+          {isPlanted ? "In garden ✓" : blocked ? "Garden full" : "Tap to plant"}
+        </p>
+      </button>
+    );
+  };
 
   /* ── Locked stage teaser card ── */
   const LockedStageCard = ({ stage }) => {
@@ -1328,7 +1384,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
                 </span>
                 {ownedIds.length > 0 && (
                   <span style={{fontFamily:"'Poppins',sans-serif",fontWeight:600,fontSize:12,color:C.mint}}>
-                    · {ownedIds.length}/70 planted
+                    · {plantedIds.length}/{PLANT_LIMIT} in garden · {ownedIds.length} owned
                   </span>
                 )}
               </div>
@@ -1341,7 +1397,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
           </div>
 
           {/* Live garden preview */}
-          <GardenPreview ownedIds={ownedIds} stageId={currentStageId}/>
+          <GardenPreview ownedIds={plantedIds} stageId={currentStageId}/>
 
           {/* Tab switcher */}
           <div style={{display:"flex",background:"#F0EBF8",borderRadius:14,padding:3,marginBottom:16}}>
@@ -1454,14 +1510,25 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
                 </div>
               ) : (
                 <>
-                  <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:13,color:C.muted,
-                    margin:"0 0 14px",textAlign:"center",lineHeight:1.6}}>
-                    {ownedItems.length} of 70 items planted in your garden 🌿
-                  </p>
-                  {/* Group by stage */}
+                  <div style={{
+                    background: gardenFull ? "#FFF4E5" : "#EDE7F6",
+                    borderRadius:14, padding:"10px 14px", marginBottom:16, textAlign:"center",
+                  }}>
+                    <p style={{fontFamily:"'Baloo 2',cursive",fontWeight:800,fontSize:14,
+                      color: gardenFull ? "#E65100" : C.purple, margin:"0 0 2px"}}>
+                      {plantedIds.length} / {PLANT_LIMIT} planted in your garden 🌿
+                    </p>
+                    <p style={{fontFamily:"'Poppins',sans-serif",fontWeight:500,fontSize:12,
+                      color:C.muted, margin:0, lineHeight:1.5}}>
+                      {gardenFull
+                        ? "Your garden is full! Tap a planted item to remove it, then add another."
+                        : "Tap any item to plant it. Tap a planted item to take it out."}
+                    </p>
+                  </div>
+                  {/* Group by stage — every owned item shows as a plant/remove toggle */}
                   {itemsByStage.map(({ stage, items }) => {
-                    const planted = items.filter(i => ownedIds.includes(i.id));
-                    if (planted.length === 0) return null;
+                    const owned = items.filter(i => ownedIds.includes(i.id));
+                    if (owned.length === 0) return null;
                     return (
                       <div key={stage.id}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
@@ -1472,7 +1539,7 @@ const ShopPanel = ({ activeChild, growthScore, supabase, setActiveChild, setChil
                           </div>
                         </div>
                         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:20}}>
-                          {planted.map(item => <OwnedItemCard key={item.id} item={item}/>)}
+                          {owned.map(item => <OwnedItemCard key={item.id} item={item}/>)}
                         </div>
                       </div>
                     );
@@ -1789,7 +1856,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
             size={500}
             dark={false}
             showMascot={false}
-            gardenItems={Object.keys(activeChild.seen_tooltips?.shop_unlocks || {})}
+            gardenItems={getPlantedIds(activeChild)}
           />
           {/* Fade to app bg at bottom so cards transition cleanly */}
           <div style={{
@@ -1836,7 +1903,7 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
               padding:"5px 12px",boxShadow:"0 2px 8px rgba(0,0,0,0.08)"}}>
               <span style={{fontSize:12}}>{["🌱","🌿","🌸","🦋","✨","🌠","👑"][stage.id]}</span>
               <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,color:stage.color,margin:0}}>
-                {score} seeds
+                {getAvailableSeeds(activeChild, score)} seeds
               </p>
             </div>
           </div>
