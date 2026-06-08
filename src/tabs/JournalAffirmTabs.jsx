@@ -65,6 +65,7 @@ export function JournalTab() {
             value={journalText}
             onChange={e=>{setJournalText(e.target.value);setJournalSaved(false);}}
             placeholder="Write anything you want — there are no wrong answers."
+            maxLength={2000}
             style={{
               width:"100%", minHeight:150,
               border:"2px solid #EEE9FF", borderRadius:16,
@@ -78,7 +79,7 @@ export function JournalTab() {
           />
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 20px", borderTop:`1px solid ${C.border}`, marginTop:12 }}>
-          <span style={{ color:C.muted, fontSize:13, fontFamily:F.b, fontWeight:500 }}>{journalText.length} characters</span>
+          <span style={{ color:C.muted, fontSize:13, fontFamily:F.b, fontWeight:500 }}>{journalText.length} / 2000 characters</span>
           <Btn
             onClick={saveJournal}
             disabled={!journalText.trim()||journalSaved}
