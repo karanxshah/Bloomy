@@ -1,4 +1,4 @@
-import { F } from "../constants.js";
+import { F, RADIUS, SHADOW, SPACE, TYPE, EASE } from "../constants.js";
 
 export const FontLoader = () => (
   <style>{`
@@ -96,8 +96,8 @@ export const MoodFace = ({ type, size=44, active }) => {
 export const Card = ({children, style, bg, shadow}) => (
   <div style={{
     background: bg || "#fff",
-    borderRadius:20, padding:"22px 20px",
-    boxShadow: shadow || "0 2px 18px rgba(124,77,255,0.09)",
+    borderRadius:RADIUS.lg, padding:"22px 20px",
+    boxShadow: shadow || SHADOW.e1,
     marginBottom:14, ...style}}>
     {children}
   </div>
@@ -107,13 +107,13 @@ export const Btn = ({children,onClick,color,textColor,style,small,icon,disabled,
   <button onClick={onClick} disabled={!!disabled||!!loading} style={{
     background:disabled||loading?"#e0e0e0":(color||"#7C4DFF"),
     color:disabled||loading?"#aaa":(textColor||"#fff"),
-    border:"none",borderRadius:50,
+    border:"none",borderRadius:RADIUS.pill,
     padding:small?"10px 22px":"15px 34px",
     fontSize:small?14:16,fontWeight:700,fontFamily:F.b,
     cursor:disabled||loading?"not-allowed":"pointer",
     boxShadow:disabled||loading?"none":`0 4px 14px ${color||"#7C4DFF"}44`,
-    transition:"transform 0.12s",
-    display:"inline-flex",alignItems:"center",gap:8,letterSpacing:0.2,...style,
+    transition:`transform 0.12s ${EASE.pop}`,
+    display:"inline-flex",alignItems:"center",gap:SPACE.sm,letterSpacing:0.2,...style,
   }}
     onMouseDown={e=>{if(!disabled&&!loading)e.currentTarget.style.transform="scale(0.95)";}}
     onMouseUp={e=>{e.currentTarget.style.transform="scale(1)";}}
@@ -124,13 +124,12 @@ export const Btn = ({children,onClick,color,textColor,style,small,icon,disabled,
 );
 
 export const Label = ({children, color}) => (
-  <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:color||"#9B8DB5",
-    letterSpacing:1.3,textTransform:"uppercase",marginBottom:10}}>{children}</p>
+  <p style={{...TYPE.label, color:color||"#9B8DB5", marginBottom:10}}>{children}</p>
 );
 
 export const TextInput = ({value,onChange,placeholder,type="text",style}) => (
   <input value={value} onChange={onChange} placeholder={placeholder} type={type}
-    style={{width:"100%",padding:"13px 18px",borderRadius:50,
+    style={{width:"100%",padding:"13px 18px",borderRadius:RADIUS.pill,
       border:"2px solid #EEE9FF",fontSize:16,fontFamily:F.b,
       fontWeight:500,color:"#2D2040",background:"#fff",...style}}
     onFocus={e=>e.target.style.border="2px solid #7C4DFF"}
@@ -165,8 +164,8 @@ export const Tooltip = ({ text, seen, onDismiss, theme }) => {
   return (
     <div style={{
       background: bg, border: `2px solid ${purple}`,
-      borderRadius: 16, padding: "12px 16px",
-      marginBottom: 12, position: "relative",
+      borderRadius: RADIUS.md, padding: "12px 16px",
+      marginBottom: SPACE.md, position: "relative",
       animation: "tooltipIn 0.35s ease forwards",
       boxShadow: `0 4px 20px ${purple}33`,
     }}>
@@ -194,7 +193,7 @@ export const Toast = ({ message, type="error", visible }) => {
   return (
     <div style={{
       position:"fixed",top:24,left:"50%",transform:"translateX(-50%)",
-      background:bg,color:"#fff",borderRadius:50,padding:"12px 20px",
+      background:bg,color:"#fff",borderRadius:RADIUS.pill,padding:"12px 20px",
       fontFamily:F.b,fontWeight:600,fontSize:14,zIndex:9999,
       boxShadow:"0 4px 20px rgba(0,0,0,0.25)",
       animation:"slideInUp 0.3s ease",whiteSpace:"nowrap",
@@ -216,7 +215,7 @@ export const SettingsPanel = ({ darkMode, setDarkMode, soundOn, setSoundOn, onCl
     }} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{
         background:dark?"#261840":"#fff",
-        borderRadius:"24px 24px 0 0",padding:"28px 24px 48px",
+        borderRadius:`${RADIUS.xl}px ${RADIUS.xl}px 0 0`,padding:"28px 24px 48px",
         width:"100%",maxWidth:430,
         animation:"slideInUp 0.3s ease",
         boxShadow:"0 -8px 40px rgba(0,0,0,0.2)",
@@ -247,7 +246,7 @@ export const SettingsPanel = ({ darkMode, setDarkMode, soundOn, setSoundOn, onCl
         <button onClick={onClose} style={{
           width:"100%",marginTop:24,
           background:"linear-gradient(135deg,#7C4DFF,#F06292)",
-          border:"none",borderRadius:50,padding:"15px",
+          border:"none",borderRadius:RADIUS.pill,padding:"15px",
           color:"#fff",fontSize:16,fontWeight:700,fontFamily:F.b,
           cursor:"pointer",boxShadow:"0 4px 16px rgba(124,77,255,0.4)",
         }}>Done</button>
