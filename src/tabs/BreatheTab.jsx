@@ -68,6 +68,15 @@ export default function BreatheTab() {
   const technique = TECHNIQUES[techIdx];
   const PHASES = technique.phases;
 
+  /* Animation speed must follow the SELECTED technique's phase length, not a fixed
+     value — otherwise the bubble desyncs from the countdown (e.g. 4-7-8, Triangle). */
+  const phaseDur = PHASES[breathPhase].duration;
+  const bubbleAnim = breathActive
+    ? breathPhase === 0 ? `breatheIn ${phaseDur}s ease-in-out forwards`
+    : breathPhase === 1 ? `breatheHold ${phaseDur}s linear forwards`
+    : `breatheOut ${phaseDur}s ease-in-out forwards`
+    : "breatheIdle 3s ease-in-out infinite alternate";
+
   /* ── Clear the timer and fully reset when user leaves the tab ── */
   useEffect(() => {
     if (tab !== "breathe") {
@@ -232,11 +241,7 @@ export default function BreatheTab() {
             position:"absolute", width:220, height:220, borderRadius:"50%",
             background:`radial-gradient(circle,${PHASES[breathPhase].color}15,transparent 70%)`,
             border:`3px solid ${PHASES[breathPhase].color}30`,
-            animation: breathActive
-              ? breathPhase===0 ? "breatheIn 4s ease-in-out forwards"
-              : breathPhase===1 ? "breatheHold 2s linear forwards"
-              : "breatheOut 4s ease-in-out forwards"
-              : "breatheIdle 3s ease-in-out infinite alternate",
+            animation: bubbleAnim,
             transition:"border-color 0.6s, background 0.6s",
           }}/>
 
@@ -246,11 +251,7 @@ export default function BreatheTab() {
             background:`radial-gradient(circle at 38% 35%, ${PHASES[breathPhase].color}28, ${PHASES[breathPhase].color}08)`,
             border:`2.5px solid ${PHASES[breathPhase].color}88`,
             boxShadow: breathActive ? `0 0 ${breathPhase===1?44:22}px ${PHASES[breathPhase].color}40` : "none",
-            animation: breathActive
-              ? breathPhase===0 ? "breatheIn 4s ease-in-out forwards"
-              : breathPhase===1 ? "breatheHold 2s linear forwards"
-              : "breatheOut 4s ease-in-out forwards"
-              : "breatheIdle 3s ease-in-out infinite alternate",
+            animation: bubbleAnim,
             transition:"border-color 0.6s, background 0.6s, box-shadow 0.6s",
           }}/>
 

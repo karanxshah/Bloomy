@@ -63,7 +63,7 @@ const getDailyMessage = () => {
 export default function HomeTab() {
   const {
     activeChild, tab, setTab, theme,
-    todayEntry, cm, currentStage, growthScore, streak, streakShield,
+    todayEntry, cm, currentStage, growthScore, availableSeeds, streak,
     dailyMissions, affirmIdx, lastMood, setShowMascotRoom, darkMode,
     todayJournalDone, todayGratitudeDone, todayBreathDone,
     moodLog,
@@ -119,7 +119,7 @@ export default function HomeTab() {
           }}>
             <span style={{ fontSize:14 }}>🌱</span>
             <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:"#fff", margin:0 }}>
-              {currentStage.name} · {growthScore} seeds · Visit garden
+              {currentStage.name} · {availableSeeds} seeds · Visit garden
             </p>
           </div>
         </button>
@@ -325,12 +325,6 @@ export default function HomeTab() {
             <p style={{ color:"#fff", fontFamily:F.h, fontWeight:800, fontSize:19, margin:0 }}>{streak}-Day Streak!</p>
             <p style={{ color:"rgba(255,255,255,0.85)", fontSize:13, fontWeight:500, margin:0 }}>Keep it up — you are doing great!</p>
           </div>
-          {streakShield && (
-            <div style={{ background:"rgba(255,255,255,0.25)", borderRadius:50, padding:"6px 12px", display:"flex", alignItems:"center", gap:4 }}>
-              <Icon name="shield" size={16} color="#fff"/>
-              <p style={{ fontFamily:F.b, fontWeight:700, fontSize:11, color:"#fff", margin:0 }}>Shield</p>
-            </div>
-          )}
         </div>
       )}
     </div>

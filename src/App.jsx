@@ -154,7 +154,6 @@ export default function BloomyApp() {
   const [dailyMissions, setDailyMissions]     = useState([]);
   const [seedPopup, setSeedPopup]             = useState({visible:false,amount:0,gold:false});
   const [pendingBonusPopup, setPendingBonusPopup] = useState(false);
-  const [streakShield, setStreakShield]       = useState(false);
 
   /* ── Berries / energy — removed, seeds are now the single currency ── */
 
@@ -186,6 +185,14 @@ export default function BloomyApp() {
     setSeedPopup({visible:true, amount, gold});
     setTimeout(()=>setSeedPopup({visible:false,amount:0,gold:false}), 2200);
   };
+
+  /* Reliable write to the children table. supabase-js v2 queries are lazy thenables —
+     they only fire the request when awaited or .then()-ed. Fire-and-forget calls
+     silently drop, so every children-row update goes through this helper. */
+  const updateChildRow = (id, fields) =>
+    supabase.from("children").update(fields).eq("id", id)
+      .then(({ error }) => { if (error) console.warn("Child update failed:", error.message); },
+            (err) => console.warn("Child update error:", err));
 
   /* ── Theme ── */
   const theme = darkMode ? DARK : LIGHT;
@@ -229,7 +236,7 @@ export default function BloomyApp() {
         if (!child) return child;
         const newCount = (child.missions_completed||0)+1;
         const updatedChild = {...child, missions_completed:newCount};
-        supabase.from("children").update({missions_completed:newCount}).eq("id",child.id);
+        updateChildRow(child.id, {missions_completed:newCount});
         setChildren(cs=>cs.map(c=>c.id===child.id?updatedChild:c));
         return updatedChild;
       });
@@ -243,11 +250,12 @@ export default function BloomyApp() {
   };
 
   /* ── Growth stage check ── */
-  const checkGrowthStageUp = (newMoodLog, newJournals, updatedChild) => {
+  const checkGrowthStageUp = (newMoodLog, newJournals, updatedChild, newGratitudes) => {
     const child = updatedChild || activeChild;
     if (!child) return;
-    const oldScore = calcGrowthScore(activeChild, moodLog, journals);
-    const newScore = calcGrowthScore(child, newMoodLog, newJournals);
+    const grats = newGratitudes || gratitudes;   // count gratitude seeds, like the Home score does
+    const oldScore = calcGrowthScore(activeChild, moodLog, journals, gratitudes);
+    const newScore = calcGrowthScore(child, newMoodLog, newJournals, grats);
     const oldStage = getStage(oldScore);
     const newStage = getStage(newScore);
     if (newStage.id > oldStage.id) {
@@ -331,7 +339,7 @@ export default function BloomyApp() {
       checkGrowthStageUp(newLog, journals);
       // Update last_activity_date so mascot expression reflects today's activity
       const actDate = new Date().toISOString().split("T")[0];
-      supabase.from("children").update({last_activity_date:actDate}).eq("id",activeChild.id);
+      updateChildRow(activeChild.id, {last_activity_date:actDate});
       setActiveChild(ac=>ac?{...ac,last_activity_date:actDate}:ac);
       setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:actDate}:c));
     } catch(e) {
@@ -381,7 +389,7 @@ export default function BloomyApp() {
       completeMission("journal");
       checkGrowthStageUp(moodLog, newJournals);
       const todayStr = new Date().toISOString().split("T")[0];
-      supabase.from("children").update({last_activity_date:todayStr}).eq("id",activeChild.id);
+      updateChildRow(activeChild.id, {last_activity_date:todayStr});
       setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
       setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
     } catch(e) {
@@ -406,16 +414,18 @@ export default function BloomyApp() {
         console.error("saveGratitude: no data returned");
         throw new Error("No data returned");
       }
-      setGratitudes(prev=>[data,...prev]);
+      const newGratitudes = [data, ...gratitudes];
+      setGratitudes(newGratitudes);
       setGratitudeText("");
       setGratitudeSaved(true);
       playSound("chime", soundOn);
       haptic(8);
       showSeedPopup(1);
       completeMission("gratitude");
+      checkGrowthStageUp(moodLog, journals, activeChild, newGratitudes);
       setTimeout(()=>setGratitudeSaved(false),1500);
       const todayStr = new Date().toISOString().split("T")[0];
-      supabase.from("children").update({last_activity_date:todayStr}).eq("id",activeChild.id);
+      updateChildRow(activeChild.id, {last_activity_date:todayStr});
       setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
       setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
     } catch(e) {
@@ -477,10 +487,6 @@ export default function BloomyApp() {
     const idx2 = (seedNum*7+3)%all.length===idx1?(seedNum*7+4)%all.length:(seedNum*7+3)%all.length;
     setDailyMissions([all[idx1],all[idx2]]);
 
-    /* Streak shield */
-    const lastShieldDate = child.last_shield_date||"";
-    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
-    setStreakShield(new Date(lastShieldDate)<weekAgo);
     setChildLoading(false);
   };
 
@@ -525,6 +531,13 @@ export default function BloomyApp() {
 
   /* ── Computed values ── */
   const growthScore  = activeChild ? calcGrowthScore(activeChild,moodLog,journals,gratitudes) : 0;
+  /* Spendable seeds = earned minus what's been spent in the garden shop. Keeps the
+     "seeds" number on Home consistent with the number shown in the shop. The garden
+     STAGE still uses growthScore, so spending never shrinks the garden. */
+  const spentSeeds   = activeChild
+    ? Object.values(activeChild.seen_tooltips?.shop_unlocks || {}).reduce((a,v)=>a+(v?.cost||0),0)
+    : 0;
+  const availableSeeds = Math.max(0, growthScore - spentSeeds);
   const todayJournalDone   = journals.some(j => j.date === today());
   const todayGratitudeDone = gratitudes.some(g => g.date === today());
   const todayBreathDone    = activeChild?.last_breath_date === today();
@@ -576,8 +589,8 @@ export default function BloomyApp() {
     seenTooltips, setSeenTooltips,
     // berries & energy removed
     darkMode, soundOn,
-    dailyMissions, streakShield,
-    cm, currentStage, growthScore, streak,
+    dailyMissions,
+    cm, currentStage, growthScore, availableSeeds, streak,
     todayEntry, lastMood, badges,
     todayJournalDone, todayGratitudeDone, todayBreathDone,
     setShowMascotRoom,
