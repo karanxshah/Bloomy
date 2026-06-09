@@ -111,7 +111,7 @@ export default function BloomyApp() {
     try {
       const stored = localStorage.getItem("bloomy_affirm_idx");
       const storedDate = localStorage.getItem("bloomy_affirm_date");
-      const todayStr = new Date().toISOString().split("T")[0];
+      const todayStr = today();
       // If we already picked an index today, use it — otherwise pick a fresh random one
       if (stored && storedDate === todayStr) {
         return parseInt(stored, 10);
@@ -133,7 +133,7 @@ export default function BloomyApp() {
     try {
       const stored = localStorage.getItem("bloomy_breath_count");
       const storedDate = localStorage.getItem("bloomy_breath_date");
-      const todayStr = new Date().toISOString().split("T")[0];
+      const todayStr = today();
       if (storedDate === todayStr && stored) return parseInt(stored, 10);
       return 0;
     } catch { return 0; }
@@ -283,7 +283,7 @@ export default function BloomyApp() {
         setChildren(prev=>prev.map(c=>c.id===activeChild.id?updatedChild:c));
         showSeedPopup(1);
         // Only complete the affirm mission the first time they hit 3 today
-        const todayStr2 = new Date().toISOString().split("T")[0];
+        const todayStr2 = today();
         const affirmMissionKey = `bloomy_affirm_mission_${activeChild.id}_${todayStr2}`;
         const alreadyCompletedToday = localStorage.getItem(affirmMissionKey);
         if (newCount % 3 === 0 && !alreadyCompletedToday) {
@@ -338,7 +338,7 @@ export default function BloomyApp() {
       completeMission("mood");
       checkGrowthStageUp(newLog, journals);
       // Update last_activity_date so mascot expression reflects today's activity
-      const actDate = new Date().toISOString().split("T")[0];
+      const actDate = today();
       updateChildRow(activeChild.id, {last_activity_date:actDate});
       setActiveChild(ac=>ac?{...ac,last_activity_date:actDate}:ac);
       setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:actDate}:c));
@@ -388,7 +388,7 @@ export default function BloomyApp() {
       showSeedPopup(2);
       completeMission("journal");
       checkGrowthStageUp(moodLog, newJournals);
-      const todayStr = new Date().toISOString().split("T")[0];
+      const todayStr = today();
       updateChildRow(activeChild.id, {last_activity_date:todayStr});
       setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
       setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
@@ -424,7 +424,7 @@ export default function BloomyApp() {
       completeMission("gratitude");
       checkGrowthStageUp(moodLog, journals, activeChild, newGratitudes);
       setTimeout(()=>setGratitudeSaved(false),1500);
-      const todayStr = new Date().toISOString().split("T")[0];
+      const todayStr = today();
       updateChildRow(activeChild.id, {last_activity_date:todayStr});
       setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
       setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
@@ -444,7 +444,7 @@ export default function BloomyApp() {
     setMoodLogged(false); setJournalSaved(false); setJournalText("");
     setBreathActive(false); setBreathPhase(0); setBreathCount(0);
     // Reset daily breath count if it's a new day
-    const todayStr2 = new Date().toISOString().split("T")[0];
+    const todayStr2 = today();
     const storedBreathDate = localStorage.getItem("bloomy_breath_date");
     if (storedBreathDate !== todayStr2) {
       setDailyBreathCount(0);
@@ -456,7 +456,7 @@ export default function BloomyApp() {
     setSeenTooltips(child.seen_tooltips||{});
     if (!child.seen_tooltips?.intro) setShowChildIntro(true);
 
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = today();
 
     /* Load all child data */
     const [moodRes,journalRes,gratitudeRes] = await Promise.all([
@@ -718,7 +718,7 @@ export default function BloomyApp() {
 
   /* ── Parent Insights ── */
   if (showInsights) return (
-    <ParentInsights supabase={supabase} session={session} children={children} onClose={()=>setShowInsights(false)}/>
+    <ParentInsights supabase={supabase} session={session} children={children} darkMode={darkMode} onClose={()=>setShowInsights(false)}/>
   );
 
   /* ── Parent Dashboard ── */
@@ -728,7 +728,7 @@ export default function BloomyApp() {
       {deleteConfirm&&(
         <div style={{position:"fixed",inset:0,zIndex:9995,background:"rgba(0,0,0,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px",backdropFilter:"blur(4px)"}}
           onClick={()=>setDeleteConfirm(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"#fff",borderRadius:24,padding:"28px 24px",width:"100%",maxWidth:360,boxShadow:"0 16px 48px rgba(0,0,0,0.18)",animation:"scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1)"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:theme.card,borderRadius:24,padding:"28px 24px",width:"100%",maxWidth:360,boxShadow:"0 16px 48px rgba(0,0,0,0.18)",animation:"scaleIn 0.25s cubic-bezier(0.34,1.56,0.64,1)"}}>
             <div style={{width:56,height:56,borderRadius:"50%",background:"#FFF5F5",border:"2px solid #FFCDD2",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 18px"}}>
               <Icon name="trash" size={24} color="#E53935"/>
             </div>
@@ -786,7 +786,7 @@ export default function BloomyApp() {
         })}
 
         {!addingChild?(
-          <Btn onClick={()=>{setAddingChild(true);setAddStep(1);}} icon="plus" color="#EEE9FF" textColor={theme.purple} style={{width:"100%",marginTop:4}}>
+          <Btn onClick={()=>{setAddingChild(true);setAddStep(1);}} icon="plus" color={theme.purple+"22"} textColor={theme.purple} style={{width:"100%",marginTop:4}}>
             Add Child Profile
           </Btn>
         ):(
@@ -797,7 +797,7 @@ export default function BloomyApp() {
                 <TextInput value={newChildName} onChange={e=>setNewChildName(e.target.value)} placeholder="Child's name" style={{marginBottom:16}}/>
                 <div style={{display:"flex",gap:8}}>
                   <Btn small onClick={()=>{if(newChildName.trim())setAddStep(2);}}>Next</Btn>
-                  <Btn small color="#f5f5f5" textColor={theme.muted} onClick={()=>{setAddingChild(false);setNewChildName("");}}>Cancel</Btn>
+                  <Btn small color={theme.border} textColor={theme.muted} onClick={()=>{setAddingChild(false);setNewChildName("");}}>Cancel</Btn>
                 </div>
               </>
             )}
@@ -814,17 +814,17 @@ export default function BloomyApp() {
                 </div>
                 <div style={{display:"flex",gap:8}}>
                   <Btn small icon="check" disabled={!newChildMascot} loading={addLoading} onClick={handleAddChild}>Create Profile</Btn>
-                  <Btn small color="#f5f5f5" textColor={theme.muted} onClick={()=>setAddStep(1)}>Back</Btn>
+                  <Btn small color={theme.border} textColor={theme.muted} onClick={()=>setAddStep(1)}>Back</Btn>
                 </div>
               </>
             )}
           </Card>
         )}
 
-        <button onClick={()=>setShowInsights(true)} style={{width:"100%",background:"#fff",border:`1.5px solid ${theme.border}`,borderRadius:20,padding:"18px 20px",cursor:"pointer",marginTop:8,display:"flex",alignItems:"center",gap:14,boxShadow:"0 2px 18px rgba(124,77,255,0.07)",transition:"transform 0.15s"}}
+        <button onClick={()=>setShowInsights(true)} style={{width:"100%",background:theme.card,border:`1.5px solid ${theme.border}`,borderRadius:20,padding:"18px 20px",cursor:"pointer",marginTop:8,display:"flex",alignItems:"center",gap:14,boxShadow:"0 2px 18px rgba(124,77,255,0.07)",transition:"transform 0.15s"}}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-          <div style={{background:"#EDE7F6",borderRadius:14,padding:10,flexShrink:0}}>
+          <div style={{background:theme.purple+"22",borderRadius:14,padding:10,flexShrink:0}}>
             <Icon name="lock" size={24} color={theme.purple}/>
           </div>
           <div style={{flex:1,textAlign:"left"}}>
@@ -834,10 +834,10 @@ export default function BloomyApp() {
           <Icon name="back" size={20} color={theme.muted} style={{transform:"rotate(180deg)"}}/>
         </button>
 
-        <button onClick={()=>setShowSettings(true)} style={{width:"100%",background:"#fff",border:`1.5px solid ${theme.border}`,borderRadius:20,padding:"18px 20px",cursor:"pointer",marginTop:8,display:"flex",alignItems:"center",gap:14,boxShadow:"0 2px 18px rgba(124,77,255,0.07)",transition:"transform 0.15s"}}
+        <button onClick={()=>setShowSettings(true)} style={{width:"100%",background:theme.card,border:`1.5px solid ${theme.border}`,borderRadius:20,padding:"18px 20px",cursor:"pointer",marginTop:8,display:"flex",alignItems:"center",gap:14,boxShadow:"0 2px 18px rgba(124,77,255,0.07)",transition:"transform 0.15s"}}
           onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"}
           onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-          <div style={{background:"#EDE7F6",borderRadius:14,padding:10,flexShrink:0}}>
+          <div style={{background:theme.purple+"22",borderRadius:14,padding:10,flexShrink:0}}>
             <Icon name="settings" size={24} color={theme.purple}/>
           </div>
           <div style={{flex:1,textAlign:"left"}}>

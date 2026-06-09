@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { LIGHT, DARK } from "./constants.js";
 
 /* ── Font loader — same as main app ── */
 const FontLoader = () => (
@@ -9,11 +10,9 @@ const FontLoader = () => (
   `}</style>
 );
 
-const C = {
-  purple:"#7C4DFF", pink:"#F06292", yellow:"#FFD54F",
-  mint:"#4DB6AC", sky:"#4FC3F7", coral:"#FF7043",
-  bg:"#F7F4FF", text:"#2D2040", muted:"#9B8DB5", border:"#EEE9FF",
-};
+/* Palette switches with dark mode. It's set at the top of the ParentInsights
+   render from the darkMode prop, so every surface that reads from C themes itself. */
+let C = LIGHT;
 const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
 
 const MOOD_COLORS = {Amazing:"#F9A825",Good:"#43A047",Okay:"#1E88E5",Sad:"#7B1FA2",Angry:"#E53935",Worried:"#E64A19"};
@@ -147,7 +146,7 @@ const MascotFace = ({ id, size=48 }) => {
 
 /* ── Primitives ── */
 const Card = ({children,style}) => (
-  <div style={{background:"#fff",borderRadius:20,padding:"20px",
+  <div style={{background:C.card,borderRadius:20,padding:"20px",
     boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14,...style}}>
     {children}
   </div>
@@ -231,7 +230,7 @@ const PinPad = ({ onSuccess, onCancel, existingPin, mode }) => {
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",
       padding:"20px 24px 32px",animation:"fadeIn 0.3s ease"}}>
 
-      <div style={{background:"#EDE7F6",borderRadius:"50%",padding:18,marginBottom:20}}>
+      <div style={{background:C.purple+"22",borderRadius:"50%",padding:18,marginBottom:20}}>
         <Icon name="lock" size={36} color={C.purple}/>
       </div>
 
@@ -270,7 +269,7 @@ const PinPad = ({ onSuccess, onCancel, existingPin, mode }) => {
           <button key={i}
             onClick={()=>d==="⌫"?handleDelete():d!==""&&handleDigit(String(d))}
             style={{
-              background:d===""?"transparent":d==="⌫"?"#FFF3E0":"#fff",
+              background:d===""?"transparent":d==="⌫"?"#FFF3E0":C.card,
               border:d===""?"none":`1.5px solid ${C.border}`,
               borderRadius:16,padding:"18px 0",
               fontSize:22,fontWeight:700,fontFamily:F.b,
@@ -349,7 +348,7 @@ const MoodHeatmap = ({ moodLog }) => {
   const hasData = days.some(d => d.entry);
 
   return (
-    <div style={{ background:"#fff", borderRadius:20, padding:"20px", marginBottom:14, boxShadow:"0 2px 18px rgba(124,77,255,0.09)" }}>
+    <div style={{ background:C.card, borderRadius:20, padding:"20px", marginBottom:14, boxShadow:"0 2px 18px rgba(124,77,255,0.09)" }}>
 
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
@@ -362,7 +361,7 @@ const MoodHeatmap = ({ moodLog }) => {
         <div style={{ display:"flex", gap:6 }}>
           {[30, 60].map(n => (
             <button key={n} onClick={() => setRange(n)} style={{
-              background: range===n ? C.purple : "#F0EAFF",
+              background: range===n ? C.purple : C.border,
               color: range===n ? "#fff" : C.muted,
               border:"none", borderRadius:50, padding:"5px 14px",
               fontSize:12, fontWeight:700, fontFamily:F.b, cursor:"pointer",
@@ -465,7 +464,8 @@ const MoodHeatmap = ({ moodLog }) => {
   );
 };
 
-export default function ParentInsights({ supabase, session, children, onClose }) {
+export default function ParentInsights({ supabase, session, children, onClose, darkMode }) {
+  C = darkMode ? DARK : LIGHT;   // theme every surface that reads from C
   const [pinState,setPinState]           = useState("check");
   const [savedPin,setSavedPin]           = useState(null);
   const [selectedChild,setSelectedChild] = useState(null);
@@ -542,7 +542,7 @@ export default function ParentInsights({ supabase, session, children, onClose })
             </h2>
           </div>
           <button onClick={()=>setChangingPin(true)} style={{
-            background:"#EDE7F6",border:"none",borderRadius:50,padding:"8px 14px",
+            background:C.purple+"22",border:"none",borderRadius:50,padding:"8px 14px",
             cursor:"pointer",display:"flex",alignItems:"center",gap:6,
             color:C.purple,fontFamily:F.b,fontWeight:600,fontSize:13}}>
             <Icon name="settings" size={15} color={C.purple}/> PIN
@@ -578,7 +578,7 @@ export default function ParentInsights({ supabase, session, children, onClose })
           const stage = getStage(seedScore);
           return (
             <button key={child.id} onClick={()=>loadChildData(child)} style={{
-              width:"100%",background:"#fff",borderRadius:20,padding:"18px 20px",
+              width:"100%",background:C.card,borderRadius:20,padding:"18px 20px",
               border:`1.5px solid ${C.border}`,marginBottom:12,cursor:"pointer",
               display:"flex",alignItems:"center",gap:14,textAlign:"left",
               boxShadow:"0 2px 18px rgba(124,77,255,0.08)",transition:"transform 0.15s"}}
@@ -772,7 +772,7 @@ export default function ParentInsights({ supabase, session, children, onClose })
             ].map(t=>(
               <button key={t.id} onClick={()=>setInsightTab(t.id)} style={{
                 flex:1, padding:"10px 8px",
-                background:insightTab===t.id?C.purple:"#fff",
+                background:insightTab===t.id?C.purple:C.card,
                 color:insightTab===t.id?"#fff":C.muted,
                 border:`1.5px solid ${insightTab===t.id?C.purple:C.border}`,
                 borderRadius:50, cursor:"pointer",

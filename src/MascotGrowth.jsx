@@ -1372,13 +1372,13 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
     : dark          ? "night"
     : hourNow < 5   ? "night"
     : hourNow < 7   ? "dawn"
-    : hourNow < 17  ? "day"
+    : hourNow < 18  ? "day"
     : hourNow < 20  ? "dusk"
     : "night";
   const TOD = {
-    dawn:  { skyTop:"#FFC9A3", skyBot:"#FDE9D2", sun:"#FFB74D", sunGlow:"#FFE0B2", night:false, cloud:0.85 },
+    dawn:  { skyTop:"#FFD3A8", skyBot:"#FFF1E0", sun:"#FFCC80", sunGlow:"#FFE8C8", night:false, cloud:0.85 },
     day:   { skyTop:"#B9F0C2", skyBot:"#DCF5E0", sun:"#FFD54F", sunGlow:"#FFFDE7", night:false, cloud:0.82 },
-    dusk:  { skyTop:"#F2865E", skyBot:"#F9CBA0", sun:"#FF7043", sunGlow:"#FFCCBC", night:false, cloud:0.7  },
+    dusk:  { skyTop:"#F6B99A", skyBot:"#FDE4C8", sun:"#FFA726", sunGlow:"#FFD9A0", night:false, cloud:0.72 },
     night: { skyTop: dark ? "#0d1a2e" : "#1B2A4A", skyBot: dark ? "#1a2e40" : "#33406B",
              sun:null, sunGlow:null, night:true, cloud:0.3 },
   }[phase] || { skyTop:"#B9F0C2", skyBot:"#DCF5E0", sun:"#FFD54F", sunGlow:"#FFFDE7", night:false, cloud:0.82 };
