@@ -1,6 +1,68 @@
 /* ── Fonts ── */
 export const F = { h:"'Baloo 2', cursive", b:"'Poppins', sans-serif" };
 
+/* ── Design tokens ──────────────────────────────────────────────
+   Single source of truth for the system. Values below MATCH the
+   numbers already used across the app, so swapping a literal for a
+   token is a pure refactor (no visual change). Tune in a later pass.
+   Migrate magic numbers to these over time. */
+
+/* 4-based spacing scale */
+export const SPACE = { xs:4, sm:8, md:12, lg:16, xl:20, xxl:24, xxxl:32 };
+
+/* Radius scale (retire stray 14/18 over time → md/lg) */
+export const RADIUS = { sm:12, md:16, lg:20, xl:24, pill:999 };
+
+/* Elevation — named shadows. e1 == the card shadow used everywhere today. */
+export const SHADOW = {
+  e1: "0 2px 18px rgba(124,77,255,0.09)",   // resting cards
+  e2: "0 10px 36px rgba(124,77,255,0.16)",  // sheets, pressed/active lift
+};
+
+/* Type scale — names for the sizes already in use */
+export const TYPE = {
+  display: { fontFamily:"'Baloo 2', cursive",   fontSize:28, fontWeight:800 },
+  title:   { fontFamily:"'Baloo 2', cursive",   fontSize:20, fontWeight:800 },
+  body:    { fontFamily:"'Poppins', sans-serif", fontSize:15, fontWeight:500 },
+  caption: { fontFamily:"'Poppins', sans-serif", fontSize:13, fontWeight:500 },
+  label:   { fontFamily:"'Poppins', sans-serif", fontSize:12, fontWeight:700,
+             letterSpacing:1.2, textTransform:"uppercase" },
+};
+
+/* Motion — the only two curves the app should use */
+export const EASE = {
+  smooth: "cubic-bezier(0.22,1,0.36,1)",   // entrances, calm transitions
+  pop:    "cubic-bezier(0.34,1.56,0.64,1)", // reward / select feedback
+};
+
+/* Content palette — saturated hues that carry WHITE text.
+   These are deliberately separate from the pastel brand/surface
+   tokens in LIGHT/DARK (which sit behind dark text / as tints).
+   Affirmations + gratitude jar draw from here. */
+export const CONTENT = {
+  amber:  "#F9A825",
+  rose:   "#EC407A",
+  violet: "#7E57C2",
+  blue:   "#1E88E5",
+  green:  "#43A047",
+  teal:   "#4DB6AC",
+  coral:  "#FF7043",
+  sky:    "#4FC3F7",
+};
+
+/* Canonical breathing phase colors — referenced by BreatheTab's
+   techniques so the bubble, ring and labels never drift. */
+export const BREATH_COLORS = { in:"#4FC3F7", hold:"#CE93D8", out:"#81C784" };
+
+/* Gratitude jar/list colors — ONE array + ONE hash helper used by both
+   the jar SVG and the recent list, so a gratitude is the same color in
+   both places. */
+export const GRAT_COLORS = ["#FFD54F","#F06292","#CE93D8","#4DB6AC","#FF8A65","#4FC3F7","#A5D6A7","#FF7043"];
+export const gratColor = (key) => {
+  const hash = String(key).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+  return GRAT_COLORS[hash % GRAT_COLORS.length];
+};
+
 /* ── Themes ── */
 export const LIGHT = {
   purple:"#7C4DFF", pink:"#F06292", yellow:"#FFD54F",
@@ -71,9 +133,9 @@ export const ALL_AFFIRMATIONS = [
 ];
 
 export const BREATHING = [
-  {phase:"Breathe In",  duration:4, color:"#4FC3F7"},
-  {phase:"Hold",        duration:2, color:"#7C4DFF"},
-  {phase:"Breathe Out", duration:4, color:"#4DB6AC"},
+  {phase:"Breathe In",  duration:4, color:BREATH_COLORS.in},
+  {phase:"Hold",        duration:2, color:BREATH_COLORS.hold},
+  {phase:"Breathe Out", duration:4, color:BREATH_COLORS.out},
 ];
 
 export const JOURNAL_PROMPTS = [

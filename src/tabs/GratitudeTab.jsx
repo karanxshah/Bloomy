@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Btn } from "../components/UI.jsx";
-import { F } from "../constants.js";
+import { F, SHADOW, RADIUS, gratColor } from "../constants.js";
 import { today } from "../constants.js";
 
 export default function GratitudeTab() {
@@ -16,12 +16,8 @@ export default function GratitudeTab() {
   const [shaking, setShaking]       = useState(false);
   const [floater, setFloater]       = useState(null); // { text, color, id }
 
-  const JAR_COLORS = ["#FFD54F","#F06292","#CE93D8","#4DB6AC","#FF8A65","#4FC3F7","#A5D6A7","#FFD54F"];
-  const getGratColor = (g, i) => {
-    const key = g.id || g.text || i;
-    const hash = String(key).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
-    return JAR_COLORS[hash % JAR_COLORS.length];
-  };
+  /* One color per gratitude, shared by the jar SVG and the recent list. */
+  const getGratColor = (g, i) => gratColor(g.id || g.text || i);
 
   const handleShake = () => {
     if (gratitudes.length === 0 || shaking) return;
@@ -128,7 +124,7 @@ export default function GratitudeTab() {
       </div>
 
       {/* Add new gratitude */}
-      <div style={{ background:C.card, borderRadius:20, padding:"20px", boxShadow:"0 2px 18px rgba(124,77,255,0.09)", marginBottom:14 }}>
+      <div style={{ background:C.card, borderRadius:RADIUS.lg, padding:"20px", boxShadow:SHADOW.e1, marginBottom:14 }}>
         <p style={{ fontFamily:F.h, fontWeight:800, fontSize:17, color:C.text, margin:"0 0 12px" }}>
           Add to your jar
         </p>
@@ -159,7 +155,7 @@ export default function GratitudeTab() {
 
       {/* Past gratitudes */}
       {gratitudes.length > 0 && (
-        <div style={{ background:C.card, borderRadius:20, padding:"20px", boxShadow:"0 2px 18px rgba(124,77,255,0.09)" }}>
+        <div style={{ background:C.card, borderRadius:RADIUS.lg, padding:"20px", boxShadow:SHADOW.e1 }}>
           <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:C.muted, letterSpacing:1.3, textTransform:"uppercase", marginBottom:10 }}>
             Recent Gratitudes
           </p>
@@ -171,12 +167,7 @@ export default function GratitudeTab() {
             }}>
               <div style={{
                 width:10, height:10, borderRadius:"50%", flexShrink:0, marginTop:5,
-                background:(()=>{
-                  const colors=["#FFD54F","#F06292","#7C4DFF","#4DB6AC","#FF7043","#4FC3F7"];
-                  const key = g.id || g.text || i;
-                  const hash = String(key).split("").reduce((a,c)=>a+c.charCodeAt(0),0);
-                  return colors[hash%colors.length];
-                })(),
+                background:getGratColor(g, i),
               }}/>
               <div style={{ flex:1 }}>
                 <p style={{ fontFamily:F.b, fontWeight:600, fontSize:14, color:C.text, margin:0, lineHeight:1.6 }}>{g.text}</p>

@@ -1,7 +1,7 @@
 import { useState, useRef } from "react"; // useRef kept for AffirmTab swipe
 import { useApp } from "../AppContext.jsx";
 import { Card, Icon, Btn, Label, Tooltip } from "../components/UI.jsx";
-import { F, JOURNAL_PROMPTS, ALL_AFFIRMATIONS, getSortedAffirmations } from "../constants.js";
+import { F, JOURNAL_PROMPTS, getSortedAffirmations, SHADOW, RADIUS } from "../constants.js";
 import { today } from "../constants.js";
 
 /* ── Journal Tab ── */
@@ -58,7 +58,7 @@ export function JournalTab() {
       </Card>
 
       {/* Textarea card */}
-      <div style={{ background:C.card, borderRadius:20, marginBottom:14, boxShadow:"0 2px 18px rgba(124,77,255,0.09)", overflow:"hidden" }}>
+      <div style={{ background:C.card, borderRadius:RADIUS.lg, marginBottom:14, boxShadow:SHADOW.e1, overflow:"hidden" }}>
         <div style={{ padding:"20px 20px 0" }}>
           <Label>Write here</Label>
           <textarea
@@ -209,10 +209,10 @@ export function AffirmTab() {
         }}
       >
         <div style={{ position:"absolute", top:8, left:"4%", right:"4%", bottom:0,
-          background:`${ALL_AFFIRMATIONS[(affirmIdx+2)%ALL_AFFIRMATIONS.length].color}55`,
+          background:`${sorted[(affirmIdx+2)%sorted.length].color}55`,
           borderRadius:24, transform:"rotate(-2deg)" }}/>
         <div style={{ position:"absolute", top:4, left:"2%", right:"2%", bottom:0,
-          background:`${ALL_AFFIRMATIONS[(affirmIdx+1)%ALL_AFFIRMATIONS.length].color}88`,
+          background:`${sorted[(affirmIdx+1)%sorted.length].color}88`,
           borderRadius:24, transform:"rotate(-1deg)" }}/>
         <div style={{
           position:"absolute", top:0, left:0, right:0, bottom:0,

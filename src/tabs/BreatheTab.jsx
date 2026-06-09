@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../AppContext.jsx";
 import { Card, Btn, Tooltip } from "../components/UI.jsx";
-import { F, BREATHING } from "../constants.js";
+import { F, BREATH_COLORS, today } from "../constants.js";
 import { GrowthMascot } from "../MascotGrowth.jsx";
 
 /* ── Breathing technique library ── */
@@ -12,9 +12,9 @@ const TECHNIQUES = [
     emoji: "🌬️",
     desc: "Great for any time you need a moment.",
     phases: [
-      { phase:"Breathe In",  duration:4, color:"#4FC3F7" },
-      { phase:"Hold",        duration:2, color:"#CE93D8" },
-      { phase:"Breathe Out", duration:4, color:"#81C784" },
+      { phase:"Breathe In",  duration:4, color:BREATH_COLORS.in },
+      { phase:"Hold",        duration:2, color:BREATH_COLORS.hold },
+      { phase:"Breathe Out", duration:4, color:BREATH_COLORS.out },
     ],
   },
   {
@@ -23,9 +23,9 @@ const TECHNIQUES = [
     emoji: "📦",
     desc: "Equal counts — used by athletes and astronauts!",
     phases: [
-      { phase:"Breathe In",  duration:4, color:"#4FC3F7" },
-      { phase:"Hold",        duration:4, color:"#CE93D8" },
-      { phase:"Breathe Out", duration:4, color:"#81C784" },
+      { phase:"Breathe In",  duration:4, color:BREATH_COLORS.in },
+      { phase:"Hold",        duration:4, color:BREATH_COLORS.hold },
+      { phase:"Breathe Out", duration:4, color:BREATH_COLORS.out },
     ],
   },
   {
@@ -34,9 +34,9 @@ const TECHNIQUES = [
     emoji: "💤",
     desc: "Perfect for feeling sleepy or very worried.",
     phases: [
-      { phase:"Breathe In",  duration:4, color:"#4FC3F7" },
-      { phase:"Hold",        duration:7, color:"#CE93D8" },
-      { phase:"Breathe Out", duration:8, color:"#81C784" },
+      { phase:"Breathe In",  duration:4, color:BREATH_COLORS.in },
+      { phase:"Hold",        duration:7, color:BREATH_COLORS.hold },
+      { phase:"Breathe Out", duration:8, color:BREATH_COLORS.out },
     ],
   },
   {
@@ -45,9 +45,9 @@ const TECHNIQUES = [
     emoji: "🔺",
     desc: "Three equal sides — easy to remember, great for quick calm.",
     phases: [
-      { phase:"Breathe In",  duration:3, color:"#4FC3F7" },
-      { phase:"Hold",        duration:3, color:"#CE93D8" },
-      { phase:"Breathe Out", duration:3, color:"#81C784" },
+      { phase:"Breathe In",  duration:3, color:BREATH_COLORS.in },
+      { phase:"Hold",        duration:3, color:BREATH_COLORS.hold },
+      { phase:"Breathe Out", duration:3, color:BREATH_COLORS.out },
     ],
   },
 ];
@@ -108,7 +108,7 @@ export default function BreatheTab() {
         setDailyBreathCount(c => {
           const next = c + 1;
           try {
-            const todayStr = new Date().toISOString().split("T")[0];
+            const todayStr = today();
             localStorage.setItem("bloomy_breath_count", String(next));
             localStorage.setItem("bloomy_breath_date", todayStr);
           } catch {}
@@ -118,7 +118,7 @@ export default function BreatheTab() {
         completeMission("breathe");
         if (activeChild) {
           const newCount = (activeChild.breath_sessions || 0) + 1;
-          const todayStr = new Date().toISOString().split("T")[0];
+          const todayStr = today();
           const { error } = await supabase.from("children")
             .update({ breath_sessions: newCount, last_breath_date: todayStr, last_activity_date: todayStr })
             .eq("id", activeChild.id);
