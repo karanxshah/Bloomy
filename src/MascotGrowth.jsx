@@ -37,8 +37,9 @@ const calcStreak = (moodLog) => {
   const dates = [...new Set(moodLog.map(e => e.date))].sort().reverse();
   let streak = 0;
   const d = new Date();
+  const pad2 = (n) => String(n).padStart(2, "0");
   for (let i = 0; i < 100; i++) {
-    const s = d.toISOString().split("T")[0];
+    const s = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     if (dates.includes(s)) streak++;
     else if (i > 0) break;
     d.setDate(d.getDate() - 1);

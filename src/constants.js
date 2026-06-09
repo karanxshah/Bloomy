@@ -101,14 +101,22 @@ export const STAGE_BGSANIM = [
 ];
 
 /* ── Helpers ── */
-export const today = () => new Date().toISOString().split("T")[0];
+/* Build a YYYY-MM-DD string from the device's LOCAL clock, not UTC.
+   Using toISOString() (UTC) meant evenings in the Americas rolled over to the
+   next day early, breaking "logged today", streaks, the weekly view, and mission
+   resets. localDate() keeps the calendar day aligned with the user's real day. */
+const pad2 = (n) => String(n).padStart(2, "0");
+export const localDate = (d = new Date()) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+export const today = () => localDate();
 
 export const getStreak = (moodLog) => {
   if (!moodLog||moodLog.length===0) return 0;
   const dates = [...new Set(moodLog.map(e=>e.date))].sort().reverse();
   let streak=0; const d=new Date();
   for (let i=0;i<100;i++) {
-    const s=d.toISOString().split("T")[0];
+    const s=localDate(d);
     if (dates.includes(s)) streak++; else if (i>0) break;
     d.setDate(d.getDate()-1);
   }
@@ -119,7 +127,7 @@ export const last7Days = () => {
   const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   return Array.from({length:7},(_,i)=>{
     const d=new Date(); d.setDate(d.getDate()-6+i);
-    return {date:d.toISOString().split("T")[0],label:days[d.getDay()]};
+    return {date:localDate(d),label:days[d.getDay()]};
   });
 };
 

@@ -55,14 +55,20 @@ const getStage = (score) => {
   return stage;
 };
 
-const today = () => new Date().toISOString().split("T")[0];
+/* Local-clock date (YYYY-MM-DD) — matches the child app so "today", streaks and
+   the weekly view stay aligned with the user's real day instead of UTC. */
+const localDate = (d = new Date()) => {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+const today = () => localDate();
 
 const getStreak = (moodLog) => {
   if (!moodLog||moodLog.length===0) return 0;
   const dates=[...new Set(moodLog.map(e=>e.date))].sort().reverse();
   let streak=0; const d=new Date();
   for (let i=0;i<100;i++) {
-    const s=d.toISOString().split("T")[0];
+    const s=localDate(d);
     if (dates.includes(s)) streak++; else if (i>0) break;
     d.setDate(d.getDate()-1);
   }
@@ -73,7 +79,7 @@ const last7Days = () => {
   const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   return Array.from({length:7},(_,i)=>{
     const d=new Date(); d.setDate(d.getDate()-6+i);
-    return {date:d.toISOString().split("T")[0],label:days[d.getDay()]};
+    return {date:localDate(d),label:days[d.getDay()]};
   });
 };
 
@@ -311,7 +317,7 @@ const MoodHeatmap = ({ moodLog }) => {
     for (let i = n - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
+      const dateStr = localDate(d);
       const entry = [...moodLog].reverse().find(e => e.date === dateStr);
       days.push({ date: dateStr, entry });
     }
@@ -386,7 +392,7 @@ const MoodHeatmap = ({ moodLog }) => {
                 <div key={di} style={{ width:cellSize, height:cellSize }}/>
               );
               const color = day.entry ? HEATMAP_COLORS[day.entry.mood] : "#EEE9FF";
-              const isToday = day.date === new Date().toISOString().split("T")[0];
+              const isToday = day.date === localDate();
               const dateLabel = new Date(day.date + "T12:00:00").toLocaleDateString("en",{month:"short",day:"numeric"});
               return (
                 <div
@@ -665,7 +671,7 @@ export default function ParentInsights({ supabase, session, children, onClose })
 
           {/* Weekly Summary Card */}
           {(() => {
-            const todayStr = new Date().toISOString().split("T")[0];
+            const todayStr = localDate();
             const weekAgo  = new Date(); weekAgo.setDate(weekAgo.getDate() - 6);
             const weekMoods = moodLog.filter(e => new Date(e.date) >= weekAgo);
             const weekJournals = journals.filter(e => new Date(e.date) >= weekAgo);
@@ -678,8 +684,8 @@ export default function ParentInsights({ supabase, session, children, onClose })
             const weekTopMood = Object.entries(weekMoodCounts).sort((a,b) => b[1]-a[1])[0];
 
             // Trend: compare last 3 days to 3 days before
-            const recentDates = [0,1,2].map(i => { const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().split("T")[0]; });
-            const olderDates  = [3,4,5].map(i => { const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().split("T")[0]; });
+            const recentDates = [0,1,2].map(i => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d); });
+            const olderDates  = [3,4,5].map(i => { const d=new Date(); d.setDate(d.getDate()-i); return localDate(d); });
             const positiveWeight = {Amazing:2, Good:1, Okay:0, Sad:-1, Angry:-1, Worried:-1};
             const recentScore = moodLog.filter(e=>recentDates.includes(e.date)).reduce((s,e)=>s+(positiveWeight[e.mood]||0),0);
             const olderScore  = moodLog.filter(e=>olderDates.includes(e.date)).reduce((s,e)=>s+(positiveWeight[e.mood]||0),0);

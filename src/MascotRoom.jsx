@@ -10,7 +10,6 @@ import { GrowthMascot, GardenScene, GardenItemSVG, GARDEN_RENDER_META, calcGrowt
    2 = low      (1-2 days) → tired
    3 = missing  (0 days)   → sad                                     */
 export const getActivityTier = (moodLog, activeChild) => {
-  const todayStr = new Date().toISOString().split("T")[0];
   const sevenAgo = new Date();
   sevenAgo.setDate(sevenAgo.getDate() - 7);
 
@@ -71,7 +70,10 @@ const FontLoader = () => (
 );
 
 /* ── Helpers ── */
-const todayStr = () => new Date().toISOString().split("T")[0];
+const todayStr = () => {
+  const d = new Date(), p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
 const randomFrom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const daysSince = (dateStr) => {
   if (!dateStr) return 999;
