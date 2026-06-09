@@ -40,12 +40,22 @@ import {
 import MascotRoom from "./MascotRoom.jsx";
 
 /* ── Supabase ──
-   TODO before shipping: move these to environment variables.
-   In Vite: import.meta.env.VITE_SUPABASE_URL / VITE_SUPABASE_KEY
-   In CRA:  process.env.REACT_APP_SUPABASE_URL / REACT_APP_SUPABASE_KEY
+   Credentials come from environment variables (set in Vercel → Settings →
+   Environment Variables, and in a local .env file for local development):
+     VITE_SUPABASE_URL
+     VITE_SUPABASE_KEY
+   No keys are hardcoded here.
 */
-const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || "https://ymfvezvezzmckcdwjvzm.supabase.co";
-const SUPABASE_KEY = import.meta.env?.VITE_SUPABASE_KEY || "sb_publishable_5CR_k4TEBUYXhqm3AuN7bQ_Csiafdcs";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error(
+    "Missing Supabase environment variables. " +
+    "Set VITE_SUPABASE_URL and VITE_SUPABASE_KEY in Vercel (and in a local .env file)."
+  );
+}
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ════════════════════════════════════════
