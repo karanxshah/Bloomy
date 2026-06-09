@@ -1,6 +1,6 @@
 import { useState, useRef } from "react"; // useRef kept for AffirmTab swipe
 import { useApp } from "../AppContext.jsx";
-import { Card, Icon, Btn, Label, Tooltip } from "../components/UI.jsx";
+import { Card, Icon, Btn, Label, Tooltip, MascotFace } from "../components/UI.jsx";
 import { F, JOURNAL_PROMPTS, getSortedAffirmations, SHADOW, RADIUS } from "../constants.js";
 import { today } from "../constants.js";
 
@@ -11,8 +11,20 @@ export function JournalTab() {
     promptIdx, setPromptIdx, saveLoading, saveJournal,
     journals, setJournals, cm, seenTooltips, setSeenTooltips,
     activeChild, setActiveChild, setChildren, supabase,
+    parentMessages, answerPrompt,
   } = useApp();
   const [expanded, setExpanded] = useState(null);
+  const [parentAnswer, setParentAnswer] = useState("");
+  const [answering, setAnswering] = useState(false);
+
+  const pendingPrompt = (parentMessages||[]).find(m=>m.type==="prompt" && m.status==="pending");
+  const handleAnswerPrompt = async () => {
+    if (!parentAnswer.trim() || answering) return;
+    setAnswering(true);
+    await answerPrompt(pendingPrompt, parentAnswer);
+    setParentAnswer("");
+    setAnswering(false);
+  };
 
   const C = theme;
 
@@ -39,6 +51,43 @@ export function JournalTab() {
         text="Read the prompt and write whatever comes to mind. There are no wrong answers — your thoughts are private!"
         seen={seenTooltips.journal} theme={C} onDismiss={dismissTooltip}
       />
+
+      {pendingPrompt && (
+        <Card style={{ background:`linear-gradient(135deg,${cm.color},${C.purple})`, marginBottom:14 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+            <div style={{ background:"rgba(255,255,255,0.22)", borderRadius:14, padding:6, flexShrink:0 }}>
+              <MascotFace id={cm.id} size={40}/>
+            </div>
+            <p style={{ color:"#fff", fontFamily:F.b, fontWeight:700, fontSize:14, margin:0, lineHeight:1.5 }}>
+              {cm.name} has a question from your grown-up! 💜
+            </p>
+          </div>
+          <p style={{ color:"#fff", fontFamily:F.h, fontWeight:800, fontSize:20, lineHeight:1.4, margin:"0 0 14px" }}>
+            {pendingPrompt.body}
+          </p>
+          <textarea
+            value={parentAnswer}
+            onChange={e=>setParentAnswer(e.target.value)}
+            placeholder="Write your answer here…"
+            maxLength={2000}
+            style={{
+              width:"100%", minHeight:96, border:"none", borderRadius:14,
+              padding:"12px 14px", fontSize:15, fontFamily:F.b, fontWeight:500,
+              color:C.text, background:"rgba(255,255,255,0.92)",
+              lineHeight:1.7, resize:"none", outline:"none", display:"block", marginBottom:12,
+            }}
+          />
+          <Btn
+            onClick={handleAnswerPrompt}
+            disabled={!parentAnswer.trim()||answering}
+            loading={answering}
+            color="#fff" textColor={cm.color} icon="next"
+            style={{ width:"100%", justifyContent:"center" }}
+          >
+            Send my answer
+          </Btn>
+        </Card>
+      )}
 
       <Card style={{ background:`linear-gradient(135deg,${C.pink},${C.purple})`, marginBottom:14 }}>
         <p style={{ color:"rgba(255,255,255,0.8)", fontWeight:700, fontSize:12, letterSpacing:1, textTransform:"uppercase", marginBottom:8 }}>

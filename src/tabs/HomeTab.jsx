@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "../AppContext.jsx";
-import { Card, Icon, MoodFace } from "../components/UI.jsx";
+import { Card, Icon, MoodFace, MascotFace } from "../components/UI.jsx";
 import { F, MOOD_BG, MOOD_COLORS, STAGE_BGSANIM, getTimeGreeting, getSortedAffirmations } from "../constants.js";
 import { today } from "../constants.js";
 import { GrowthMascot, GardenScene, GrowthProgressBar } from "../MascotGrowth.jsx";
@@ -67,12 +67,26 @@ export default function HomeTab() {
     dailyMissions, affirmIdx, lastMood, setShowMascotRoom, darkMode,
     todayJournalDone, todayGratitudeDone, todayBreathDone,
     moodLog,
+    parentMessages, markMessagesSeen,
   } = useApp();
 
   const C = theme;
   const todaysWord = getTodaysWord();
   const activityTier = getActivityTier(moodLog, activeChild);
   const [wordExpanded, setWordExpanded] = useState(false);
+
+  /* Capture unseen notes/reactions once when they arrive, keep them visible for
+     this session, and flip them to "seen" so the parent's status updates. */
+  const [inbox, setInbox] = useState([]);
+  useEffect(() => {
+    const unseen = (parentMessages||[]).filter(
+      m => (m.type==="note"||m.type==="reaction") && m.status!=="seen"
+    );
+    if (unseen.length > 0) {
+      setInbox(prev => prev.length ? prev : unseen);
+      markMessagesSeen(unseen.map(m=>m.id));
+    }
+  }, [parentMessages]);
 
   return (
     <div style={{ paddingTop:12, animation:"fadeIn 0.4s ease" }}>
@@ -124,6 +138,35 @@ export default function HomeTab() {
           </div>
         </button>
       </div>
+
+      {/* Messages from your grown-up (notes + reaction acknowledgements) */}
+      {inbox.length > 0 && (
+        <Card style={{ background:`linear-gradient(135deg,${cm.color},#F06292)`, marginBottom:14 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
+            <div style={{ background:"rgba(255,255,255,0.22)", borderRadius:12, padding:5, flexShrink:0 }}>
+              <MascotFace id={cm.id} size={32}/>
+            </div>
+            <p style={{ fontFamily:F.h, fontWeight:800, fontSize:16, color:"#fff", margin:0 }}>
+              A message from your grown-up!
+            </p>
+          </div>
+          {inbox.map(mmsg => (
+            <div key={mmsg.id} style={{
+              background:"rgba(255,255,255,0.92)", borderRadius:12, padding:"10px 12px",
+              marginTop:8, display:"flex", gap:8, alignItems:"flex-start",
+            }}>
+              <span style={{ fontSize:16, flexShrink:0, marginTop:1 }}>
+                {mmsg.type==="reaction" ? "❤️" : "💜"}
+              </span>
+              <p style={{ fontFamily:F.b, fontWeight:600, fontSize:14, color:"#2D2040", margin:0, lineHeight:1.5 }}>
+                {mmsg.type==="reaction"
+                  ? `They loved your ${mmsg.target_type==="gratitude" ? "gratitude" : "journal entry"}!`
+                  : mmsg.body}
+              </p>
+            </div>
+          ))}
+        </Card>
+      )}
 
       {/* Daily missions */}
       {dailyMissions.length > 0 && (

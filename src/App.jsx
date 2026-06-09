@@ -84,6 +84,7 @@ export default function BloomyApp() {
   const [moodLog, setMoodLog]       = useState([]);
   const [journals, setJournals]     = useState([]);
   const [gratitudes, setGratitudes] = useState([]);
+  const [parentMessages, setParentMessages] = useState([]); // prompts/notes/reactions from the parent
 
   /* ── Tab & UI state ── */
   const [tab, setTab]                     = useState("home");
@@ -459,10 +460,11 @@ export default function BloomyApp() {
     const todayStr = today();
 
     /* Load all child data */
-    const [moodRes,journalRes,gratitudeRes] = await Promise.all([
+    const [moodRes,journalRes,gratitudeRes,msgRes] = await Promise.all([
       supabase.from("mood_logs").select("*").eq("child_id",child.id).order("created_at",{ascending:true}),
       supabase.from("journal_entries").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
       supabase.from("gratitudes").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
+      supabase.from("parent_messages").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
     ]);
     const todayMoodLogs   = (moodRes.data||[]).filter(e=>e.date===todayStr);
     const todayJournals   = (journalRes.data||[]).filter(e=>e.date===todayStr);
@@ -470,6 +472,7 @@ export default function BloomyApp() {
     if (!moodRes.error)     setMoodLog(moodRes.data||[]);
     if (!journalRes.error)  setJournals(journalRes.data||[]);
     if (!gratitudeRes.error) setGratitudes(gratitudeRes.data||[]);
+    if (!msgRes.error)      setParentMessages(msgRes.data||[]);
     if (todayMoodLogs.length>0) setTodayMood(todayMoodLogs[todayMoodLogs.length-1].mood);
 
     /* Generate daily missions */
@@ -512,12 +515,12 @@ export default function BloomyApp() {
   const handleDeleteChild = async (childId) => {
     await supabase.from("children").delete().eq("id",childId);
     setChildren(prev=>prev.filter(c=>c.id!==childId));
-    if (activeChild?.id===childId) { setActiveChild(null); setMoodLog([]); setJournals([]); }
+    if (activeChild?.id===childId) { setActiveChild(null); setMoodLog([]); setJournals([]); setParentMessages([]); }
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setBreathActive(false); setActiveChild(null); setMoodLog([]); setJournals([]);
+    setBreathActive(false); setActiveChild(null); setMoodLog([]); setJournals([]); setParentMessages([]);
   };
 
   const handleFinishIntro = async () => {
@@ -556,6 +559,56 @@ export default function BloomyApp() {
     ? Object.fromEntries(BADGE_DEFS.map(b=>[b.id,b.check(moodLog,journals,activeChild.breath_sessions||0,activeChild.affirm_count||0)]))
     : {};
 
+  /* ── Parent⇄child messages ── */
+  /* Child answers a parent's question: saves it as a journal entry (so it lives
+     in their journal history + the parent's Journal tab) AND marks the prompt
+     answered with the response. All writes are awaited — never fire-and-forget. */
+  const answerPrompt = async (msg, answerText) => {
+    const text = (answerText||"").trim();
+    if (!text || !activeChild || !msg) return;
+    try {
+      const {data,error} = await supabase.from("journal_entries")
+        .insert({child_id:activeChild.id, text, prompt:msg.body, date:today()})
+        .select().single();
+      if (error || !data) throw error || new Error("No data returned");
+      const newJournals = [data, ...journals];
+      setJournals(newJournals);
+
+      const answeredAt = new Date().toISOString();
+      const {error:upErr} = await supabase.from("parent_messages")
+        .update({status:"answered", response_text:text, answered_at:answeredAt})
+        .eq("id", msg.id);
+      if (!upErr) {
+        setParentMessages(prev=>prev.map(m=>m.id===msg.id
+          ? {...m, status:"answered", response_text:text, answered_at:answeredAt}
+          : m));
+      }
+
+      playSound("chime", soundOn);
+      haptic(10);
+      showSeedPopup(2);
+      completeMission("journal");
+      checkGrowthStageUp(moodLog, newJournals);
+      const todayStr = today();
+      updateChildRow(activeChild.id, {last_activity_date:todayStr});
+      setActiveChild(ac=>ac?{...ac,last_activity_date:todayStr}:ac);
+      setChildren(cs=>cs.map(c=>c.id===activeChild.id?{...c,last_activity_date:todayStr}:c));
+    } catch(e) {
+      console.error("answerPrompt error:", e);
+      showToast("Couldn't send your answer. Please try again.");
+    }
+  };
+
+  /* Mark notes/reactions as seen by the child (flips the parent's status). */
+  const markMessagesSeen = async (ids) => {
+    if (!ids || ids.length===0) return;
+    const seenAt = new Date().toISOString();
+    setParentMessages(prev=>prev.map(m=>ids.includes(m.id)?{...m, status:"seen", seen_at:seenAt}:m));
+    const {error} = await supabase.from("parent_messages")
+      .update({status:"seen", seen_at:seenAt}).in("id", ids);
+    if (error) console.error("markMessagesSeen error:", error);
+  };
+
   /* ════════════════════════════════════════
      CONTEXT VALUE — passed to all tabs
   ════════════════════════════════════════ */
@@ -567,6 +620,8 @@ export default function BloomyApp() {
     moodLog, setMoodLog,
     journals, setJournals,
     gratitudes, setGratitudes,
+    parentMessages, setParentMessages,
+    answerPrompt, markMessagesSeen,
     selectedMood, setSelectedMood,
     moodLogged, setMoodLogged,
     todayMood, setTodayMood,
