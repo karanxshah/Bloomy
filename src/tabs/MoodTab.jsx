@@ -1,5 +1,5 @@
 import { useApp } from "../AppContext.jsx";
-import { Card, Icon, MoodFace, Btn, Tooltip } from "../components/UI.jsx";
+import { Card, Icon, MoodFace, Btn, Tooltip, Label } from "../components/UI.jsx";
 import { F, MOODS, MOOD_COLORS, MOOD_BG, MOOD_MESSAGES } from "../constants.js";
 import { today, last7Days } from "../constants.js";
 
@@ -145,9 +145,7 @@ export default function MoodTab() {
       })()}
 
       <Card>
-        <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:C.muted, letterSpacing:1.3, textTransform:"uppercase", marginBottom:10 }}>
-          This Week
-        </p>
+        <Label color={C.muted}>This Week</Label>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
           {week.map(d=>{
             const entry = moodLog.slice().reverse().find(e=>e.date===d.date);
@@ -165,9 +163,7 @@ export default function MoodTab() {
 
       {moodLog.length > 0 && (
         <Card>
-          <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:C.muted, letterSpacing:1.3, textTransform:"uppercase", marginBottom:10 }}>
-            Recent Moods
-          </p>
+          <Label color={C.muted}>Recent Moods</Label>
           {[...moodLog].reverse().slice(0,5).map((e,i)=>(
             <div key={e.id} style={{ padding:"10px 0", borderBottom:i<4?`1px solid ${C.border}`:"none" }}>
               <div style={{ display:"flex", alignItems:"center", gap:12 }}>

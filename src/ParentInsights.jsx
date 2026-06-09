@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LIGHT, DARK } from "./constants.js";
+import { LIGHT, DARK, TYPE, SHADOW, RADIUS } from "./constants.js";
 
 /* ── Font loader — same as main app ── */
 const FontLoader = () => (
@@ -146,15 +146,14 @@ const MascotFace = ({ id, size=48 }) => {
 
 /* ── Primitives ── */
 const Card = ({children,style}) => (
-  <div style={{background:C.card,borderRadius:20,padding:"20px",
-    boxShadow:"0 2px 18px rgba(124,77,255,0.09)",marginBottom:14,...style}}>
+  <div style={{background:C.card,borderRadius:RADIUS.lg,padding:"20px",
+    boxShadow:SHADOW.e1,marginBottom:14,...style}}>
     {children}
   </div>
 );
 
 const Label = ({children,color}) => (
-  <p style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:color||C.muted,
-    letterSpacing:1.3,textTransform:"uppercase",marginBottom:10,margin:"0 0 10px"}}>
+  <p style={{...TYPE.label, color:color||C.muted, margin:"0 0 10px"}}>
     {children}
   </p>
 );

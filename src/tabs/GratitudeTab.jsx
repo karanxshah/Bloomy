@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../AppContext.jsx";
-import { Btn } from "../components/UI.jsx";
+import { Btn, Label } from "../components/UI.jsx";
 import { F, SHADOW, RADIUS, gratColor } from "../constants.js";
 import { today } from "../constants.js";
 
@@ -156,9 +156,7 @@ export default function GratitudeTab() {
       {/* Past gratitudes */}
       {gratitudes.length > 0 && (
         <div style={{ background:C.card, borderRadius:RADIUS.lg, padding:"20px", boxShadow:SHADOW.e1 }}>
-          <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:C.muted, letterSpacing:1.3, textTransform:"uppercase", marginBottom:10 }}>
-            Recent Gratitudes
-          </p>
+          <Label color={C.muted}>Recent Gratitudes</Label>
           {gratitudes.map((g,i)=>(
             <div key={g.id||i} style={{
               display:"flex", alignItems:"flex-start", gap:12,

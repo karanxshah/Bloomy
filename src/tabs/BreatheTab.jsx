@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../AppContext.jsx";
-import { Card, Btn, Tooltip } from "../components/UI.jsx";
+import { Card, Btn, Tooltip, Label } from "../components/UI.jsx";
 import { F, BREATH_COLORS, today } from "../constants.js";
 import { GrowthMascot } from "../MascotGrowth.jsx";
 
@@ -284,9 +284,7 @@ export default function BreatheTab() {
       )}
 
       <Card style={{ marginTop:4, textAlign:"left" }}>
-        <p style={{ fontFamily:F.b, fontWeight:700, fontSize:12, color:C.muted, letterSpacing:1.3, textTransform:"uppercase", marginBottom:10 }}>
-          Sessions completed
-        </p>
+        <Label color={C.muted}>Sessions completed</Label>
         <p style={{ fontFamily:F.h, fontWeight:800, fontSize:28, color:C.purple, margin:0 }}>
           {activeChild.breath_sessions || 0}
         </p>
