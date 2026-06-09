@@ -471,9 +471,14 @@ export default function ParentInsights({ supabase, session, children, onClose, d
   const [moodLog,setMoodLog]             = useState([]);
   const [journals,setJournals]           = useState([]);
   const [gratitudes,setGratitudes]       = useState([]);
+  const [messages,setMessages]           = useState([]);   // parent_messages for selected child
   const [dataLoading,setDataLoading]     = useState(false);
   const [changingPin,setChangingPin]     = useState(false);
   const [insightTab,setInsightTab]       = useState("overview");
+  /* Connect-tab compose state */
+  const [promptText,setPromptText]       = useState("");
+  const [noteText,setNoteText]           = useState("");
+  const [sending,setSending]             = useState(false);
 
   useEffect(()=>{
     const pin=session?.user?.user_metadata?.parent_pin;
@@ -491,16 +496,79 @@ export default function ParentInsights({ supabase, session, children, onClose, d
   const loadChildData = async (child) => {
     setDataLoading(true);
     setSelectedChild(child);
-    const [moodRes,journalRes,gratitudeRes] = await Promise.all([
+    const [moodRes,journalRes,gratitudeRes,msgRes] = await Promise.all([
       supabase.from("mood_logs").select("*").eq("child_id",child.id).order("created_at",{ascending:true}),
       supabase.from("journal_entries").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
       supabase.from("gratitudes").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
+      supabase.from("parent_messages").select("*").eq("child_id",child.id).order("created_at",{ascending:false}),
     ]);
     if (!moodRes.error) setMoodLog(moodRes.data||[]);
     if (!journalRes.error) setJournals(journalRes.data||[]);
     if (!gratitudeRes.error) setGratitudes(gratitudeRes.data||[]);
+    if (!msgRes.error) setMessages(msgRes.data||[]);
     setDataLoading(false);
   };
+
+  /* Reload just the messages after a write (await the query so the lazy
+     supabase-js thenable actually executes — never fire-and-forget). */
+  const reloadMessages = async (childId) => {
+    const { data, error } = await supabase.from("parent_messages")
+      .select("*").eq("child_id",childId).order("created_at",{ascending:false});
+    if (!error) setMessages(data||[]);
+  };
+
+  const sendPrompt = async () => {
+    const body = promptText.trim();
+    if (!body || sending || !selectedChild) return;
+    setSending(true);
+    const { error } = await supabase.from("parent_messages")
+      .insert({ child_id:selectedChild.id, type:"prompt", body, status:"pending" });
+    if (!error) { setPromptText(""); await reloadMessages(selectedChild.id); }
+    setSending(false);
+  };
+
+  const sendNote = async () => {
+    const body = noteText.trim();
+    if (!body || sending || !selectedChild) return;
+    setSending(true);
+    const { error } = await supabase.from("parent_messages")
+      .insert({ child_id:selectedChild.id, type:"note", body, status:"pending" });
+    if (!error) { setNoteText(""); await reloadMessages(selectedChild.id); }
+    setSending(false);
+  };
+
+  const deleteMessage = async (id) => {
+    await supabase.from("parent_messages").delete().eq("id",id);
+    if (selectedChild) await reloadMessages(selectedChild.id);
+  };
+
+  /* Toggle a heart on a journal/gratitude entry. One reaction per entry. */
+  const toggleReaction = async (targetType, targetId) => {
+    if (!selectedChild) return;
+    const existing = messages.find(
+      mmsg => mmsg.type==="reaction" && mmsg.target_type===targetType && mmsg.target_id===targetId
+    );
+    if (existing) {
+      await supabase.from("parent_messages").delete().eq("id",existing.id);
+    } else {
+      await supabase.from("parent_messages").insert({
+        child_id:selectedChild.id, type:"reaction", body:"❤️",
+        target_type:targetType, target_id:targetId, status:"pending",
+      });
+    }
+    await reloadMessages(selectedChild.id);
+  };
+
+  const isReacted = (targetType, targetId) =>
+    messages.some(mmsg => mmsg.type==="reaction" && mmsg.target_type===targetType && mmsg.target_id===targetId);
+
+  /* Starter questions to lower the friction of writing a prompt. */
+  const STARTER_PROMPTS = [
+    "What was the best part of your day?",
+    "What made you laugh today?",
+    "Is there anything on your mind you'd like to share?",
+    "What are you looking forward to tomorrow?",
+  ];
 
   const week=last7Days();
 
@@ -633,7 +701,7 @@ export default function ParentInsights({ supabase, session, children, onClose, d
 
           {/* Header */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-            <button onClick={()=>{setSelectedChild(null);setMoodLog([]);setJournals([]);setGratitudes([]);setInsightTab("overview");}}
+            <button onClick={()=>{setSelectedChild(null);setMoodLog([]);setJournals([]);setGratitudes([]);setMessages([]);setPromptText("");setNoteText("");setInsightTab("overview");}}
               style={{background:"none",border:"none",cursor:"pointer",
                 display:"flex",alignItems:"center",gap:5,
                 color:C.muted,fontFamily:F.b,fontWeight:600,fontSize:14}}>
@@ -763,23 +831,40 @@ export default function ParentInsights({ supabase, session, children, onClose, d
           })()}
 
           {/* Tabs */}
-          <div style={{display:"flex",gap:8,marginBottom:16}}>
-            {[
-              {id:"overview", label:"Overview"},
-              {id:"journal",  label:`Journal (${journals.length})`},
-              {id:"gratitude",label:`Gratitude (${gratitudes.length})`},
-            ].map(t=>(
-              <button key={t.id} onClick={()=>setInsightTab(t.id)} style={{
-                flex:1, padding:"10px 8px",
-                background:insightTab===t.id?C.purple:C.card,
-                color:insightTab===t.id?"#fff":C.muted,
-                border:`1.5px solid ${insightTab===t.id?C.purple:C.border}`,
-                borderRadius:50, cursor:"pointer",
-                fontFamily:F.b, fontWeight:700, fontSize:13,
-                transition:"all 0.18s",
-              }}>{t.label}</button>
-            ))}
-          </div>
+          {(() => {
+            const answeredUnseen = messages.filter(mmsg => mmsg.type==="prompt" && mmsg.status==="answered").length;
+            return (
+              <div style={{display:"flex",gap:8,marginBottom:16}}>
+                {[
+                  {id:"connect",  label:"Connect"},
+                  {id:"overview", label:"Overview"},
+                  {id:"journal",  label:`Journal (${journals.length})`},
+                  {id:"gratitude",label:`Gratitude (${gratitudes.length})`},
+                ].map(t=>(
+                  <button key={t.id} onClick={()=>setInsightTab(t.id)} style={{
+                    flex:1, padding:"10px 6px", position:"relative",
+                    background:insightTab===t.id?C.purple:C.card,
+                    color:insightTab===t.id?"#fff":C.muted,
+                    border:`1.5px solid ${insightTab===t.id?C.purple:C.border}`,
+                    borderRadius:50, cursor:"pointer",
+                    fontFamily:F.b, fontWeight:700, fontSize:12.5,
+                    transition:"all 0.18s",
+                  }}>
+                    {t.label}
+                    {t.id==="connect" && answeredUnseen>0 && (
+                      <span style={{
+                        position:"absolute", top:-5, right:-2,
+                        background:"#F06292", color:"#fff", borderRadius:50,
+                        minWidth:18, height:18, padding:"0 5px", fontSize:11, fontWeight:800,
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        boxShadow:"0 2px 6px rgba(240,98,146,0.5)",
+                      }}>{answeredUnseen}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
 
           {dataLoading ? (
             <Card style={{textAlign:"center",padding:"40px 20px"}}>
@@ -789,6 +874,152 @@ export default function ParentInsights({ supabase, session, children, onClose, d
             </Card>
           ) : (
             <div style={{animation:"fadeIn 0.4s ease"}}>
+
+              {/* CONNECT TAB */}
+              {insightTab==="connect" && (() => {
+                const prompts = messages.filter(mmsg => mmsg.type==="prompt");
+                const notes   = messages.filter(mmsg => mmsg.type==="note");
+                const fmt = (ts) => { try { return new Date(ts).toLocaleDateString(undefined,{month:"short",day:"numeric"}); } catch { return ""; } };
+                const sendBtnStyle = (active) => ({
+                  width:"100%", marginTop:12, border:"none", borderRadius:RADIUS.pill,
+                  padding:"13px", cursor:active?"pointer":"not-allowed",
+                  background:active?C.purple:"#e0e0e0", color:active?"#fff":"#aaa",
+                  fontFamily:F.b, fontWeight:700, fontSize:15,
+                  display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+                  transition:"transform 0.12s",
+                });
+                const taStyle = {
+                  width:"100%", minHeight:72, border:`2px solid ${C.border}`, borderRadius:RADIUS.md,
+                  padding:"12px 14px", fontSize:15, fontFamily:F.b, fontWeight:500,
+                  color:C.text, background:C.bg, lineHeight:1.6, resize:"none", outline:"none", display:"block",
+                };
+                return (
+                  <>
+                    {/* Intro */}
+                    <Card style={{background:`linear-gradient(135deg,${m.color},${C.pink})`, padding:"18px 20px"}}>
+                      <div style={{display:"flex", alignItems:"center", gap:12}}>
+                        <div style={{background:"rgba(255,255,255,0.22)", borderRadius:14, padding:8, flexShrink:0}}>
+                          <MascotFace id={m.id} size={40}/>
+                        </div>
+                        <p style={{fontFamily:F.b, fontWeight:600, fontSize:14, color:"#fff", margin:0, lineHeight:1.55}}>
+                          Send {selectedChild.name} a question or a little note — {m.name} will deliver it with a 💜
+                        </p>
+                      </div>
+                    </Card>
+
+                    {/* Ask a question */}
+                    <Card>
+                      <Label>Ask a question</Label>
+                      <div style={{display:"flex", flexWrap:"wrap", gap:8, marginBottom:12}}>
+                        {STARTER_PROMPTS.map(s => (
+                          <button key={s} onClick={()=>setPromptText(s)} style={{
+                            background:C.purple+"14", border:`1px solid ${C.purple}33`, borderRadius:RADIUS.pill,
+                            padding:"7px 12px", cursor:"pointer", color:C.purple,
+                            fontFamily:F.b, fontWeight:600, fontSize:12, lineHeight:1.3, textAlign:"left",
+                          }}>{s}</button>
+                        ))}
+                      </div>
+                      <textarea value={promptText} maxLength={200}
+                        onChange={e=>setPromptText(e.target.value)}
+                        placeholder={`Write a question for ${selectedChild.name}…`}
+                        style={taStyle}
+                        onFocus={e=>e.target.style.border=`2px solid ${C.purple}`}
+                        onBlur={e=>e.target.style.border=`2px solid ${C.border}`}/>
+                      <button onClick={sendPrompt} disabled={!promptText.trim()||sending} style={sendBtnStyle(!!promptText.trim()&&!sending)}>
+                        <Icon name="next" size={17} color={promptText.trim()&&!sending?"#fff":"#aaa"}/>
+                        {sending?"Sending…":`Send to ${selectedChild.name}`}
+                      </button>
+                    </Card>
+
+                    {/* Send a note */}
+                    <Card>
+                      <Label>Send an encouragement note</Label>
+                      <p style={{fontFamily:F.b, fontWeight:500, fontSize:13, color:C.muted, margin:"0 0 10px", lineHeight:1.5}}>
+                        A little message of love or pride — no answer needed.
+                      </p>
+                      <textarea value={noteText} maxLength={200}
+                        onChange={e=>setNoteText(e.target.value)}
+                        placeholder={`e.g. "I'm so proud of you, ${selectedChild.name}!"`}
+                        style={taStyle}
+                        onFocus={e=>e.target.style.border=`2px solid ${C.pink}`}
+                        onBlur={e=>e.target.style.border=`2px solid ${C.border}`}/>
+                      <button onClick={sendNote} disabled={!noteText.trim()||sending}
+                        style={{...sendBtnStyle(!!noteText.trim()&&!sending), background:noteText.trim()&&!sending?"#F06292":"#e0e0e0"}}>
+                        <Icon name="heart" size={17} color={noteText.trim()&&!sending?"#fff":"#aaa"}/>
+                        {sending?"Sending…":"Send note"}
+                      </button>
+                    </Card>
+
+                    {/* Sent questions + answers */}
+                    {prompts.length>0 && (
+                      <Card>
+                        <Label>Your questions</Label>
+                        {prompts.map((p,i)=>{
+                          const answered = p.status==="answered" && p.response_text;
+                          return (
+                            <div key={p.id} style={{padding:"12px 0", borderBottom:i<prompts.length-1?`1px solid ${C.border}`:"none"}}>
+                              <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8}}>
+                                <p style={{fontFamily:F.b, fontWeight:700, fontSize:14, color:C.text, margin:0, lineHeight:1.5, flex:1}}>
+                                  {p.body}
+                                </p>
+                                <button onClick={()=>deleteMessage(p.id)} style={{
+                                  background:"none", border:"none", cursor:"pointer", flexShrink:0, padding:2,
+                                }} aria-label="Delete question">
+                                  <Icon name="trash" size={15} color={C.muted}/>
+                                </button>
+                              </div>
+                              {answered ? (
+                                <div style={{background:"#E8F5E9", borderRadius:RADIUS.md, padding:"10px 12px", marginTop:8}}>
+                                  <p style={{fontFamily:F.b, fontWeight:700, fontSize:11, color:"#43A047", letterSpacing:0.5, textTransform:"uppercase", margin:"0 0 4px"}}>
+                                    {selectedChild.name} answered
+                                  </p>
+                                  <p style={{fontFamily:F.b, fontWeight:500, fontSize:14, color:C.text, margin:0, lineHeight:1.6}}>
+                                    {p.response_text}
+                                  </p>
+                                </div>
+                              ) : (
+                                <p style={{fontFamily:F.b, fontWeight:600, fontSize:12, color:C.muted, margin:"6px 0 0"}}>
+                                  ⏳ Waiting for {selectedChild.name} · sent {fmt(p.created_at)}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </Card>
+                    )}
+
+                    {/* Sent notes */}
+                    {notes.length>0 && (
+                      <Card>
+                        <Label>Your notes</Label>
+                        {notes.map((n,i)=>(
+                          <div key={n.id} style={{display:"flex", alignItems:"flex-start", gap:10, padding:"10px 0",
+                            borderBottom:i<notes.length-1?`1px solid ${C.border}`:"none"}}>
+                            <span style={{fontSize:16, flexShrink:0, marginTop:1}}>💜</span>
+                            <div style={{flex:1}}>
+                              <p style={{fontFamily:F.b, fontWeight:500, fontSize:14, color:C.text, margin:0, lineHeight:1.5}}>{n.body}</p>
+                              <p style={{fontFamily:F.b, fontWeight:600, fontSize:11, color:C.muted, margin:"3px 0 0"}}>
+                                {n.status==="seen" ? `Seen by ${selectedChild.name}` : "Delivered"} · {fmt(n.created_at)}
+                              </p>
+                            </div>
+                            <button onClick={()=>deleteMessage(n.id)} style={{background:"none", border:"none", cursor:"pointer", flexShrink:0, padding:2}} aria-label="Delete note">
+                              <Icon name="trash" size={15} color={C.muted}/>
+                            </button>
+                          </div>
+                        ))}
+                      </Card>
+                    )}
+
+                    {prompts.length===0 && notes.length===0 && (
+                      <Card style={{textAlign:"center", padding:"28px 20px"}}>
+                        <p style={{fontFamily:F.b, color:C.muted, fontWeight:500, fontSize:14, margin:0, lineHeight:1.6}}>
+                          Nothing sent yet. A question or note from you is one of the nicest things {selectedChild.name} can open. 💜
+                        </p>
+                      </Card>
+                    )}
+                  </>
+                );
+              })()}
 
               {/* OVERVIEW TAB */}
               {insightTab==="overview" && (
@@ -885,6 +1116,17 @@ export default function ParentInsights({ supabase, session, children, onClose, d
                           <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,color:C.text,margin:0,lineHeight:1.7}}>
                             {j.text}
                           </p>
+                          <button onClick={()=>toggleReaction("journal", j.id)} style={{
+                            display:"inline-flex",alignItems:"center",gap:6,marginTop:8,
+                            background:isReacted("journal",j.id)?"#FFEBEE":"transparent",
+                            border:`1px solid ${isReacted("journal",j.id)?"#F8BBD0":C.border}`,
+                            borderRadius:RADIUS.pill,padding:"5px 12px",cursor:"pointer",
+                            fontFamily:F.b,fontWeight:600,fontSize:12,
+                            color:isReacted("journal",j.id)?"#E53935":C.muted,
+                          }}>
+                            <span>{isReacted("journal",j.id)?"❤️":"🤍"}</span>
+                            {isReacted("journal",j.id)?"You loved this":"Send a ❤️"}
+                          </button>
                         </div>
                       ))}
                     </Card>
@@ -914,6 +1156,17 @@ export default function ParentInsights({ supabase, session, children, onClose, d
                             <p style={{fontFamily:F.b,fontSize:11,color:C.muted,margin:"2px 0 0"}}>
                               {g.date===today()?"Today":g.date}
                             </p>
+                            <button onClick={()=>toggleReaction("gratitude", g.id)} style={{
+                              display:"inline-flex",alignItems:"center",gap:6,marginTop:8,
+                              background:isReacted("gratitude",g.id)?"#FFEBEE":"transparent",
+                              border:`1px solid ${isReacted("gratitude",g.id)?"#F8BBD0":C.border}`,
+                              borderRadius:RADIUS.pill,padding:"5px 12px",cursor:"pointer",
+                              fontFamily:F.b,fontWeight:600,fontSize:12,
+                              color:isReacted("gratitude",g.id)?"#E53935":C.muted,
+                            }}>
+                              <span>{isReacted("gratitude",g.id)?"❤️":"🤍"}</span>
+                              {isReacted("gratitude",g.id)?"You loved this":"Send a ❤️"}
+                            </button>
                           </div>
                         </div>
                       ))}
