@@ -58,7 +58,7 @@ export function JournalTab() {
       </Card>
 
       {/* Textarea card */}
-      <div style={{ background:"#fff", borderRadius:20, marginBottom:14, boxShadow:"0 2px 18px rgba(124,77,255,0.09)", overflow:"hidden" }}>
+      <div style={{ background:C.card, borderRadius:20, marginBottom:14, boxShadow:"0 2px 18px rgba(124,77,255,0.09)", overflow:"hidden" }}>
         <div style={{ padding:"20px 20px 0" }}>
           <Label>Write here</Label>
           <textarea
@@ -68,14 +68,14 @@ export function JournalTab() {
             maxLength={2000}
             style={{
               width:"100%", minHeight:150,
-              border:"2px solid #EEE9FF", borderRadius:16,
+              border:`2px solid ${C.border}`, borderRadius:16,
               padding:"14px 16px", fontSize:16, fontFamily:F.b, fontWeight:500,
-              color:"#2D2040", background:"#F7F4FF",
+              color:C.text, background:C.bg,
               lineHeight:1.8, resize:"none", outline:"none", display:"block",
               WebkitAppearance:"none", MozAppearance:"none",
             }}
-            onFocus={e=>{e.target.style.border=`2px solid ${C.purple}`;e.target.style.background="#fff";}}
-            onBlur={e=>{e.target.style.border="2px solid #EEE9FF";e.target.style.background="#F7F4FF";}}
+            onFocus={e=>{e.target.style.border=`2px solid ${C.purple}`;e.target.style.background=C.card;}}
+            onBlur={e=>{e.target.style.border=`2px solid ${C.border}`;e.target.style.background=C.bg;}}
           />
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 20px", borderTop:`1px solid ${C.border}`, marginTop:12 }}>

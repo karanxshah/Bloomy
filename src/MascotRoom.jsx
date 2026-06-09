@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { GrowthMascot, GardenScene, GardenItemSVG, GARDEN_RENDER_META, calcGrowthScore, getStage, STAGES } from "./MascotGrowth";
+import { BADGE_DEFS } from "./constants.js";
+
+/* Playful emoji for each achievement badge (keeps the garden's warm, kid-friendly tone). */
+const BADGE_EMOJI = {
+  first_checkin: "⭐", mood_explorer: "😊", brave_heart: "💖",
+  week_streak: "🔥", affirm_pro: "🏆", calm_champ: "🌬️",
+};
 
 /* ── Activity-based expression tier ─────────────────────────────────
    Driven by days with ANY activity in the last 7 days.
@@ -1700,7 +1707,15 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
     bg:    activeChild.mascot_bg,
   };
   const personality   = PERSONALITIES[cm.id]||PERSONALITIES.fox;
-  const score         = growthScore || calcGrowthScore(activeChild, moodLog, journals);
+  const score         = growthScore || calcGrowthScore(activeChild, moodLog, journals, gratitudes);
+
+  /* Achievements — computed from the same BADGE_DEFS the rest of the app uses. */
+  const achievements  = BADGE_DEFS.map(b => ({
+    ...b,
+    emoji: BADGE_EMOJI[b.id] || "⭐",
+    earned: b.check(moodLog, journals, activeChild.breath_sessions||0, activeChild.affirm_count||0),
+  }));
+  const earnedCount   = achievements.filter(b => b.earned).length;
   const stage         = getStage(score);
   const activityTier  = getActivityTier(moodLog, activeChild);
   const lastEntry     = moodLog?.length>0 ? moodLog[moodLog.length-1] : null;
@@ -2121,6 +2136,69 @@ export default function MascotRoom({ activeChild, moodLog, journals, gratitudes,
             color:"#fff",margin:"0 0 4px"}}>{personality.trait}</p>
           <p style={{fontFamily:F.b,fontWeight:500,fontSize:14,
             color:"rgba(255,255,255,0.85)",margin:0}}>Loves: {personality.loves}</p>
+        </div>
+
+        {/* ── Achievements / Trophy shelf ── */}
+        <div style={{background:"#fff",borderRadius:20,padding:"18px 20px",
+          border:`1.5px solid ${C.border}`,marginBottom:14,
+          boxShadow:"0 2px 18px rgba(124,77,255,0.09)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <p style={{fontFamily:F.h,fontWeight:800,fontSize:18,color:C.text,margin:0}}>
+              Achievements
+            </p>
+            <div style={{display:"inline-flex",alignItems:"center",gap:5,
+              background:"#FFF8E1",borderRadius:50,padding:"4px 12px"}}>
+              <span style={{fontSize:13}}>🏆</span>
+              <span style={{fontFamily:F.b,fontWeight:700,fontSize:12,color:"#F9A825"}}>
+                {earnedCount} / {achievements.length}
+              </span>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+            {achievements.map(b => (
+              <div key={b.id} style={{
+                display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",
+                background: b.earned ? "#FFF8E1" : "#F4F2FA",
+                border:`1.5px solid ${b.earned ? "#FFE082" : C.border}`,
+                borderRadius:16,padding:"12px 6px",
+                opacity: b.earned ? 1 : 0.55,
+                transition:"all 0.2s",
+              }}>
+                <div style={{
+                  width:46,height:46,borderRadius:"50%",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  background: b.earned ? "#fff" : "#ECE8F6",
+                  fontSize:24,marginBottom:6,
+                  filter: b.earned ? "none" : "grayscale(1)",
+                  boxShadow: b.earned ? "0 2px 8px rgba(249,168,37,0.28)" : "none",
+                  position:"relative",
+                }}>
+                  {b.emoji}
+                  {!b.earned && (
+                    <div style={{position:"absolute",bottom:-2,right:-2,
+                      background:C.muted,borderRadius:"50%",width:16,height:16,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      border:"2px solid #fff"}}>
+                      <svg viewBox="0 0 24 24" width={8} height={8} fill="none"
+                        stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                        <rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <p style={{fontFamily:F.b,fontWeight:700,fontSize:11,
+                  color: b.earned ? C.text : C.muted,margin:0,lineHeight:1.25}}>
+                  {b.label}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p style={{fontFamily:F.b,fontWeight:500,fontSize:12,color:C.muted,
+            textAlign:"center",margin:"14px 0 0",lineHeight:1.5}}>
+            {earnedCount === achievements.length
+              ? `You've earned every badge — ${cm.name} is so proud! 🎉`
+              : `Keep checking in to unlock more with ${cm.name}!`}
+          </p>
         </div>
         <button onClick={()=>setShowStats(s=>!s)} style={{
           width:"100%",background:"#fff",

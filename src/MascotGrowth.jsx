@@ -1357,15 +1357,35 @@ export const GardenItemSVG = ({ id, cx, groundY, scale=1, w, h, idx=0 }) => {
    Backdrop is fixed — a single cheerful daytime garden.
    What changes is only what the child has planted via the shop.
 ══════════════════════════════════════════════ */
-export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = false, mascotStageId = 0, gardenItems = [] }) => {
+export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = false, mascotStageId = 0, gardenItems = [], timeOfDay }) => {
   const w = size;
   const h = Math.round(size * 1.05);
   // stageId kept for mascot accessory callers but NOT used for backdrop
   const stageId = typeof stage === "object" ? stage.id : stage;
 
-  /* ── Fixed backdrop colours ── */
-  const skyTop  = dark ? "#0d1a2e" : "#B9F0C2";
-  const skyBot  = dark ? "#1a2e40" : "#DCF5E0";
+  /* ── Time-of-day ambiance ──────────────────────────────────────────
+     The garden shifts with the child's local clock: soft dawn, bright
+     day, warm dusk, and a starry night. `dark` (app dark mode) forces
+     night. An optional `timeOfDay` prop can override for previews. */
+  const hourNow = new Date().getHours();
+  const phase = timeOfDay ? timeOfDay
+    : dark          ? "night"
+    : hourNow < 5   ? "night"
+    : hourNow < 7   ? "dawn"
+    : hourNow < 17  ? "day"
+    : hourNow < 20  ? "dusk"
+    : "night";
+  const TOD = {
+    dawn:  { skyTop:"#FFC9A3", skyBot:"#FDE9D2", sun:"#FFB74D", sunGlow:"#FFE0B2", night:false, cloud:0.85 },
+    day:   { skyTop:"#B9F0C2", skyBot:"#DCF5E0", sun:"#FFD54F", sunGlow:"#FFFDE7", night:false, cloud:0.82 },
+    dusk:  { skyTop:"#F2865E", skyBot:"#F9CBA0", sun:"#FF7043", sunGlow:"#FFCCBC", night:false, cloud:0.7  },
+    night: { skyTop: dark ? "#0d1a2e" : "#1B2A4A", skyBot: dark ? "#1a2e40" : "#33406B",
+             sun:null, sunGlow:null, night:true, cloud:0.3 },
+  }[phase] || { skyTop:"#B9F0C2", skyBot:"#DCF5E0", sun:"#FFD54F", sunGlow:"#FFFDE7", night:false, cloud:0.82 };
+
+  /* ── Backdrop colours ── */
+  const skyTop  = TOD.skyTop;
+  const skyBot  = TOD.skyBot;
   const grass   = ["#43A047","#66BB6A","#81C784","#A5D6A7"];
 
   const groundY = h * 0.56;
@@ -1421,8 +1441,8 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
             <stop offset="100%" stopColor={grass[0]}/>
           </linearGradient>
           <radialGradient id={`sun_${animId}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FFFDE7" stopOpacity="0.9"/>
-            <stop offset="100%" stopColor="#FFD54F" stopOpacity="0"/>
+            <stop offset="0%" stopColor={TOD.sunGlow || "#FFFDE7"} stopOpacity="0.9"/>
+            <stop offset="100%" stopColor={TOD.sun || "#FFD54F"} stopOpacity="0"/>
           </radialGradient>
           <clipPath id={`clip_${animId}`}>
             <rect width={w} height={h}/>
@@ -1434,8 +1454,9 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
         {/* Sky — always the same fresh daytime blue-green */}
         <rect width={w} height={h} fill={`url(#sky_${animId})`}/>
 
-        {/* Sun — always present, gently pulsing */}
-        <circle cx={w*0.84} cy={h*0.13} r={w*0.072} fill="#FFD54F" opacity="0.95">
+        {/* Sun — by day/dawn/dusk; gently pulsing */}
+        {!TOD.night && (<>
+        <circle cx={w*0.84} cy={h*0.13} r={w*0.072} fill={TOD.sun} opacity="0.95">
           <animate attributeName="r" values={`${w*0.068};${w*0.082};${w*0.068}`} dur="4s" repeatCount="indefinite"/>
         </circle>
         <circle cx={w*0.84} cy={h*0.13} r={w*0.115} fill={`url(#sun_${animId})`}/>
@@ -1444,12 +1465,24 @@ export const GardenScene = ({ stage, mascotId, size = 280, dark, showMascot = fa
           return <line key={i}
             x1={w*0.84+Math.cos(r)*w*0.092} y1={h*0.13+Math.sin(r)*w*0.092}
             x2={w*0.84+Math.cos(r)*w*0.13}  y2={h*0.13+Math.sin(r)*w*0.13}
-            stroke="#FFD54F" strokeWidth="2.5" opacity="0.55" strokeLinecap="round"/>;
+            stroke={TOD.sun} strokeWidth="2.5" opacity="0.55" strokeLinecap="round"/>;
         })}
+        </>)}
+
+        {/* Night sky — moon + twinkling stars */}
+        {TOD.night && (<>
+        <circle cx={w*0.82} cy={h*0.13} r={w*0.06} fill="#FFF9E5" opacity="0.95"/>
+        <circle cx={w*0.85} cy={h*0.115} r={w*0.052} fill={skyTop} opacity="0.95"/>
+        {[[0.12,0.07],[0.23,0.15],[0.34,0.05],[0.46,0.19],[0.58,0.09],[0.68,0.17],[0.9,0.12],[0.5,0.04],[0.16,0.21]].map(([sx,sy],i)=>(
+          <circle key={i} cx={w*sx} cy={h*sy} r={1.5+(i%3)*0.6} fill="#FFFDE7" opacity="0.85">
+            <animate attributeName="opacity" values="0.25;1;0.25" dur={`${2+(i%4)*0.6}s`} begin={`${(i*0.3).toFixed(1)}s`} repeatCount="indefinite"/>
+          </circle>
+        ))}
+        </>)}
 
         {/* Two drifting clouds */}
         {[{x:0.04,y:0.14,s:0.9,dur:"20s"},{x:0.52,y:0.08,s:1.1,dur:"28s"}].map((cl,i)=>(
-          <g key={i} style={{animation:`gCloud ${cl.dur} ease-in-out infinite alternate`}}>
+          <g key={i} style={{animation:`gCloud ${cl.dur} ease-in-out infinite alternate`}} opacity={TOD.cloud}>
             <g transform={`translate(${w*cl.x},${h*cl.y}) scale(${cl.s})`}>
               <ellipse cx="32" cy="0" rx="32" ry="15" fill="white" opacity="0.82"/>
               <ellipse cx="14" cy="6"  rx="22" ry="13" fill="white" opacity="0.72"/>
